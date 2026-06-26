@@ -1,0 +1,19 @@
+{
+  "project": "IHM Hotel School Management System",
+  "created_files": [
+    "AGENTS.md",
+    "CODEX_START_PROMPT.md",
+    "README.md",
+    "branding/ihm-logo.jpg",
+    "docs/ACCEPTANCE_CRITERIA.md",
+    "docs/API_SPECIFICATION.md",
+    "docs/BUSINESS_RULES.md",
+    "docs/DATABASE_DESIGN.md",
+    "docs/DECISIONS_AND_ASSUMPTIONS.md",
+    "docs/IMPLEMENTATION_PLAN.md",
+    "docs/PRODUCT_SPEC.md",
+    "docs/SECURITY_REQUIREMENTS.md",
+    "docs/TESTING_REQUIREMENTS.md",
+    "docs/UI_REQUIREMENTS.md"
+  ]
+}

@@ -1,0 +1,16 @@
+.env
+*.log
+
+# Java and Maven
+backend/target/
+backend/.mvn/wrapper/maven-wrapper.jar
+backend/.mvn/repository/
+
+# Node and Angular
+frontend/node_modules/
+frontend/dist/
+frontend/.angular/
+
+# Local IDE files
+.idea/
+.vscode/

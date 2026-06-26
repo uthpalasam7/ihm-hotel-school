@@ -1,0 +1,35 @@
+spring:
+  application:
+    name: ihm-hotel-school
+  datasource:
+    url: ${IHM_DB_URL:jdbc:postgresql://localhost:5432/ihm_hotel_school}
+    username: ${IHM_DB_USERNAME:ihm_app}
+    password: ${IHM_DB_PASSWORD:change-me-local-only}
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+    properties:
+      hibernate:
+        jdbc:
+          time_zone: UTC
+
+server:
+  port: ${IHM_BACKEND_PORT:8080}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      probes:
+        enabled: true
+
+app:
+  timezone: ${IHM_APP_TIMEZONE:Asia/Colombo}
+  currency-code: ${IHM_APP_CURRENCY:LKR}
