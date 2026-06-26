@@ -1,0 +1,43 @@
+<main class="login-page">
+  <section class="login-panel" aria-labelledby="login-heading">
+    <img src="/assets/branding/ihm-logo.jpg" alt="IHM Hotel School logo" />
+    <div>
+      <p class="eyebrow">IHM Hotel School</p>
+      <h1 id="login-heading">Sign in</h1>
+    </div>
+
+    <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+      <label>
+        <span>Username</span>
+        <input type="text" formControlName="username" autocomplete="username" />
+      </label>
+      @if (form.controls.username.touched && form.controls.username.invalid) {
+        <p class="field-error">Username is required</p>
+      }
+
+      <label>
+        <span>Password</span>
+        <div class="password-field">
+          <input [type]="showPassword() ? 'text' : 'password'" formControlName="password" autocomplete="current-password" />
+          <button type="button" (click)="showPassword.set(!showPassword())">
+            {{ showPassword() ? 'Hide' : 'Show' }}
+          </button>
+        </div>
+      </label>
+      @if (form.controls.password.touched && form.controls.password.invalid) {
+        <p class="field-error">Password is required</p>
+      }
+
+      @if (errorMessage()) {
+        <p class="auth-error">{{ errorMessage() }}</p>
+      }
+      @if (successMessage()) {
+        <p class="auth-success">{{ successMessage() }}</p>
+      }
+
+      <button class="submit-button" type="submit" [disabled]="loading()">
+        {{ loading() ? 'Signing in...' : 'Sign in' }}
+      </button>
+    </form>
+  </section>
+</main>

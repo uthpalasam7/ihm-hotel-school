@@ -5,7 +5,26 @@ spring:
     password:
     driver-class-name: org.h2.Driver
   flyway:
-    enabled: false
+    enabled: true
   jpa:
     hibernate:
-      ddl-auto: none
+      ddl-auto: validate
+
+app:
+  security:
+    jwt-secret: test-development-placeholder-change-before-production-64-characters
+    access-token-minutes: 15
+    refresh-token-days: 30
+    max-failed-login-attempts: 5
+    failed-login-lock-minutes: 15
+  initial-admin:
+    username:
+    password:
+    full-name: Initial Super Administrator
+    email:
+
+debug: false
+
+logging:
+  level:
+    root: INFO

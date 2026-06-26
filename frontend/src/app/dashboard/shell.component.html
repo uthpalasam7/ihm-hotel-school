@@ -1,0 +1,56 @@
+<div class="app-shell">
+  <aside class="sidebar" aria-label="Primary navigation">
+    <a class="brand" routerLink="/" aria-label="IHM Hotel School home">
+      <img src="/assets/branding/ihm-logo.jpg" alt="IHM Hotel School logo" />
+      <span>IHM Hotel School</span>
+    </a>
+
+    <nav>
+      @for (item of visibleNavigation(); track item.label) {
+        <a routerLink="/" routerLinkActive="is-active" [routerLinkActiveOptions]="{ exact: true }">{{ item.label }}</a>
+      }
+    </nav>
+  </aside>
+
+  <main class="workspace">
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">{{ primaryBranchCode() }}</p>
+        <h1>Management Console</h1>
+      </div>
+      <div class="operator">
+        <span class="operator-label">{{ user()?.fullName }}</span>
+        <strong>{{ user()?.roles?.join(', ') }}</strong>
+        <a routerLink="/change-password">Change password</a>
+        <button type="button" (click)="logout()">Logout</button>
+      </div>
+    </header>
+
+    <section class="status-grid" aria-label="Foundation status">
+      <article class="status-card">
+        <span>Authentication</span>
+        <strong>Enabled</strong>
+      </article>
+      <article class="status-card">
+        <span>Backend API</span>
+        <strong>/api/v1</strong>
+      </article>
+      <article class="status-card">
+        <span>Timezone</span>
+        <strong>Asia/Colombo</strong>
+      </article>
+      <article class="status-card">
+        <span>Currency</span>
+        <strong>LKR</strong>
+      </article>
+    </section>
+
+    <section class="work-panel" aria-labelledby="workspace-heading">
+      <div>
+        <p class="eyebrow">Default Branch</p>
+        <h2 id="workspace-heading">IHM Hotel School</h2>
+      </div>
+      <p class="branch-code">IHM-MAIN</p>
+    </section>
+  </main>
+</div>

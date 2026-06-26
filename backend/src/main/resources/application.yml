@@ -33,3 +33,14 @@ management:
 app:
   timezone: ${IHM_APP_TIMEZONE:Asia/Colombo}
   currency-code: ${IHM_APP_CURRENCY:LKR}
+  security:
+    jwt-secret: ${IHM_JWT_SECRET:local-development-placeholder-change-before-production-64-characters}
+    access-token-minutes: ${IHM_ACCESS_TOKEN_MINUTES:15}
+    refresh-token-days: ${IHM_REFRESH_TOKEN_DAYS:30}
+    max-failed-login-attempts: ${IHM_MAX_FAILED_LOGIN_ATTEMPTS:5}
+    failed-login-lock-minutes: ${IHM_FAILED_LOGIN_LOCK_MINUTES:15}
+  initial-admin:
+    username: ${IHM_INITIAL_ADMIN_USERNAME:}
+    password: ${IHM_INITIAL_ADMIN_PASSWORD:}
+    full-name: ${IHM_INITIAL_ADMIN_FULL_NAME:Initial Super Administrator}
+    email: ${IHM_INITIAL_ADMIN_EMAIL:}
