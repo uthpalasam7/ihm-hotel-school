@@ -52,6 +52,18 @@ class ApiExceptionHandler {
 		return error(HttpStatus.BAD_REQUEST, "BAD_REQUEST", exception.getMessage(), List.of(), request);
 	}
 
+	@ExceptionHandler(NotFoundException.class)
+	@ResponseStatus(HttpStatus.NOT_FOUND)
+	ApiError notFound(NotFoundException exception, HttpServletRequest request) {
+		return error(HttpStatus.NOT_FOUND, "NOT_FOUND", exception.getMessage(), List.of(), request);
+	}
+
+	@ExceptionHandler(ConflictException.class)
+	@ResponseStatus(HttpStatus.CONFLICT)
+	ApiError conflict(ConflictException exception, HttpServletRequest request) {
+		return error(HttpStatus.CONFLICT, "CONFLICT", exception.getMessage(), List.of(), request);
+	}
+
 	private ApiFieldError toFieldError(FieldError error) {
 		return new ApiFieldError(error.getField(), error.getDefaultMessage());
 	}

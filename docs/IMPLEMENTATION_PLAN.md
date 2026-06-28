@@ -1,4 +1,4 @@
-# Implementation Plan
+x# Implementation Plan
 
 ## General Rule
 
@@ -80,6 +80,12 @@ Implement:
 - Lecturer account creation
 - User activation/deactivation
 - Audit events
+
+Phase 3 implementation note:
+
+- `SUPER_ADMIN` manages branches and all user roles.
+- `ADMIN` manages lecturer accounts only within assigned branches.
+- Audit events are persisted in `audit_logs`; the audit viewer remains a later phase.
 
 ## Phase 4 — Courses and Batches
 

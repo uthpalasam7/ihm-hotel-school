@@ -1,0 +1,62 @@
+<section class="page-header">
+  <div>
+    <p class="eyebrow">Branch</p>
+    <h2>{{ editingId() ? 'Edit branch' : 'Add branch' }}</h2>
+  </div>
+  <a routerLink="/branches">Back to branches</a>
+</section>
+
+@if (loading()) {
+  <p class="notice">Loading branch...</p>
+} @else {
+  <form [formGroup]="form" (ngSubmit)="save()" novalidate>
+    @if (error()) {
+      <p class="notice error">{{ error() }}</p>
+    }
+
+    <label>
+      Code
+      <input formControlName="code" autocomplete="off" />
+      @if (form.controls.code.touched && form.controls.code.hasError('required')) {
+        <span>Code is required</span>
+      }
+      @if (fieldError('code')) {
+        <span>{{ fieldError('code') }}</span>
+      }
+    </label>
+
+    <label>
+      Name
+      <input formControlName="name" autocomplete="off" />
+      @if (form.controls.name.touched && form.controls.name.hasError('required')) {
+        <span>Name is required</span>
+      }
+      @if (fieldError('name')) {
+        <span>{{ fieldError('name') }}</span>
+      }
+    </label>
+
+    <label>
+      Contact number
+      <input formControlName="contactNumber" autocomplete="off" />
+    </label>
+
+    <label>
+      Status
+      <select formControlName="status">
+        <option value="ACTIVE">Active</option>
+        <option value="INACTIVE">Inactive</option>
+      </select>
+    </label>
+
+    <label class="wide">
+      Address
+      <textarea formControlName="address" rows="4"></textarea>
+    </label>
+
+    <div class="form-actions">
+      <button type="submit" [disabled]="saving()">{{ saving() ? 'Saving...' : 'Save branch' }}</button>
+      <a routerLink="/branches">Cancel</a>
+    </div>
+  </form>
+}

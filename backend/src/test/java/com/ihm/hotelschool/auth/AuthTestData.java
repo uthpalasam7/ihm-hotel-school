@@ -13,7 +13,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 @Component
-class AuthTestData {
+public class AuthTestData {
 
 	private final UserRepository userRepository;
 	private final RoleRepository roleRepository;
@@ -32,10 +32,15 @@ class AuthTestData {
 	}
 
 	@Transactional
-	UserAccount user(String username, String roleCode, UserStatus status) {
+	public UserAccount user(String username, String roleCode, UserStatus status) {
+		return user(username, roleCode, status, "IHM-MAIN");
+	}
+
+	@Transactional
+	public UserAccount user(String username, String roleCode, UserStatus status, String branchCode) {
 		Instant now = Instant.now();
 		Role role = roleRepository.findByCode(roleCode).orElseThrow();
-		Branch branch = branchRepository.findByCode("IHM-MAIN").orElseThrow();
+		Branch branch = branchRepository.findByCode(branchCode).orElseThrow();
 		UserAccount user = new UserAccount(
 				username,
 				username + "@example.invalid",

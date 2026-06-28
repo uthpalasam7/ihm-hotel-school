@@ -1,0 +1,117 @@
+<section class="page-header">
+  <div>
+    <p class="eyebrow">User</p>
+    <h2>{{ editingId() ? 'Edit user' : 'Add user' }}</h2>
+  </div>
+  <a routerLink="/users">Back to users</a>
+</section>
+
+@if (loading()) {
+  <p class="notice">Loading user...</p>
+} @else {
+  @if (temporaryPassword()) {
+    <section class="notice success">
+      <strong>User created.</strong>
+      <p>Temporary password: {{ temporaryPassword() }}</p>
+      <a routerLink="/users">Return to users</a>
+    </section>
+  } @else {
+    <form [formGroup]="form" (ngSubmit)="save()" novalidate>
+      @if (error()) {
+        <p class="notice error">{{ error() }}</p>
+      }
+
+      <label>
+        Username
+        <input formControlName="username" autocomplete="off" />
+        @if (form.controls.username.touched && form.controls.username.hasError('required')) {
+          <span>Username is required</span>
+        }
+        @if (fieldError('username')) {
+          <span>{{ fieldError('username') }}</span>
+        }
+      </label>
+
+      <label>
+        Full name
+        <input formControlName="fullName" autocomplete="off" />
+        @if (form.controls.fullName.touched && form.controls.fullName.hasError('required')) {
+          <span>Full name is required</span>
+        }
+        @if (fieldError('fullName')) {
+          <span>{{ fieldError('fullName') }}</span>
+        }
+      </label>
+
+      <label>
+        Email
+        <input formControlName="email" type="email" autocomplete="off" />
+        @if (form.controls.email.touched && form.controls.email.hasError('email')) {
+          <span>Enter a valid email address</span>
+        }
+      </label>
+
+      <label>
+        Contact number
+        <input formControlName="contactNumber" autocomplete="off" />
+      </label>
+
+      @if (!editingId()) {
+        <label>
+          Status
+          <select formControlName="status">
+            <option value="ACTIVE">Active after password change</option>
+            <option value="DISABLED">Disabled</option>
+          </select>
+        </label>
+
+        <label>
+          Temporary password
+          <input formControlName="temporaryPassword" type="text" autocomplete="off" />
+          @if (form.controls.temporaryPassword.touched && form.controls.temporaryPassword.hasError('minlength')) {
+            <span>Use at least 8 characters or leave blank to generate one</span>
+          }
+        </label>
+      }
+
+      <fieldset>
+        <legend>Roles</legend>
+        @for (role of roles(); track role.code) {
+          <label class="check">
+            <input
+              type="checkbox"
+              [checked]="hasRole(role.code)"
+              (change)="toggleRole(role.code, $any($event.target).checked)"
+            />
+            {{ role.name }}
+          </label>
+        }
+        @if (form.controls.roleCodes.touched && form.controls.roleCodes.invalid) {
+          <span>Select at least one role</span>
+        }
+      </fieldset>
+
+      <fieldset>
+        <legend>Branches</legend>
+        @for (branch of branches(); track branch.id) {
+          <label class="check">
+            <input
+              type="checkbox"
+              [checked]="hasBranch(branch.id)"
+              (change)="toggleBranch(branch.id, $any($event.target).checked)"
+            />
+            {{ branch.code }} · {{ branch.name }}
+          </label>
+        }
+        @if (form.controls.branchIds.touched && form.controls.branchIds.invalid) {
+          <span>Select at least one branch</span>
+        }
+      </fieldset>
+
+      <div class="form-actions">
+        <button type="submit" [disabled]="saving()">{{ saving() ? 'Saving...' : 'Save user' }}</button>
+        <a routerLink="/users">Cancel</a>
+      </div>
+    </form>
+  }
+}

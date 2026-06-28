@@ -1,6 +1,6 @@
 # IHM Hotel School Management System
 
-Phase 2 provides the authentication and authorization foundation for the IHM Hotel School Management System.
+Phase 3 provides the authentication foundation plus branch and user administration for the IHM Hotel School Management System.
 
 ## Stack
 
@@ -125,7 +125,7 @@ Infrastructure:
 docker compose config
 ```
 
-## Phase 2 Scope
+## Phase 3 Scope
 
 Implemented:
 
@@ -142,8 +142,17 @@ Implemented:
 - Default roles and default branch seed data
 - Environment-driven first-super-admin bootstrap
 - Angular login page, auth guard, interceptor, and role-aware navigation
+- Branch list, create, edit, and activation/deactivation APIs and screens
+- User list, create, edit, role assignment, branch assignment, activation/deactivation, and password reset APIs and screens
+- Lecturer account creation by assigned-branch administrators
+- Audit event persistence for branch and user administration actions
 
 Not implemented yet:
 
-- Branch and user administration screens
 - Course, batch, student, enrollment, attendance, finance, reports, and audit workflows
+
+Phase 3 authorization:
+
+- `SUPER_ADMIN` can manage all branches and all user roles.
+- `ADMIN` can manage only `LECTURER` accounts in branches assigned to that admin.
+- `LECTURER` cannot access branch or user administration endpoints.

@@ -7,7 +7,7 @@
 
     <nav>
       @for (item of visibleNavigation(); track item.label) {
-        <a routerLink="/" routerLinkActive="is-active" [routerLinkActiveOptions]="{ exact: true }">{{ item.label }}</a>
+        <a [routerLink]="item.path" routerLinkActive="is-active" [routerLinkActiveOptions]="{ exact: item.path === '/' }">{{ item.label }}</a>
       }
     </nav>
   </aside>
@@ -26,31 +26,6 @@
       </div>
     </header>
 
-    <section class="status-grid" aria-label="Foundation status">
-      <article class="status-card">
-        <span>Authentication</span>
-        <strong>Enabled</strong>
-      </article>
-      <article class="status-card">
-        <span>Backend API</span>
-        <strong>/api/v1</strong>
-      </article>
-      <article class="status-card">
-        <span>Timezone</span>
-        <strong>Asia/Colombo</strong>
-      </article>
-      <article class="status-card">
-        <span>Currency</span>
-        <strong>LKR</strong>
-      </article>
-    </section>
-
-    <section class="work-panel" aria-labelledby="workspace-heading">
-      <div>
-        <p class="eyebrow">Default Branch</p>
-        <h2 id="workspace-heading">IHM Hotel School</h2>
-      </div>
-      <p class="branch-code">IHM-MAIN</p>
-    </section>
+    <router-outlet />
   </main>
 </div>

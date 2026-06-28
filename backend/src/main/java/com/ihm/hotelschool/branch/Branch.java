@@ -55,6 +55,28 @@ public class Branch {
 	protected Branch() {
 	}
 
+	public Branch(
+			String code,
+			String name,
+			String address,
+			String contactNumber,
+			BranchStatus status,
+			boolean defaultBranch,
+			Instant now,
+			Long actorUserId) {
+		this.code = code;
+		this.name = name;
+		this.address = address;
+		this.contactNumber = contactNumber;
+		this.status = status;
+		this.defaultBranch = defaultBranch;
+		this.createdAt = now;
+		this.createdBy = actorUserId;
+		this.updatedAt = now;
+		this.updatedBy = actorUserId;
+		this.version = 0L;
+	}
+
 	public Long getId() {
 		return id;
 	}
@@ -67,11 +89,47 @@ public class Branch {
 		return name;
 	}
 
+	public String getAddress() {
+		return address;
+	}
+
+	public String getContactNumber() {
+		return contactNumber;
+	}
+
 	public BranchStatus getStatus() {
 		return status;
 	}
 
 	public boolean isDefaultBranch() {
 		return defaultBranch;
+	}
+
+	public Instant getCreatedAt() {
+		return createdAt;
+	}
+
+	public Instant getUpdatedAt() {
+		return updatedAt;
+	}
+
+	public Long getVersion() {
+		return version;
+	}
+
+	public void updateDetails(String code, String name, String address, String contactNumber, BranchStatus status, Instant now, Long actorUserId) {
+		this.code = code;
+		this.name = name;
+		this.address = address;
+		this.contactNumber = contactNumber;
+		this.status = status;
+		this.updatedAt = now;
+		this.updatedBy = actorUserId;
+	}
+
+	public void changeStatus(BranchStatus status, Instant now, Long actorUserId) {
+		this.status = status;
+		this.updatedAt = now;
+		this.updatedBy = actorUserId;
 	}
 }

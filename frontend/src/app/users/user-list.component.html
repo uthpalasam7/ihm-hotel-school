@@ -1,0 +1,93 @@
+<section class="page-header">
+  <div>
+    <p class="eyebrow">Administration</p>
+    <h2>Users</h2>
+  </div>
+  <a class="primary-action" routerLink="/users/new">Add user</a>
+</section>
+
+<section class="toolbar" aria-label="User filters">
+  <label>
+    Search
+    <input type="search" [(ngModel)]="search" (keyup.enter)="load()" placeholder="Name, username, or email" />
+  </label>
+  <label>
+    Role
+    <select [(ngModel)]="role" (change)="load()">
+      <option value="">All roles</option>
+      @for (roleOption of roles(); track roleOption.code) {
+        <option [value]="roleOption.code">{{ roleOption.name }}</option>
+      }
+    </select>
+  </label>
+  <label>
+    Branch
+    <select [(ngModel)]="branchId" (change)="load()">
+      <option value="">All branches</option>
+      @for (branch of branches(); track branch.id) {
+        <option [value]="branch.id">{{ branch.code }}</option>
+      }
+    </select>
+  </label>
+  <label>
+    Status
+    <select [(ngModel)]="status" (change)="load()">
+      <option value="">All statuses</option>
+      <option value="ACTIVE">Active</option>
+      <option value="PASSWORD_CHANGE_REQUIRED">Password change required</option>
+      <option value="DISABLED">Disabled</option>
+    </select>
+  </label>
+  <button type="button" (click)="load()">Apply</button>
+</section>
+
+@if (success()) {
+  <p class="notice success">{{ success() }}</p>
+}
+@if (temporaryPassword()) {
+  <p class="notice warning"><strong>Temporary password:</strong> {{ temporaryPassword() }}</p>
+}
+@if (error()) {
+  <p class="notice error">{{ error() }}</p>
+}
+@if (loading()) {
+  <p class="notice">Loading users...</p>
+} @else if (users().length === 0) {
+  <p class="empty-state">No users match the current filters.</p>
+} @else {
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>User</th>
+          <th>Roles</th>
+          <th>Branches</th>
+          <th>Status</th>
+          <th>Last login</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (user of users(); track user.id) {
+          <tr>
+            <td>
+              <strong>{{ user.fullName }}</strong>
+              <span>{{ user.username }} · {{ user.email || 'No email' }}</span>
+            </td>
+            <td>{{ user.roles.length ? user.roles[0].code : 'No role' }}</td>
+            <td>{{ user.branches.length ? user.branches[0].code : 'No branch' }}</td>
+            <td><span class="badge" [class.is-danger]="user.status === 'DISABLED'">{{ user.status }}</span></td>
+            <td>{{ user.lastLoginAt || 'Never' }}</td>
+            <td class="actions">
+              <a [routerLink]="['/users', user.id, 'edit']">Edit</a>
+              <button type="button" (click)="resetPassword(user)">Reset</button>
+              <button type="button" (click)="changeStatus(user)">
+                {{ user.status === 'DISABLED' ? 'Activate' : 'Deactivate' }}
+              </button>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+}

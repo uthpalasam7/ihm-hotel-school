@@ -35,6 +35,7 @@
 8. Asia/Colombo as initial display timezone.
 9. UTC timestamp storage.
 10. Student-photo storage behind an abstraction.
+11. In Phase 3, `ADMIN` users may manage lecturer accounts only within their assigned branches. `SUPER_ADMIN` remains responsible for branch management and for creating or changing `ADMIN` and `SUPER_ADMIN` accounts.
 
 ## Initial Business Assumptions
 

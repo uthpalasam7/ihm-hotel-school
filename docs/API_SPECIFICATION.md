@@ -111,7 +111,7 @@ Response:
 ### `PUT /branches/{id}`
 ### `PATCH /branches/{id}/status`
 
-Only authorized administrators may modify branches.
+Only `SUPER_ADMIN` may create, update or deactivate branches. Branch-scoped users may list or read only assigned branches where an endpoint needs branch choices.
 
 ## 6. Users
 
@@ -133,6 +133,8 @@ Filters:
 ### `POST /users/{id}/reset-password`
 
 Do not return password hashes.
+
+For Phase 3, `SUPER_ADMIN` may manage all user roles and branch assignments. `ADMIN` may create and manage only `LECTURER` accounts within the admin's assigned branches. Disabling a user and resetting a password revoke active refresh tokens.
 
 ## 7. Courses
 

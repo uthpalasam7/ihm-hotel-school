@@ -1,0 +1,67 @@
+<section class="page-header">
+  <div>
+    <p class="eyebrow">Administration</p>
+    <h2>Branches</h2>
+  </div>
+  <a class="primary-action" routerLink="/branches/new">Add branch</a>
+</section>
+
+<section class="toolbar" aria-label="Branch filters">
+  <label>
+    Search
+    <input type="search" [(ngModel)]="search" (keyup.enter)="load()" placeholder="Name or code" />
+  </label>
+  <label>
+    Status
+    <select [(ngModel)]="status" (change)="load()">
+      <option value="">All statuses</option>
+      <option value="ACTIVE">Active</option>
+      <option value="INACTIVE">Inactive</option>
+    </select>
+  </label>
+  <button type="button" (click)="load()">Apply</button>
+</section>
+
+@if (success()) {
+  <p class="notice success">{{ success() }}</p>
+}
+@if (error()) {
+  <p class="notice error">{{ error() }}</p>
+}
+@if (loading()) {
+  <p class="notice">Loading branches...</p>
+} @else if (branches().length === 0) {
+  <p class="empty-state">No branches match the current filters.</p>
+} @else {
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Code</th>
+          <th>Name</th>
+          <th>Contact</th>
+          <th>Status</th>
+          <th>Default</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (branch of branches(); track branch.id) {
+          <tr>
+            <td><strong>{{ branch.code }}</strong></td>
+            <td>{{ branch.name }}</td>
+            <td>{{ branch.contactNumber || 'Not set' }}</td>
+            <td><span class="badge" [class.is-danger]="branch.status === 'INACTIVE'">{{ branch.status }}</span></td>
+            <td>{{ branch.defaultBranch ? 'Yes' : 'No' }}</td>
+            <td class="actions">
+              <a [routerLink]="['/branches', branch.id, 'edit']">Edit</a>
+              <button type="button" (click)="changeStatus(branch)">
+                {{ branch.status === 'ACTIVE' ? 'Deactivate' : 'Activate' }}
+              </button>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+}

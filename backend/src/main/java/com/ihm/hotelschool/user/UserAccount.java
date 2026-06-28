@@ -111,12 +111,28 @@ public class UserAccount {
 		return fullName;
 	}
 
+	public String getContactNumber() {
+		return contactNumber;
+	}
+
 	public UserStatus getStatus() {
 		return status;
 	}
 
 	public Instant getLastLoginAt() {
 		return lastLoginAt;
+	}
+
+	public Instant getCreatedAt() {
+		return createdAt;
+	}
+
+	public Instant getUpdatedAt() {
+		return updatedAt;
+	}
+
+	public Long getVersion() {
+		return version;
 	}
 
 	public Set<Role> getRoles() {
@@ -146,11 +162,52 @@ public class UserAccount {
 		this.updatedAt = now;
 	}
 
+	public void updateProfile(String username, String email, String fullName, String contactNumber, Instant now, Long actorUserId) {
+		this.username = username;
+		this.email = email;
+		this.fullName = fullName;
+		this.contactNumber = contactNumber;
+		this.updatedAt = now;
+		this.updatedBy = actorUserId;
+	}
+
+	public void changeStatus(UserStatus status, Instant now, Long actorUserId) {
+		this.status = status;
+		this.updatedAt = now;
+		this.updatedBy = actorUserId;
+	}
+
+	public void resetPassword(String passwordHash, Instant now, Long actorUserId) {
+		this.passwordHash = passwordHash;
+		this.status = UserStatus.PASSWORD_CHANGE_REQUIRED;
+		this.updatedAt = now;
+		this.updatedBy = actorUserId;
+	}
+
+	public void replaceRoles(Set<Role> roles, Instant now, Long actorUserId) {
+		this.roles.clear();
+		this.roles.addAll(roles);
+		this.updatedAt = now;
+		this.updatedBy = actorUserId;
+	}
+
+	public void replaceBranches(Set<Branch> branches, Instant now, Long actorUserId) {
+		this.branches.clear();
+		this.branches.addAll(branches);
+		this.updatedAt = now;
+		this.updatedBy = actorUserId;
+	}
+
 	public void addRole(Role role) {
 		roles.add(role);
 	}
 
 	public void addBranch(Branch branch) {
 		branches.add(branch);
+	}
+
+	public void setCreatedBy(Long actorUserId) {
+		this.createdBy = actorUserId;
+		this.updatedBy = actorUserId;
 	}
 }

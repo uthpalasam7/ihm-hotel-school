@@ -24,3 +24,11 @@ export const guestGuard: CanActivateFn = () => {
     ? router.createUrlTree(['/change-password'])
     : router.createUrlTree(['/']);
 };
+
+export function roleGuard(roles: string[]): CanActivateFn {
+  return () => {
+    const auth = inject(AuthService);
+    const router = inject(Router);
+    return auth.hasAnyRole(roles) ? true : router.createUrlTree(['/']);
+  };
+}
