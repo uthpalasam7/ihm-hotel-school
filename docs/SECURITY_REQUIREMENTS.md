@@ -45,6 +45,8 @@ For every branch-owned resource:
 
 Super administrators may access all branches.
 
+The frontend may send `X-Active-Branch-Id` as the user's selected branch context. The backend must treat this value as untrusted input, validate branch membership or super-administrator access, validate that the branch is active where applicable, and reject unauthorized branch selections.
+
 ## 4. Lecturer Restrictions
 
 Lecturers may access:

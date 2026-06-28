@@ -21,8 +21,11 @@ Use:
 - Server-side filtering
 - Consistent errors
 - Branch-aware authorization
+- `X-Active-Branch-Id` on branch-scoped requests when the UI has an active branch selected
 - ISO-8601 dates and timestamps
 - Decimal JSON values for money
+
+The active branch header is only a request context. The backend must validate that the authenticated user can access the branch and must still apply branch predicates to branch-owned data. If both `X-Active-Branch-Id` and an explicit `branchId` query parameter are present, the endpoint-specific query parameter is the explicit filter and remains subject to authorization.
 
 ## 2. Standard Pagination
 

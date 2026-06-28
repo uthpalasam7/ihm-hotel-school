@@ -27,7 +27,7 @@ Requirements:
 Desktop:
 
 - Left navigation sidebar
-- Header with branch, user, and logout controls
+- Header with active branch, user, and logout controls
 - Main content area
 - Breadcrumbs where useful
 
@@ -37,6 +37,14 @@ Mobile:
 - Compact header
 - Touch-friendly controls
 - Tables converted to cards or horizontal scroll where needed
+
+Branch behaviour:
+
+- If the logged-in user has one available branch, select it automatically and show it as read-only text.
+- If the logged-in user has multiple available branches, show an active-branch selector in the header.
+- Persist the selected branch and restore it only while the user is still authorized for that branch.
+- Refresh branch-specific data after the active branch changes.
+- Super administrators can switch between active branches.
 
 ## 3. Login Page
 

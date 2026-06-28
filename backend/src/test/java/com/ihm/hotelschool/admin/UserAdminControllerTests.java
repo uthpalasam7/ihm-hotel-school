@@ -118,6 +118,34 @@ class UserAdminControllerTests {
 	}
 
 	@Test
+	void activeBranchHeaderFiltersUserListAndKeepsAllAssignedBranchesInResponse() throws Exception {
+		authTestData.branch("IHM-CITY");
+		authTestData.user("user_multi_admin", "ADMIN", UserStatus.ACTIVE, "IHM-MAIN", "IHM-CITY");
+		authTestData.user("user_city_lecturer", "LECTURER", UserStatus.ACTIVE, "IHM-MAIN", "IHM-CITY");
+		String token = login("user_multi_admin").accessToken();
+
+		mockMvc.perform(get("/api/v1/users?search=user_city_lecturer")
+						.header("Authorization", "Bearer " + token)
+						.header("X-Active-Branch-Id", "1"))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.content[0].branches.length()").value(2))
+				.andExpect(jsonPath("$.content[0].branches[0].code").value("IHM-CITY"))
+				.andExpect(jsonPath("$.content[0].branches[1].code").value("IHM-MAIN"));
+	}
+
+	@Test
+	void unauthorizedActiveBranchHeaderIsRejected() throws Exception {
+		Long cityBranchId = authTestData.branch("IHM-CITY").getId();
+		authTestData.user("user_main_admin", "ADMIN", UserStatus.ACTIVE, "IHM-MAIN");
+		String token = login("user_main_admin").accessToken();
+
+		mockMvc.perform(get("/api/v1/users")
+						.header("Authorization", "Bearer " + token)
+						.header("X-Active-Branch-Id", cityBranchId))
+				.andExpect(status().isForbidden());
+	}
+
+	@Test
 	void disablingUserRevokesRefreshTokensAndAudits() throws Exception {
 		authTestData.user("user_super_disable", "SUPER_ADMIN", UserStatus.ACTIVE);
 		authTestData.user("user_to_disable", "LECTURER", UserStatus.ACTIVE);

@@ -1,6 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { Observable, tap } from 'rxjs';
+import { ActiveBranchService } from './active-branch.service';
 import { AuthResponse, CurrentUser } from './auth.models';
 import { TokenStorageService } from './token-storage.service';
 
@@ -8,6 +9,7 @@ import { TokenStorageService } from './token-storage.service';
 export class AuthService {
   private readonly http = inject(HttpClient);
   private readonly tokenStorage = inject(TokenStorageService);
+  private readonly activeBranchService = inject(ActiveBranchService);
   private readonly userSignal = signal<CurrentUser | null>(this.tokenStorage.user());
 
   readonly currentUser = this.userSignal.asReadonly();
@@ -22,6 +24,7 @@ export class AuthService {
       tap((response) => {
         this.tokenStorage.save(response);
         this.userSignal.set(response.user);
+        this.activeBranchService.configure(response.user.branches);
       }),
     );
   }
@@ -32,6 +35,7 @@ export class AuthService {
       this.http.post('/api/v1/auth/logout', { refreshToken }).subscribe();
     }
     this.tokenStorage.clear();
+    this.activeBranchService.clear();
     this.userSignal.set(null);
   }
 
@@ -40,6 +44,7 @@ export class AuthService {
       tap((user) => {
         this.tokenStorage.updateUser(user);
         this.userSignal.set(user);
+        this.activeBranchService.configure(user.branches);
       }),
     );
   }
@@ -49,6 +54,7 @@ export class AuthService {
       tap((user) => {
         this.tokenStorage.updateUser(user);
         this.userSignal.set(user);
+        this.activeBranchService.configure(user.branches);
       }),
     );
   }

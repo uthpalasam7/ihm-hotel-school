@@ -75,7 +75,17 @@
               <span>{{ user.username }} · {{ user.email || 'No email' }}</span>
             </td>
             <td>{{ user.roles.length ? user.roles[0].code : 'No role' }}</td>
-            <td>{{ user.branches.length ? user.branches[0].code : 'No branch' }}</td>
+            <td>
+              @if (user.branches.length) {
+                <div class="branch-badges" [attr.aria-label]="user.fullName + ' assigned branches'">
+                  @for (branch of user.branches; track branch.id) {
+                    <span class="branch-badge" [title]="branch.name">{{ branch.code }}</span>
+                  }
+                </div>
+              } @else {
+                <span>No branch</span>
+              }
+            </td>
             <td><span class="badge" [class.is-danger]="user.status === 'DISABLED'">{{ user.status }}</span></td>
             <td>{{ user.lastLoginAt || 'Never' }}</td>
             <td class="actions">

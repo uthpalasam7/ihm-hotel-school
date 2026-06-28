@@ -100,6 +100,28 @@ th {
   color: #9b1c1c;
 }
 
+.branch-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  max-height: 5.5rem;
+  max-width: 18rem;
+  overflow: auto;
+}
+
+.branch-badges .branch-badge {
+  background: #fff8ea;
+  border: 1px solid #d7bb71;
+  border-radius: 999px;
+  color: #6d4611;
+  display: inline-flex;
+  font-size: 0.76rem;
+  font-weight: 800;
+  line-height: 1;
+  margin: 0;
+  padding: 0.3rem 0.5rem;
+}
+
 .actions {
   display: flex;
   flex-wrap: wrap;

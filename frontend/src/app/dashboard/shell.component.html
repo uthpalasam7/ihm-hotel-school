@@ -15,7 +15,21 @@
   <main class="workspace">
     <header class="topbar">
       <div>
-        <p class="eyebrow">{{ primaryBranchCode() }}</p>
+        <div class="branch-control">
+          @if (canSwitchBranch()) {
+            <label>
+              <span class="eyebrow">Active branch</span>
+              <select [ngModel]="activeBranch()?.id" (ngModelChange)="changeBranch($event)" aria-label="Active branch">
+                @for (branch of availableBranches(); track branch.id) {
+                  <option [value]="branch.id">{{ branch.code }} - {{ branch.name }}</option>
+                }
+              </select>
+            </label>
+          } @else {
+            <p class="eyebrow">Active branch</p>
+            <strong class="branch-display">{{ branchLabel() }}</strong>
+          }
+        </div>
         <h1>Management Console</h1>
       </div>
       <div class="operator">

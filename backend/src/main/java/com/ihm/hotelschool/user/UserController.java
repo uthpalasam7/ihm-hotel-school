@@ -1,5 +1,6 @@
 package com.ihm.hotelschool.user;
 
+import com.ihm.hotelschool.common.security.ActiveBranchContextService;
 import com.ihm.hotelschool.common.web.PageResponse;
 import com.ihm.hotelschool.user.dto.ResetPasswordRequest;
 import com.ihm.hotelschool.user.dto.RoleResponse;
@@ -32,10 +33,12 @@ class UserController {
 
 	private final UserService userService;
 	private final RoleService roleService;
+	private final ActiveBranchContextService activeBranchContextService;
 
-	UserController(UserService userService, RoleService roleService) {
+	UserController(UserService userService, RoleService roleService, ActiveBranchContextService activeBranchContextService) {
 		this.userService = userService;
 		this.roleService = roleService;
+		this.activeBranchContextService = activeBranchContextService;
 	}
 
 	@GetMapping
@@ -45,8 +48,12 @@ class UserController {
 			@RequestParam(required = false) String status,
 			@RequestParam(required = false) String search,
 			Pageable pageable,
-			Authentication authentication) {
-		return userService.list(role, branchId, status, search, pageable, authentication);
+			Authentication authentication,
+			HttpServletRequest httpRequest) {
+		Long effectiveBranchId = branchId != null
+				? branchId
+				: activeBranchContextService.activeBranchId(httpRequest, authentication).orElse(null);
+		return userService.list(role, effectiveBranchId, status, search, pageable, authentication);
 	}
 
 	@PostMapping

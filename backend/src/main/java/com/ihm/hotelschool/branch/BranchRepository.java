@@ -11,5 +11,7 @@ public interface BranchRepository extends JpaRepository<Branch, Long>, JpaSpecif
 
 	boolean existsByCodeAndIdNot(String code, Long id);
 
+	boolean existsByIdAndStatus(Long id, BranchStatus status);
+
 	long countByStatus(BranchStatus status);
 }

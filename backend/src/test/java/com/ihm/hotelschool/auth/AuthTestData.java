@@ -38,6 +38,11 @@ public class AuthTestData {
 
 	@Transactional
 	public UserAccount user(String username, String roleCode, UserStatus status, String branchCode) {
+		return user(username, roleCode, status, branchCode, new String[0]);
+	}
+
+	@Transactional
+	public UserAccount user(String username, String roleCode, UserStatus status, String branchCode, String... additionalBranchCodes) {
 		Instant now = Instant.now();
 		Role role = roleRepository.findByCode(roleCode).orElseThrow();
 		Branch branch = branchRepository.findByCode(branchCode).orElseThrow();
@@ -50,6 +55,23 @@ public class AuthTestData {
 				now);
 		user.addRole(role);
 		user.addBranch(branch);
+		for (String additionalBranchCode : additionalBranchCodes) {
+			user.addBranch(branchRepository.findByCode(additionalBranchCode).orElseThrow());
+		}
 		return userRepository.saveAndFlush(user);
+	}
+
+	@Transactional
+	public Branch branch(String code) {
+		return branchRepository.findByCode(code)
+				.orElseGet(() -> branchRepository.saveAndFlush(new Branch(
+						code,
+						code + " Branch",
+						null,
+						null,
+						com.ihm.hotelschool.branch.BranchStatus.ACTIVE,
+						false,
+						Instant.now(),
+						null)));
 	}
 }

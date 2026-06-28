@@ -14,12 +14,22 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
+@Sql(statements = {
+		"delete from refresh_tokens",
+		"delete from audit_logs",
+		"delete from user_roles",
+		"delete from user_branches",
+		"delete from users",
+		"delete from branches where id <> 1",
+		"update branches set status = 'ACTIVE' where id = 1"
+}, executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
 class BranchAdminControllerTests {
 
 	@Autowired

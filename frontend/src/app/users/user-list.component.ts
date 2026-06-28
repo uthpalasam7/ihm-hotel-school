@@ -1,8 +1,9 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, effect, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { Branch } from '../branches/branch.models';
 import { BranchService } from '../branches/branch.service';
+import { ActiveBranchService } from '../core/auth/active-branch.service';
 import { errorMessage } from '../shared/api-error';
 import { Role, UserAccount, UserStatus } from './user.models';
 import { UserService } from './user.service';
@@ -16,6 +17,8 @@ import { UserService } from './user.service';
 export class UserListComponent implements OnInit {
   private readonly userService = inject(UserService);
   private readonly branchService = inject(BranchService);
+  private readonly activeBranchService = inject(ActiveBranchService);
+  private initialized = false;
 
   protected readonly users = signal<UserAccount[]>([]);
   protected readonly roles = signal<Role[]>([]);
@@ -30,9 +33,19 @@ export class UserListComponent implements OnInit {
   protected branchId = '';
   protected status = '';
 
+  constructor() {
+    effect(() => {
+      this.activeBranchService.activeBranchId();
+      if (this.initialized) {
+        this.load();
+      }
+    });
+  }
+
   ngOnInit(): void {
     this.userService.roles().subscribe({ next: (roles) => this.roles.set(roles) });
     this.branchService.list({ status: 'ACTIVE', size: 100 }).subscribe({ next: (page) => this.branches.set(page.content) });
+    this.initialized = true;
     this.load();
   }
 
