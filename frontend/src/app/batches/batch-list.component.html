@@ -1,0 +1,95 @@
+<section class="page-header">
+  <div>
+    <p class="eyebrow">Academics</p>
+    <h2>Batches</h2>
+  </div>
+  <a class="primary-action" routerLink="/batches/new">Add batch</a>
+</section>
+
+<section class="toolbar" aria-label="Batch filters">
+  <label>
+    Search
+    <input type="search" [(ngModel)]="search" (keyup.enter)="load()" placeholder="Batch number or course" />
+  </label>
+  <label>
+    Course
+    <select [(ngModel)]="courseId" (change)="load()">
+      <option value="">All courses</option>
+      @for (course of courses(); track course.id) {
+        <option [value]="course.id">{{ course.shortCode }} - {{ course.name }}</option>
+      }
+    </select>
+  </label>
+  <label>
+    Status
+    <select [(ngModel)]="status" (change)="load()">
+      <option value="">All statuses</option>
+      <option value="UPCOMING">Upcoming</option>
+      <option value="ACTIVE">Active</option>
+      <option value="COMPLETED">Completed</option>
+      <option value="CANCELLED">Cancelled</option>
+    </select>
+  </label>
+  <label>
+    From
+    <input type="date" [(ngModel)]="startDateFrom" (change)="load()" />
+  </label>
+  <label>
+    To
+    <input type="date" [(ngModel)]="startDateTo" (change)="load()" />
+  </label>
+  <button type="button" (click)="load()">Apply</button>
+</section>
+
+@if (success()) {
+  <p class="notice success">{{ success() }}</p>
+}
+@if (error()) {
+  <p class="notice error">{{ error() }}</p>
+}
+@if (loading()) {
+  <p class="notice">Loading batches...</p>
+} @else if (batches().length === 0) {
+  <p class="empty-state">No batches match the current filters.</p>
+} @else {
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Batch</th>
+          <th>Course</th>
+          <th>Branch</th>
+          <th>Dates</th>
+          <th>Duration</th>
+          <th>Status</th>
+          <th>Lecturers</th>
+          <th>Students</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (batch of batches(); track batch.id) {
+          <tr>
+            <td>
+              <strong>{{ batch.batchNumber }}</strong>
+              <span>{{ batch.scheduleMode }} · {{ batch.feePlanConfigured ? 'Fee plan set' : 'No fee plan' }}</span>
+            </td>
+            <td>{{ batch.course.shortCode }}</td>
+            <td>{{ batch.branch.code }}</td>
+            <td>{{ batch.startDate }} to {{ batch.endDate }}</td>
+            <td>{{ batch.durationMonths }} months</td>
+            <td><span class="badge" [class.is-danger]="batch.status === 'CANCELLED'">{{ batch.status }}</span></td>
+            <td>{{ batch.lecturerCount }}</td>
+            <td>{{ batch.studentCount }}</td>
+            <td class="actions">
+              <a [routerLink]="['/batches', batch.id, 'edit']">Edit</a>
+              <button type="button" (click)="changeStatus(batch)">
+                {{ batch.status === 'CANCELLED' ? 'Reopen' : 'Cancel' }}
+              </button>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+}

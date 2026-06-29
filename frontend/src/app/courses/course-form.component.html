@@ -1,0 +1,54 @@
+<section class="page-header">
+  <div>
+    <p class="eyebrow">Academics</p>
+    <h2>{{ editingId() ? 'Edit course' : 'Add course' }}</h2>
+  </div>
+  <a routerLink="/courses">Back to courses</a>
+</section>
+
+@if (loading()) {
+  <p class="notice">Loading course...</p>
+} @else {
+  <form [formGroup]="form" (ngSubmit)="save()">
+    @if (error()) {
+      <p class="notice error">{{ error() }}</p>
+    }
+
+    <label>
+      Course name
+      <input formControlName="name" />
+      @if (form.controls.name.touched && form.controls.name.invalid) {
+        <span>Name is required.</span>
+      }
+      @if (fieldError('name')) {
+        <span>{{ fieldError('name') }}</span>
+      }
+    </label>
+
+    <label>
+      Short code
+      <input formControlName="shortCode" />
+      @if (form.controls.shortCode.touched && form.controls.shortCode.invalid) {
+        <span>Short code is required.</span>
+      }
+      @if (fieldError('shortCode')) {
+        <span>{{ fieldError('shortCode') }}</span>
+      }
+    </label>
+
+    <label>
+      Description
+      <textarea formControlName="description" rows="4"></textarea>
+    </label>
+
+    <label>
+      Status
+      <select formControlName="status">
+        <option value="ACTIVE">Active</option>
+        <option value="INACTIVE">Inactive</option>
+      </select>
+    </label>
+
+    <button type="submit" [disabled]="saving()">{{ saving() ? 'Saving...' : 'Save course' }}</button>
+  </form>
+}

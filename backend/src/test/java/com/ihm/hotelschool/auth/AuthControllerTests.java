@@ -113,6 +113,17 @@ class AuthControllerTests {
 	}
 
 	@Test
+	void refreshRejectsInvalidTokenWithAuthenticationError() throws Exception {
+		mockMvc.perform(post("/api/v1/auth/refresh")
+						.contentType(MediaType.APPLICATION_JSON)
+						.content("""
+								{"refreshToken":"not-a-valid-refresh-token"}
+								"""))
+				.andExpect(status().isUnauthorized())
+				.andExpect(jsonPath("$.code").value("AUTHENTICATION_FAILED"));
+	}
+
+	@Test
 	void authenticatedUserCanLoadMe() throws Exception {
 		authTestData.user("me_user", "LECTURER", UserStatus.ACTIVE);
 		LoginTokens tokens = login("me_user");

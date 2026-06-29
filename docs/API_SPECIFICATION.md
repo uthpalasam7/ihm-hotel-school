@@ -165,6 +165,8 @@ Request:
 ### `PUT /courses/{id}`
 ### `PATCH /courses/{id}/status`
 
+Course short codes are normalized to uppercase and must remain unique. Course management is limited to `SUPER_ADMIN` and `ADMIN`.
+
 ## 8. Course Batches
 
 ### `GET /batches`
@@ -201,10 +203,13 @@ Request:
 ### `PUT /batches/{id}`
 ### `PATCH /batches/{id}/status`
 
+Batch reads and writes are branch-aware. `SUPER_ADMIN` may access all branches; `ADMIN` may manage only assigned branches; `LECTURER` may read only batches with active lecturer assignments in authorized branches. Batch mutations require `SUPER_ADMIN` or `ADMIN`.
+
 ## 9. Batch Lecturer Assignments
 
 ### `GET /batches/{batchId}/lecturers`
 ### `POST /batches/{batchId}/lecturers`
+### `PUT /batches/{batchId}/lecturers`
 ### `PUT /batches/{batchId}/lecturers/{assignmentId}`
 ### `PATCH /batches/{batchId}/lecturers/{assignmentId}/status`
 
@@ -218,6 +223,21 @@ Request:
   "status": "ACTIVE"
 }
 ```
+
+The batch form uses `PUT /batches/{batchId}/lecturers` to synchronize the selected active lecturer set.
+The backend deduplicates `lecturerUserIds`, keeps already selected active assignments, creates only new active assignments, and marks unselected active assignments inactive for history.
+
+Request:
+
+```json
+{
+  "lecturerUserIds": [20, 21],
+  "assignmentStartDate": "2026-07-01",
+  "assignmentEndDate": null
+}
+```
+
+Selected users must exist, be active, have the `LECTURER` role, and be assigned to the batch branch.
 
 ## 10. Students
 
@@ -448,11 +468,30 @@ Request:
   "durationMonths": 6,
   "monthlyDueDay": 10,
   "examinationDueDate": "2026-11-15",
-  "currencyCode": "LKR"
+  "currencyCode": "LKR",
+  "status": "ACTIVE"
 }
 ```
 
-Changing the plan must not update already generated enrollment charges.
+Preview response:
+
+```json
+{
+  "currencyCode": "LKR",
+  "totalAmount": 72500.00,
+  "charges": [
+    {
+      "type": "REGISTRATION_FEE",
+      "installmentNumber": null,
+      "description": "Registration fee",
+      "dueDate": "2026-07-01",
+      "amount": 5000.00
+    }
+  ]
+}
+```
+
+The installment preview is display-only and does not create student charges. Changing the plan must not update already generated enrollment charges once enrollments exist.
 
 ## 17. Student Charges
 

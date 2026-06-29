@@ -1,0 +1,216 @@
+<section class="page-header">
+  <div>
+    <p class="eyebrow">Academics</p>
+    <h2>{{ editingId() ? 'Edit batch' : 'Add batch' }}</h2>
+  </div>
+  <a routerLink="/batches">Back to batches</a>
+</section>
+
+@if (loading()) {
+  <p class="notice">Loading batch...</p>
+} @else {
+  <nav class="steps" aria-label="Batch wizard steps">
+    <button type="button" [class.is-active]="step() === 1" (click)="setStep(1)">General</button>
+    <button type="button" [class.is-active]="step() === 2" (click)="setStep(2)">Fees</button>
+    <button type="button" [class.is-active]="step() === 3" (click)="setStep(3)">Schedule</button>
+    <button type="button" [class.is-active]="step() === 4" (click)="setStep(4)">Lecturers</button>
+    <button type="button" [class.is-active]="step() === 5" (click)="setStep(5)">Review</button>
+  </nav>
+
+  @if (error()) {
+    <p class="notice error">{{ error() }}</p>
+  }
+
+  @if (step() === 1) {
+    <form [formGroup]="generalForm" class="panel">
+      <label>
+        Branch
+        <select formControlName="branchId" (change)="branchChanged()">
+          @for (branch of branches(); track branch.id) {
+            <option [value]="branch.id">{{ branch.code }} - {{ branch.name }}</option>
+          }
+        </select>
+      </label>
+      <label>
+        Course
+        <select formControlName="courseId">
+          @for (course of courses(); track course.id) {
+            <option [value]="course.id">{{ course.shortCode }} - {{ course.name }}</option>
+          }
+        </select>
+      </label>
+      <label>
+        Batch number
+        <input formControlName="batchNumber" placeholder="2026/PB02" />
+        @if (generalForm.controls.batchNumber.touched && generalForm.controls.batchNumber.invalid) {
+          <span>Batch number is required.</span>
+        }
+        @if (fieldError('batchNumber')) {
+          <span>{{ fieldError('batchNumber') }}</span>
+        }
+      </label>
+      <div class="grid">
+        <label>
+          Start date
+          <input type="date" formControlName="startDate" (change)="syncAssignmentStartDate()" />
+        </label>
+        <label>
+          End date
+          <input type="date" formControlName="endDate" />
+        </label>
+        <label>
+          Duration months
+          <input type="number" min="1" formControlName="durationMonths" />
+        </label>
+      </div>
+      <label>
+        Status
+        <select formControlName="status">
+          <option value="UPCOMING">Upcoming</option>
+          <option value="ACTIVE">Active</option>
+          <option value="COMPLETED">Completed</option>
+          <option value="CANCELLED">Cancelled</option>
+        </select>
+      </label>
+      <label>
+        Remarks
+        <textarea formControlName="remarks" rows="3"></textarea>
+      </label>
+    </form>
+  }
+
+  @if (step() === 2) {
+    <form [formGroup]="feeForm" class="panel">
+      <div class="grid">
+        <label>
+          Registration fee
+          <input type="number" min="0" step="0.01" formControlName="registrationFee" />
+        </label>
+        <label>
+          Total course fee
+          <input type="number" min="0" step="0.01" formControlName="courseFee" />
+        </label>
+        <label>
+          Examination fee
+          <input type="number" min="0" step="0.01" formControlName="examinationFee" />
+        </label>
+      </div>
+      <div class="grid">
+        <label>
+          Monthly due day
+          <input type="number" min="1" max="31" formControlName="monthlyDueDay" />
+        </label>
+        <label>
+          Examination due date
+          <input type="date" formControlName="examinationDueDate" />
+        </label>
+        <label>
+          Currency
+          <input formControlName="currencyCode" />
+        </label>
+      </div>
+      <div class="preview">
+        <h3>Installment preview</h3>
+        @for (charge of previewCharges(); track charge.type + '-' + charge.installmentNumber) {
+          <div>
+            <span>{{ charge.description }}</span>
+            <strong>{{ charge.dueDate }} · {{ feeForm.controls.currencyCode.value }} {{ charge.amount.toFixed(2) }}</strong>
+          </div>
+        }
+      </div>
+    </form>
+  }
+
+  @if (step() === 3) {
+    <form [formGroup]="scheduleForm" class="panel">
+      <fieldset>
+        <legend>Schedule mode</legend>
+        <label class="option">
+          <input type="radio" formControlName="scheduleMode" value="REGULAR" />
+          Regular weekly schedule
+        </label>
+        <label class="option">
+          <input type="radio" formControlName="scheduleMode" value="MANUAL" />
+          Manual sessions
+        </label>
+      </fieldset>
+    </form>
+  }
+
+  @if (step() === 4) {
+    <form [formGroup]="lecturerForm" class="panel">
+      <div class="lecturer-select">
+        <label class="search-field">
+          Search lecturers
+          <input type="search" [value]="lecturerSearch()" (input)="lecturerSearch.set($any($event.target).value)" placeholder="Search by name or username" />
+        </label>
+        <div class="selected-lecturers" aria-live="polite">
+          @if (selectedLecturerSummaries().length) {
+            @for (lecturer of selectedLecturerSummaries(); track lecturer.id) {
+              <span class="chip">
+                {{ lecturer.fullName }}
+                <button type="button" (click)="removeSelectedLecturer(lecturer.id)" [attr.aria-label]="'Remove ' + lecturer.fullName">x</button>
+              </span>
+            }
+          } @else {
+            <p>No lecturers selected.</p>
+          }
+        </div>
+        <div class="lecturer-options">
+          @if (filteredLecturers().length) {
+            @for (lecturer of filteredLecturers(); track lecturer.id) {
+              <label class="lecturer-option" [class.is-selected]="isLecturerSelected(lecturer.id)">
+                <input type="checkbox" [checked]="isLecturerSelected(lecturer.id)" (change)="toggleLecturer(lecturer.id, $any($event.target).checked)" />
+                <span>
+                  <strong>{{ lecturer.fullName }}</strong>
+                  <small>{{ lecturer.username }}</small>
+                </span>
+              </label>
+            }
+          } @else {
+            <p class="empty">No active lecturers found for this branch.</p>
+          }
+        </div>
+      </div>
+      <div class="grid">
+        <label>
+          Assignment start
+          <input type="date" formControlName="assignmentStartDate" />
+        </label>
+        <label>
+          Assignment end
+          <input type="date" formControlName="assignmentEndDate" />
+        </label>
+      </div>
+      @if (assignments().length) {
+        <div class="preview">
+          <h3>Current assignments</h3>
+          @for (assignment of assignments(); track assignment.id) {
+            <div>
+              <span>{{ assignment.lecturerFullName }}</span>
+              <strong>{{ assignment.status }}</strong>
+            </div>
+          }
+        </div>
+      }
+    </form>
+  }
+
+  @if (step() === 5) {
+    <section class="panel review">
+      <h3>{{ generalForm.controls.batchNumber.value || 'New batch' }}</h3>
+      <p>{{ scheduleForm.controls.scheduleMode.value }} schedule · {{ generalForm.controls.durationMonths.value }} months</p>
+      <p>{{ feeForm.controls.currencyCode.value }} {{ feeForm.controls.courseFee.value.toFixed(2) }} course fee</p>
+      <p>{{ selectedLecturerIds.length }} selected lecturer(s)</p>
+    </section>
+  }
+
+  <div class="actions">
+    <button type="button" (click)="previous()" [disabled]="step() === 1">Back</button>
+    @if (step() < 5) {
+      <button type="button" (click)="next()">Next</button>
+    } @else {
+      <button type="button" (click)="save()" [disabled]="saving()">{{ saving() ? 'Saving...' : 'Save batch' }}</button>
+    }
+  </div>
+}

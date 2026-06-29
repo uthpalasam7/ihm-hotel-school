@@ -24,6 +24,10 @@ import org.springframework.test.web.servlet.MvcResult;
 @Sql(statements = {
 		"delete from refresh_tokens",
 		"delete from audit_logs",
+		"delete from batch_lecturers",
+		"delete from fee_plans",
+		"delete from course_batches",
+		"delete from courses",
 		"delete from user_roles",
 		"delete from user_branches",
 		"delete from users",

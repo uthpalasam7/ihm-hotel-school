@@ -1,9 +1,13 @@
 import { Routes } from '@angular/router';
 import { ChangePasswordComponent } from './auth/change-password.component';
 import { LoginComponent } from './auth/login.component';
+import { BatchFormComponent } from './batches/batch-form.component';
+import { BatchListComponent } from './batches/batch-list.component';
 import { BranchFormComponent } from './branches/branch-form.component';
 import { BranchListComponent } from './branches/branch-list.component';
 import { authGuard, guestGuard, roleGuard } from './core/auth/auth.guard';
+import { CourseFormComponent } from './courses/course-form.component';
+import { CourseListComponent } from './courses/course-list.component';
 import { ShellComponent } from './dashboard/shell.component';
 import { DashboardHomeComponent } from './dashboard/dashboard-home.component';
 import { UserFormComponent } from './users/user-form.component';
@@ -24,6 +28,12 @@ export const routes: Routes = [
       { path: 'users', component: UserListComponent, canActivate: [roleGuard(['SUPER_ADMIN', 'ADMIN'])] },
       { path: 'users/new', component: UserFormComponent, canActivate: [roleGuard(['SUPER_ADMIN', 'ADMIN'])] },
       { path: 'users/:id/edit', component: UserFormComponent, canActivate: [roleGuard(['SUPER_ADMIN', 'ADMIN'])] },
+      { path: 'courses', component: CourseListComponent, canActivate: [roleGuard(['SUPER_ADMIN', 'ADMIN'])] },
+      { path: 'courses/new', component: CourseFormComponent, canActivate: [roleGuard(['SUPER_ADMIN', 'ADMIN'])] },
+      { path: 'courses/:id/edit', component: CourseFormComponent, canActivate: [roleGuard(['SUPER_ADMIN', 'ADMIN'])] },
+      { path: 'batches', component: BatchListComponent, canActivate: [roleGuard(['SUPER_ADMIN', 'ADMIN'])] },
+      { path: 'batches/new', component: BatchFormComponent, canActivate: [roleGuard(['SUPER_ADMIN', 'ADMIN'])] },
+      { path: 'batches/:id/edit', component: BatchFormComponent, canActivate: [roleGuard(['SUPER_ADMIN', 'ADMIN'])] },
     ],
   },
   { path: '**', redirectTo: '' },

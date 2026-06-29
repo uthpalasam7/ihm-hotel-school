@@ -2,7 +2,9 @@ import { Injectable } from '@angular/core';
 import { AuthResponse, CurrentUser } from './auth.models';
 
 const ACCESS_TOKEN_KEY = 'ihm.accessToken';
+const ACCESS_TOKEN_EXPIRES_AT_KEY = 'ihm.accessTokenExpiresAt';
 const REFRESH_TOKEN_KEY = 'ihm.refreshToken';
+const REFRESH_TOKEN_EXPIRES_AT_KEY = 'ihm.refreshTokenExpiresAt';
 const USER_KEY = 'ihm.currentUser';
 
 @Injectable({ providedIn: 'root' })
@@ -15,6 +17,14 @@ export class TokenStorageService {
     return localStorage.getItem(REFRESH_TOKEN_KEY);
   }
 
+  accessTokenExpiresAt(): string | null {
+    return localStorage.getItem(ACCESS_TOKEN_EXPIRES_AT_KEY);
+  }
+
+  refreshTokenExpiresAt(): string | null {
+    return localStorage.getItem(REFRESH_TOKEN_EXPIRES_AT_KEY);
+  }
+
   user(): CurrentUser | null {
     const value = localStorage.getItem(USER_KEY);
     return value ? JSON.parse(value) as CurrentUser : null;
@@ -22,7 +32,9 @@ export class TokenStorageService {
 
   save(auth: AuthResponse): void {
     localStorage.setItem(ACCESS_TOKEN_KEY, auth.accessToken);
+    localStorage.setItem(ACCESS_TOKEN_EXPIRES_AT_KEY, auth.accessTokenExpiresAt);
     localStorage.setItem(REFRESH_TOKEN_KEY, auth.refreshToken);
+    localStorage.setItem(REFRESH_TOKEN_EXPIRES_AT_KEY, auth.refreshTokenExpiresAt);
     localStorage.setItem(USER_KEY, JSON.stringify(auth.user));
   }
 
@@ -32,7 +44,9 @@ export class TokenStorageService {
 
   clear(): void {
     localStorage.removeItem(ACCESS_TOKEN_KEY);
+    localStorage.removeItem(ACCESS_TOKEN_EXPIRES_AT_KEY);
     localStorage.removeItem(REFRESH_TOKEN_KEY);
+    localStorage.removeItem(REFRESH_TOKEN_EXPIRES_AT_KEY);
     localStorage.removeItem(USER_KEY);
   }
 }

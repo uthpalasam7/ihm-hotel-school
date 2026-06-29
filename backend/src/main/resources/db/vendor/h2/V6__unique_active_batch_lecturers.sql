@@ -1,0 +1,2 @@
+-- H2 does not support PostgreSQL partial indexes. The PostgreSQL vendor
+-- migration creates the production unique active lecturer-assignment index.

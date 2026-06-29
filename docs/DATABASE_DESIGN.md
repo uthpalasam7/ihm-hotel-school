@@ -139,6 +139,11 @@ Primary key:
 | updated_by | BIGINT | Required |
 | version | BIGINT | Required |
 
+Constraints:
+
+- Unique `short_code`
+- Status must be `ACTIVE` or `INACTIVE`
+
 ### 3.8 `course_batches`
 
 | Column | Type | Rules |
@@ -165,6 +170,8 @@ Constraints:
 - `start_date <= end_date`
 - `duration_months > 0`
 - Unique `batch_number`
+- `schedule_mode` must be `REGULAR` or `MANUAL`
+- Status must be `UPCOMING`, `ACTIVE`, `COMPLETED`, or `CANCELLED`
 
 ### 3.9 `batch_lecturers`
 
@@ -184,7 +191,7 @@ Constraints:
 Constraints:
 
 - End date must not precede start date
-- Prevent overlapping duplicate active assignments for the same lecturer and batch through service validation
+- Prevent duplicate active assignments for the same lecturer and batch through service validation and a partial unique index on `(batch_id, lecturer_user_id)` where `status = 'ACTIVE'`
 
 ### 3.10 `students`
 
@@ -320,7 +327,7 @@ Constraints:
 |---|---|---|
 | id | BIGINT | PK |
 | batch_id | BIGINT | FK course_batches, unique |
-| currency_code | CHAR(3) | Default LKR |
+| currency_code | VARCHAR(3) | Default LKR |
 | registration_fee | NUMERIC(14,2) | Non-negative |
 | course_fee | NUMERIC(14,2) | Non-negative |
 | examination_fee | NUMERIC(14,2) | Non-negative |
@@ -355,7 +362,7 @@ Constraints:
 | discount_amount | NUMERIC(14,2) | Default 0 |
 | waiver_amount | NUMERIC(14,2) | Default 0 |
 | final_payable_amount | NUMERIC(14,2) | Required |
-| currency_code | CHAR(3) | Required |
+| currency_code | VARCHAR(3) | Required |
 | status | VARCHAR(20) | Required |
 | paid_at | TIMESTAMPTZ | Optional |
 | created_at | TIMESTAMPTZ | Required |
@@ -399,7 +406,7 @@ Constraints:
 | branch_id | BIGINT | FK branches |
 | payment_date | DATE | Required |
 | total_amount | NUMERIC(14,2) | Positive |
-| currency_code | CHAR(3) | Required |
+| currency_code | VARCHAR(3) | Required |
 | payment_method | VARCHAR(30) | Required |
 | reference_number | VARCHAR(150) | Optional |
 | remarks | TEXT | Optional |
