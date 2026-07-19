@@ -3,6 +3,10 @@ import { BranchSummary } from './auth.models';
 
 const ACTIVE_BRANCH_KEY = 'ihm.activeBranchId';
 
+interface ConfigureBranchesOptions {
+  retainStoredSelection?: boolean;
+}
+
 @Injectable({ providedIn: 'root' })
 export class ActiveBranchService {
   private readonly branchesSignal = signal<BranchSummary[]>([]);
@@ -13,7 +17,7 @@ export class ActiveBranchService {
   readonly activeBranchId = computed(() => this.activeBranchSignal()?.id ?? null);
   readonly canSwitch = computed(() => this.branchesSignal().length > 1);
 
-  configure(branches: BranchSummary[]): void {
+  configure(branches: BranchSummary[], options: ConfigureBranchesOptions = {}): void {
     const sortedBranches = [...branches].sort((left, right) => left.code.localeCompare(right.code));
     this.branchesSignal.set(sortedBranches);
 
@@ -26,6 +30,11 @@ export class ActiveBranchService {
     const storedBranch = sortedBranches.find((branch) => branch.id === storedBranchId);
     if (storedBranch) {
       this.setActiveBranch(storedBranch);
+      return;
+    }
+
+    if (storedBranchId !== null && options.retainStoredSelection) {
+      this.activeBranchSignal.set(null);
       return;
     }
 

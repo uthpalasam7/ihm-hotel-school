@@ -1,0 +1,43 @@
+<main class="auth-page">
+  <section class="brand-panel" aria-label="IHM Hotel School">
+    <a class="brand-lockup" href="/" aria-label="IHM Hotel School home">
+      <img src="/assets/branding/ihm-logo.jpg" alt="" />
+      <span>
+        <strong>IHM Hotel School</strong>
+        <small>Staff management portal</small>
+      </span>
+    </a>
+
+    <div class="brand-message">
+      <p class="brand-kicker">Welcome to IHM</p>
+      <h2>Building skills. Shaping hospitality careers.</h2>
+      <p class="brand-description">
+        A dedicated workspace for the team supporting every student—from enrollment to completion.
+      </p>
+    </div>
+
+    <p class="brand-footer">IHM Hotel School · Staff portal</p>
+  </section>
+
+  <section class="form-region">
+    <mat-card appearance="outlined" class="auth-card">
+      <mat-card-content>
+        <div class="mobile-brand" aria-hidden="true">
+          <img src="/assets/branding/ihm-logo.jpg" alt="" />
+          <span>
+            <strong>IHM Hotel School</strong>
+            <small>Staff management portal</small>
+          </span>
+        </div>
+
+        <header>
+          <p class="eyebrow">{{ eyebrow() }}</p>
+          <h1>{{ title() }}</h1>
+          <p class="subtitle">{{ subtitle() }}</p>
+        </header>
+
+        <ng-content />
+      </mat-card-content>
+    </mat-card>
+  </section>
+</main>

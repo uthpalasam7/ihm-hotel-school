@@ -6,7 +6,7 @@ export const authGuard: CanActivateFn = (_route, state) => {
   const auth = inject(AuthService);
   const router = inject(Router);
   if (!auth.authenticated()) {
-    return router.createUrlTree(['/login']);
+    return router.createUrlTree(['/login'], { queryParams: { reason: 'sign-in-required' } });
   }
   if (auth.requiresPasswordChange() && state.url !== '/change-password') {
     return router.createUrlTree(['/change-password']);
@@ -29,6 +29,6 @@ export function roleGuard(roles: string[]): CanActivateFn {
   return () => {
     const auth = inject(AuthService);
     const router = inject(Router);
-    return auth.hasAnyRole(roles) ? true : router.createUrlTree(['/']);
+    return auth.hasAnyRole(roles) ? true : router.createUrlTree(['/forbidden']);
   };
 }

@@ -1,12 +1,15 @@
 import { TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { provideRouter, Router } from '@angular/router';
 import { of, throwError } from 'rxjs';
+import { vi } from 'vitest';
 import { CurrentUser } from '../core/auth/auth.models';
 import { AuthService } from '../core/auth/auth.service';
 import { ChangePasswordComponent } from './change-password.component';
 
 describe('ChangePasswordComponent', () => {
   let changePassword: AuthService['changePassword'];
+  let requiredChange: boolean;
+  let logout: ReturnType<typeof vi.fn>;
   const user: CurrentUser = {
     id: 1,
     username: 'admin',
@@ -19,6 +22,8 @@ describe('ChangePasswordComponent', () => {
 
   beforeEach(async () => {
     changePassword = () => of(user);
+    requiredChange = true;
+    logout = vi.fn();
 
     await TestBed.configureTestingModule({
       imports: [ChangePasswordComponent],
@@ -28,8 +33,8 @@ describe('ChangePasswordComponent', () => {
           provide: AuthService,
           useValue: {
             changePassword: (currentPassword: string, newPassword: string) => changePassword(currentPassword, newPassword),
-            logout: () => undefined,
-            requiresPasswordChange: () => true,
+            logout,
+            requiresPasswordChange: () => requiredChange,
           },
         },
       ],
@@ -89,8 +94,45 @@ describe('ChangePasswordComponent', () => {
     await fixture.whenStable();
     fixture.detectChanges();
 
-    const submitButton = fixture.nativeElement.querySelector('.submit-button') as HTMLButtonElement;
+    const submitButton = fixture.nativeElement.querySelector('.auth-submit') as HTMLButtonElement;
     expect(fixture.nativeElement.textContent).toContain('Could not change password');
     expect(submitButton.disabled).toBeFalsy();
+  });
+
+  it('explains a required password change and hides the dashboard link', () => {
+    const fixture = TestBed.createComponent(ChangePasswordComponent);
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.textContent).toContain('Your account is using a temporary password');
+    expect(fixture.nativeElement.querySelector('a[routerlink="/"]')).toBeNull();
+  });
+
+  it('shows a dashboard link for an optional password change', () => {
+    requiredChange = false;
+    const fixture = TestBed.createComponent(ChangePasswordComponent);
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.textContent).toContain('Update the password used to protect your school account.');
+    expect(fixture.nativeElement.textContent).toContain('Back to Dashboard');
+  });
+
+  it('logs out and confirms a successful password change on the login screen', () => {
+    const router = TestBed.inject(Router);
+    const navigate = vi.spyOn(router, 'navigate');
+    const fixture = TestBed.createComponent(ChangePasswordComponent);
+    fixture.detectChanges();
+
+    fixture.componentInstance['form'].setValue({
+      currentPassword: 'Admin@123',
+      newPassword: 'NewAdmin@123',
+      confirmPassword: 'NewAdmin@123',
+    });
+    fixture.nativeElement.querySelector('form').dispatchEvent(new Event('submit'));
+    fixture.detectChanges();
+
+    expect(logout).toHaveBeenCalled();
+    expect(navigate).toHaveBeenCalledWith(['/login'], {
+      queryParams: { passwordChanged: 'true' },
+    });
   });
 });

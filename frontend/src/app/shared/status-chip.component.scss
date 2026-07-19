@@ -1,0 +1,44 @@
+:host {
+  display: inline-flex;
+}
+
+.status-chip {
+  align-items: center;
+  background: #eef1f3;
+  border: 1px solid #d7dde1;
+  border-radius: 999px;
+  color: #3e4a52;
+  display: inline-flex;
+  font-size: 0.75rem;
+  font-weight: 700;
+  gap: 0.4rem;
+  line-height: 1;
+  padding: 0.38rem 0.65rem;
+  text-transform: capitalize;
+  white-space: nowrap;
+}
+
+.status-dot {
+  background: currentColor;
+  border-radius: 50%;
+  height: 0.42rem;
+  width: 0.42rem;
+}
+
+.is-success {
+  background: #e9f6ed;
+  border-color: #b6dbc1;
+  color: #17652c;
+}
+
+.is-danger {
+  background: #fdecec;
+  border-color: #efbcbc;
+  color: #981b1b;
+}
+
+.is-warning {
+  background: #fff5dd;
+  border-color: #ebd29b;
+  color: #76520a;
+}

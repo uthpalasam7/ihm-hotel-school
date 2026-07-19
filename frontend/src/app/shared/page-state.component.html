@@ -1,0 +1,20 @@
+@if (loading()) {
+  <section class="state-card is-loading" role="status" aria-live="polite">
+    <mat-spinner diameter="32" />
+    <p>{{ loadingLabel() }}</p>
+  </section>
+} @else if (error()) {
+  <section class="state-card is-error" role="alert">
+    <strong>Something went wrong</strong>
+    <p>{{ error() }}</p>
+    <button mat-stroked-button type="button" (click)="retry.emit()">Try again</button>
+  </section>
+} @else if (empty()) {
+  <section class="state-card" aria-live="polite">
+    <strong>{{ emptyTitle() }}</strong>
+    @if (emptyMessage()) {
+      <p>{{ emptyMessage() }}</p>
+    }
+    <ng-content />
+  </section>
+}

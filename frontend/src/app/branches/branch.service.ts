@@ -1,6 +1,6 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
-import { Observable } from 'rxjs';
+import { EMPTY, Observable, expand, map, reduce } from 'rxjs';
 import { PageResponse } from '../shared/page.model';
 import { Branch, BranchRequest, BranchStatus } from './branch.models';
 
@@ -19,6 +19,17 @@ export class BranchService {
       params = params.set('status', filters.status);
     }
     return this.http.get<PageResponse<Branch>>('/api/v1/branches', { params });
+  }
+
+  listAllActive(): Observable<Branch[]> {
+    const size = 100;
+    return this.list({ status: 'ACTIVE', page: 0, size }).pipe(
+      expand((page) => page.page + 1 < page.totalPages
+        ? this.list({ status: 'ACTIVE', page: page.page + 1, size })
+        : EMPTY),
+      reduce((branches, page) => [...branches, ...page.content], [] as Branch[]),
+      map((branches) => branches.sort((left, right) => left.code.localeCompare(right.code))),
+    );
   }
 
   get(id: number): Observable<Branch> {

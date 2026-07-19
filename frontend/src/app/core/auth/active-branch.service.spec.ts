@@ -56,4 +56,24 @@ describe('ActiveBranchService', () => {
     expect(service.activeBranch()?.code).toBe('IHM-CITY');
     expect(localStorage.getItem('ihm.activeBranchId')).toBe('2');
   });
+
+  it('retains a super-admin selection until the complete active branch list is loaded', () => {
+    localStorage.setItem('ihm.activeBranchId', '2');
+
+    service.configure(
+      [{ id: 1, code: 'IHM-MAIN', name: 'IHM Hotel School' }],
+      { retainStoredSelection: true },
+    );
+
+    expect(service.activeBranch()).toBeNull();
+    expect(localStorage.getItem('ihm.activeBranchId')).toBe('2');
+
+    service.configure([
+      { id: 1, code: 'IHM-MAIN', name: 'IHM Hotel School' },
+      { id: 2, code: 'IHM-CITY', name: 'IHM City' },
+    ]);
+
+    expect(service.activeBranch()?.code).toBe('IHM-CITY');
+    expect(localStorage.getItem('ihm.activeBranchId')).toBe('2');
+  });
 });

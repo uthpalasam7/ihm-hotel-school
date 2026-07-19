@@ -1,16 +1,18 @@
 import { TestBed } from '@angular/core/testing';
 import { provideRouter, Router, RouterStateSnapshot } from '@angular/router';
 import { AuthService } from './auth.service';
-import { authGuard, guestGuard } from './auth.guard';
+import { authGuard, guestGuard, roleGuard } from './auth.guard';
 
 describe('auth route guards', () => {
   let router: Router;
   let authenticated = false;
   let requiresPasswordChange = false;
+  let currentRoles: string[] = [];
 
   beforeEach(() => {
     authenticated = false;
     requiresPasswordChange = false;
+    currentRoles = [];
 
     TestBed.configureTestingModule({
       providers: [
@@ -20,6 +22,7 @@ describe('auth route guards', () => {
           useValue: {
             authenticated: () => authenticated,
             requiresPasswordChange: () => requiresPasswordChange,
+            hasAnyRole: (roles: string[]) => roles.some((role) => currentRoles.includes(role)),
           },
         },
       ],
@@ -35,7 +38,7 @@ describe('auth route guards', () => {
   it('redirects logged-out users from protected routes to login', () => {
     const result = TestBed.runInInjectionContext(() => authGuard({} as never, state('/')));
 
-    expect(router.serializeUrl(result as never)).toBe('/login');
+    expect(router.serializeUrl(result as never)).toBe('/login?reason=sign-in-required');
   });
 
   it('redirects password-change-required users from dashboard to change password', () => {
@@ -77,5 +80,21 @@ describe('auth route guards', () => {
     const result = TestBed.runInInjectionContext(() => guestGuard({} as never, state('/login')));
 
     expect(router.serializeUrl(result as never)).toBe('/change-password');
+  });
+
+  it('redirects users without a required role to the access-denied page', () => {
+    currentRoles = ['LECTURER'];
+
+    const result = TestBed.runInInjectionContext(() => roleGuard(['SUPER_ADMIN'])({} as never, state('/branches')));
+
+    expect(router.serializeUrl(result as never)).toBe('/forbidden');
+  });
+
+  it('allows users with a required role to continue', () => {
+    currentRoles = ['ADMIN'];
+
+    const result = TestBed.runInInjectionContext(() => roleGuard(['SUPER_ADMIN', 'ADMIN'])({} as never, state('/users')));
+
+    expect(result).toBe(true);
   });
 });

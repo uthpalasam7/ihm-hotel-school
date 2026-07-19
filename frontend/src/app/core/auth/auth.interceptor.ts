@@ -58,7 +58,7 @@ export const authInterceptor: HttpInterceptorFn = (request, next) => {
         }),
         catchError((refreshError: unknown) => {
           authService.clearAuthenticationState();
-          router.navigateByUrl('/login');
+          router.navigate(['/login'], { queryParams: { reason: 'session-expired' } });
           return throwError(() => refreshError);
         }),
       );

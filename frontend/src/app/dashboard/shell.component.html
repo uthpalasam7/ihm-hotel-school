@@ -1,45 +1,135 @@
-<div class="app-shell">
-  <aside class="sidebar" aria-label="Primary navigation">
-    <a class="brand" routerLink="/" aria-label="IHM Hotel School home">
-      <img src="/assets/branding/ihm-logo.jpg" alt="IHM Hotel School logo" />
-      <span>IHM Hotel School</span>
-    </a>
+<mat-sidenav-container class="app-shell">
+  <mat-sidenav
+    #drawer
+    class="sidebar"
+    [mode]="isHandset() ? 'over' : 'side'"
+    [opened]="!isHandset()"
+    [fixedInViewport]="isHandset()"
+    aria-label="Primary navigation"
+  >
+    <div class="sidebar-content">
+      <a class="brand" routerLink="/" (click)="closeNavigation(drawer)" aria-label="IHM Hotel School home">
+        <img src="/assets/branding/ihm-logo.jpg" alt="" />
+        <span>
+          <strong>IHM Hotel School</strong>
+          <small>Management system</small>
+        </span>
+      </a>
 
-    <nav>
-      @for (item of visibleNavigation(); track item.label) {
-        <a [routerLink]="item.path" routerLinkActive="is-active" [routerLinkActiveOptions]="{ exact: item.path === '/' }">{{ item.label }}</a>
+      <p class="nav-label">Workspace</p>
+      <nav>
+        @for (item of visibleNavigation(); track item.label) {
+          <a
+            [routerLink]="item.path"
+            routerLinkActive="is-active"
+            [routerLinkActiveOptions]="{ exact: item.path === '/' }"
+            (click)="closeNavigation(drawer)"
+          >
+            {{ item.label }}
+          </a>
+        }
+      </nav>
+
+      <div class="sidebar-footer">
+        <span class="sidebar-footer-mark">IHM</span>
+        <span>Hospitality education management</span>
+      </div>
+    </div>
+  </mat-sidenav>
+
+  <mat-sidenav-content>
+    <mat-toolbar class="topbar">
+      @if (isHandset()) {
+        <button mat-button type="button" (click)="drawer.toggle()" aria-label="Open navigation">Menu</button>
       }
-    </nav>
-  </aside>
 
-  <main class="workspace">
-    <header class="topbar">
-      <div>
-        <div class="branch-control">
-          @if (canSwitchBranch()) {
-            <label>
-              <span class="eyebrow">Active branch</span>
-              <select [ngModel]="activeBranch()?.id" (ngModelChange)="changeBranch($event)" aria-label="Active branch">
-                @for (branch of availableBranches(); track branch.id) {
-                  <option [value]="branch.id">{{ branch.code }} - {{ branch.name }}</option>
+      <div class="branch-control">
+        @if (branchesLoading()) {
+          <div class="branch-context is-loading" role="status">
+            <span class="branch-context-mark" aria-hidden="true"></span>
+            <span class="branch-context-copy">
+              <span class="branch-label">Active branch</span>
+              <strong>Loading branches…</strong>
+            </span>
+          </div>
+        } @else if (canSwitchBranch()) {
+          <button
+            class="branch-context branch-switcher"
+            type="button"
+            [matMenuTriggerFor]="branchMenu"
+            [attr.aria-label]="'Switch active branch. Current branch: ' + branchLabel()"
+          >
+            <span class="branch-context-mark" aria-hidden="true"></span>
+            <span class="branch-context-copy">
+              <span class="branch-label">Active branch</span>
+              <span class="branch-value">
+                <strong>{{ activeBranch()?.name }}</strong>
+                <small>{{ activeBranch()?.code }}</small>
+              </span>
+            </span>
+            <span class="branch-chevron" aria-hidden="true"></span>
+          </button>
+          <mat-menu #branchMenu="matMenu">
+            @for (branch of availableBranches(); track branch.id) {
+              <button
+                class="branch-menu-item"
+                mat-menu-item
+                type="button"
+                [class.is-selected]="activeBranch()?.id === branch.id"
+                [attr.aria-current]="activeBranch()?.id === branch.id ? 'true' : null"
+                (click)="changeBranch(branch.id)"
+              >
+                <span class="branch-menu-copy">
+                  <strong>{{ branch.code }}</strong>
+                  <small>{{ branch.name }}</small>
+                </span>
+                @if (activeBranch()?.id === branch.id) {
+                  <span class="branch-current-label">Current</span>
                 }
-              </select>
-            </label>
-          } @else {
-            <p class="eyebrow">Active branch</p>
-            <strong class="branch-display">{{ branchLabel() }}</strong>
-          }
-        </div>
-        <h1>Management Console</h1>
+              </button>
+            }
+          </mat-menu>
+        } @else {
+          <div class="branch-context branch-static" [attr.aria-label]="'Active branch: ' + branchLabel()">
+            <span class="branch-context-mark" aria-hidden="true"></span>
+            <span class="branch-context-copy">
+              <span class="branch-label">Active branch</span>
+              <span class="branch-value">
+                <strong>{{ activeBranch()?.name ?? 'No active branch' }}</strong>
+                @if (activeBranch()?.code) {
+                  <small>{{ activeBranch()?.code }}</small>
+                }
+              </span>
+            </span>
+          </div>
+        }
       </div>
-      <div class="operator">
-        <span class="operator-label">{{ user()?.fullName }}</span>
-        <strong>{{ user()?.roles?.join(', ') }}</strong>
-        <a routerLink="/change-password">Change password</a>
-        <button type="button" (click)="logout()">Logout</button>
-      </div>
-    </header>
 
-    <router-outlet />
-  </main>
-</div>
+      <span class="topbar-spacer"></span>
+
+      <button
+        class="user-menu-trigger"
+        mat-icon-button
+        type="button"
+        [matMenuTriggerFor]="userMenu"
+        [attr.aria-label]="'Open account menu for ' + (user()?.fullName ?? 'current user')"
+      >
+        <span class="avatar" aria-hidden="true">{{ userInitials() }}</span>
+      </button>
+      <mat-menu #userMenu="matMenu" xPosition="before">
+        <div class="account-menu-header">
+          <strong>{{ user()?.fullName }}</strong>
+          <span>{{ user()?.roles?.join(', ') }}</span>
+        </div>
+        <a mat-menu-item routerLink="/change-password">Change password</a>
+        <button mat-menu-item type="button" (click)="logout()">Logout</button>
+      </mat-menu>
+    </mat-toolbar>
+
+    <main class="workspace">
+      <div class="workspace-content">
+        <router-outlet />
+      </div>
+    </main>
+  </mat-sidenav-content>
+</mat-sidenav-container>

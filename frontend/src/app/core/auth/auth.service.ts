@@ -32,7 +32,7 @@ export class AuthService {
       return of(false);
     }
     this.userSignal.set(user);
-    this.activeBranchService.configure(user.branches);
+    this.configureBranches(user);
     if (this.accessTokenValid()) {
       return of(true);
     }
@@ -89,7 +89,7 @@ export class AuthService {
       tap((user) => {
         this.tokenStorage.updateUser(user);
         this.userSignal.set(user);
-        this.activeBranchService.configure(user.branches);
+        this.configureBranches(user);
       }),
     );
   }
@@ -99,7 +99,7 @@ export class AuthService {
       tap((user) => {
         this.tokenStorage.updateUser(user);
         this.userSignal.set(user);
-        this.activeBranchService.configure(user.branches);
+        this.configureBranches(user);
       }),
     );
   }
@@ -116,7 +116,13 @@ export class AuthService {
   private applyAuth(response: AuthResponse): void {
     this.tokenStorage.save(response);
     this.userSignal.set(response.user);
-    this.activeBranchService.configure(response.user.branches);
+    this.configureBranches(response.user);
+  }
+
+  private configureBranches(user: CurrentUser): void {
+    this.activeBranchService.configure(user.branches, {
+      retainStoredSelection: user.roles.includes('SUPER_ADMIN'),
+    });
   }
 
   private accessTokenValid(): boolean {

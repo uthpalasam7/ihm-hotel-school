@@ -1,3 +1,4 @@
+import { BreakpointObserver } from '@angular/cdk/layout';
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
@@ -13,7 +14,7 @@ describe('ShellComponent', () => {
     localStorage.clear();
   });
 
-  it('shows lecturer navigation without administrator controls', async () => {
+  it('shows only implemented lecturer navigation without administrator controls', async () => {
     localStorage.clear();
     const lecturer: CurrentUser = {
       id: 10,
@@ -49,10 +50,27 @@ describe('ShellComponent', () => {
     await fixture.whenStable();
 
     const text = fixture.nativeElement.textContent as string;
-    expect(text).toContain('Attendance');
-    expect(text).toContain('Lecturer User');
+    expect(text).toContain('Dashboard');
+    expect(text).not.toContain('Attendance');
     expect(text).not.toContain('Users');
     expect(text).not.toContain('Audit');
+    expect(fixture.nativeElement.querySelector('.nav-marker')).toBeNull();
+
+    const accountButton = fixture.nativeElement.querySelector(
+      'button[aria-label="Open account menu for Lecturer User"]',
+    ) as HTMLButtonElement;
+    expect(accountButton).toBeTruthy();
+    expect(accountButton.textContent).toContain('LU');
+
+    accountButton.click();
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    const menuText = document.body.textContent ?? '';
+    expect(menuText).toContain('Lecturer User');
+    expect(menuText).toContain('LECTURER');
+    expect(menuText).toContain('Change password');
+    expect(menuText).toContain('Logout');
   });
 
   it('shows a selector and switches active branch for multi-branch users', async () => {
@@ -94,12 +112,23 @@ describe('ShellComponent', () => {
     await fixture.whenStable();
     fixture.detectChanges();
 
-    const select = fixture.nativeElement.querySelector('select[aria-label="Active branch"]') as HTMLSelectElement;
-    select.value = '2';
-    select.dispatchEvent(new Event('change'));
+    const branchSwitcher = fixture.nativeElement.querySelector(
+      'button[aria-label^="Switch active branch"]',
+    ) as HTMLButtonElement;
+    expect(branchSwitcher).toBeTruthy();
+    expect(branchSwitcher.textContent).toContain('IHM-CITY');
+    expect(fixture.nativeElement.querySelector('mat-select')).toBeNull();
+
+    branchSwitcher.click();
+    fixture.detectChanges();
+    await fixture.whenStable();
+    expect(document.body.textContent).toContain('IHM-MAIN');
+
+    const component = fixture.componentInstance as unknown as { changeBranch: (branchId: number) => void };
+    component.changeBranch(1);
     fixture.detectChanges();
 
-    expect(TestBed.inject(ActiveBranchService).activeBranch()?.code).toBe('IHM-CITY');
+    expect(TestBed.inject(ActiveBranchService).activeBranch()?.code).toBe('IHM-MAIN');
   });
 
   it('shows a fixed branch display for a single-branch user', async () => {
@@ -138,7 +167,53 @@ describe('ShellComponent', () => {
     await fixture.whenStable();
     fixture.detectChanges();
 
-    expect(fixture.nativeElement.querySelector('select[aria-label="Active branch"]')).toBeNull();
-    expect(fixture.nativeElement.textContent).toContain('IHM-MAIN - IHM Hotel School');
+    expect(fixture.nativeElement.querySelector('button[aria-label^="Switch active branch"]')).toBeNull();
+    const branchContext = fixture.nativeElement.querySelector('.branch-static') as HTMLElement;
+    expect(branchContext).toBeTruthy();
+    expect(branchContext.textContent).toContain('IHM Hotel School');
+    expect(branchContext.textContent).toContain('IHM-MAIN');
+  });
+
+  it('uses overlay navigation and exposes a menu control on mobile screens', async () => {
+    const lecturer: CurrentUser = {
+      id: 13,
+      username: 'mobile_lecturer',
+      fullName: 'Mobile Lecturer',
+      status: 'ACTIVE',
+      passwordChangeRequired: false,
+      roles: ['LECTURER'],
+      branches: [{ id: 1, code: 'IHM-MAIN', name: 'IHM Hotel School' }],
+    };
+
+    await TestBed.configureTestingModule({
+      imports: [ShellComponent],
+      providers: [
+        provideRouter([]),
+        {
+          provide: AuthService,
+          useValue: {
+            currentUser: signal(lecturer).asReadonly(),
+            hasAnyRole: (roles: string[]) => lecturer.roles.some((role) => roles.includes(role)),
+            logout: () => undefined,
+          },
+        },
+        {
+          provide: BranchService,
+          useValue: { listAllActive: () => of([]) },
+        },
+        {
+          provide: BreakpointObserver,
+          useValue: { observe: () => of({ matches: true }) },
+        },
+      ],
+    }).compileComponents();
+
+    const fixture = TestBed.createComponent(ShellComponent);
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('button[aria-label="Open navigation"]')).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('mat-sidenav').classList).toContain('mat-drawer-over');
   });
 });

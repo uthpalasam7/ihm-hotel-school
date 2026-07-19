@@ -121,7 +121,7 @@ describe('authInterceptor', () => {
 
   it('clears auth state and redirects to login when refresh fails', () => {
     const router = TestBed.inject(Router);
-    const navigate = vi.spyOn(router, 'navigateByUrl');
+    const navigate = vi.spyOn(router, 'navigate');
     const errors: unknown[] = [];
     TestBed.inject(HttpClient).get('/api/v1/users').subscribe({ error: (error) => errors.push(error) });
 
@@ -131,7 +131,9 @@ describe('authInterceptor', () => {
     expect(errors.length).toBe(1);
     expect(localStorage.getItem('ihm.accessToken')).toBeNull();
     expect(localStorage.getItem('ihm.refreshToken')).toBeNull();
-    expect(navigate).toHaveBeenCalledWith('/login');
+    expect(navigate).toHaveBeenCalledWith(['/login'], {
+      queryParams: { reason: 'session-expired' },
+    });
   });
 });
 

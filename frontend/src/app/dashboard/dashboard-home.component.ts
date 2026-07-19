@@ -1,35 +1,66 @@
-import { Component } from '@angular/core';
+import { Component, computed, inject } from '@angular/core';
+import { MatCardModule } from '@angular/material/card';
+import { RouterLink } from '@angular/router';
+import { ActiveBranchService } from '../core/auth/active-branch.service';
+import { AuthService } from '../core/auth/auth.service';
+import { PageHeaderComponent } from '../shared/page-header.component';
+import { PageStateComponent } from '../shared/page-state.component';
+
+interface QuickAction {
+  label: string;
+  description: string;
+  category: string;
+  actionLabel: string;
+  path: string;
+  roles: string[];
+}
 
 @Component({
   selector: 'app-dashboard-home',
-  template: `
-    <section class="work-panel" aria-labelledby="workspace-heading">
-      <div>
-        <p class="eyebrow">Management Console</p>
-        <h2 id="workspace-heading">Administration workspace</h2>
-        <p>Use the navigation to manage branches and users.</p>
-      </div>
-    </section>
-  `,
-  styles: [`
-    .work-panel {
-      background: #fdfdfd;
-      border: 1px solid #e5e5e5;
-      border-radius: 0.5rem;
-      padding: 1.25rem;
-    }
-
-    h2,
-    p {
-      margin: 0;
-    }
-
-    h2 {
-      color: #292929;
-      font-size: 1.35rem;
-      margin-bottom: 0.5rem;
-    }
-  `],
+  imports: [MatCardModule, PageHeaderComponent, PageStateComponent, RouterLink],
+  templateUrl: './dashboard-home.component.html',
+  styleUrl: './dashboard-home.component.scss',
 })
 export class DashboardHomeComponent {
+  private readonly authService = inject(AuthService);
+  protected readonly activeBranchService = inject(ActiveBranchService);
+
+  protected readonly activeBranch = this.activeBranchService.activeBranch;
+  protected readonly user = this.authService.currentUser;
+  protected readonly quickActions = computed(() => this.actions.filter((action) => this.authService.hasAnyRole(action.roles)));
+
+  private readonly actions: QuickAction[] = [
+    {
+      label: 'Branches',
+      description: 'Manage school locations, contact details, and branch status.',
+      category: 'Organization',
+      actionLabel: 'View branches',
+      path: '/branches',
+      roles: ['SUPER_ADMIN'],
+    },
+    {
+      label: 'Users',
+      description: 'Manage staff accounts, access, and branch assignments.',
+      category: 'Access',
+      actionLabel: 'View users',
+      path: '/users',
+      roles: ['SUPER_ADMIN', 'ADMIN'],
+    },
+    {
+      label: 'Courses',
+      description: 'Maintain reusable course definitions and availability.',
+      category: 'Academic',
+      actionLabel: 'View courses',
+      path: '/courses',
+      roles: ['SUPER_ADMIN', 'ADMIN'],
+    },
+    {
+      label: 'Batches',
+      description: 'Set up and manage course intakes for the active branch.',
+      category: 'Intakes',
+      actionLabel: 'View batches',
+      path: '/batches',
+      roles: ['SUPER_ADMIN', 'ADMIN'],
+    },
+  ];
 }

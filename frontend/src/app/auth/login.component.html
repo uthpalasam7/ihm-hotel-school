@@ -1,43 +1,65 @@
-<main class="login-page">
-  <section class="login-panel" aria-labelledby="login-heading">
-    <img src="/assets/branding/ihm-logo.jpg" alt="IHM Hotel School logo" />
-    <div>
-      <p class="eyebrow">IHM Hotel School</p>
-      <h1 id="login-heading">Sign in</h1>
-    </div>
+<app-auth-layout
+  eyebrow="Secure access"
+  title="Sign in"
+  subtitle="Use your school account to open the management system."
+>
+  @if (infoMessage()) {
+    <p class="auth-message is-info" role="status" aria-live="polite">{{ infoMessage() }}</p>
+  }
+  @if (successMessage()) {
+    <p class="auth-message is-success" role="status" aria-live="polite">{{ successMessage() }}</p>
+  }
+  @if (errorMessage()) {
+    <p class="auth-message is-error" role="alert">{{ errorMessage() }}</p>
+  }
 
-    <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
-      <label>
-        <span>Username</span>
-        <input type="text" formControlName="username" autocomplete="username" />
-      </label>
-      @if (form.controls.username.touched && form.controls.username.invalid) {
-        <p class="field-error">Username is required</p>
+  <form
+    class="auth-form"
+    [formGroup]="form"
+    (ngSubmit)="submit()"
+    [attr.aria-busy]="loading()"
+    novalidate
+  >
+    <mat-form-field appearance="outline">
+      <mat-label>Username</mat-label>
+      <input matInput type="text" formControlName="username" autocomplete="username" />
+      @if (form.controls.username.touched && form.controls.username.hasError('required')) {
+        <mat-error>Username is required</mat-error>
       }
+    </mat-form-field>
 
-      <label>
-        <span>Password</span>
-        <div class="password-field">
-          <input [type]="showPassword() ? 'text' : 'password'" formControlName="password" autocomplete="current-password" />
-          <button type="button" (click)="showPassword.set(!showPassword())">
-            {{ showPassword() ? 'Hide' : 'Show' }}
-          </button>
-        </div>
-      </label>
-      @if (form.controls.password.touched && form.controls.password.invalid) {
-        <p class="field-error">Password is required</p>
-      }
-
-      @if (errorMessage()) {
-        <p class="auth-error">{{ errorMessage() }}</p>
-      }
-      @if (successMessage()) {
-        <p class="auth-success">{{ successMessage() }}</p>
-      }
-
-      <button class="submit-button" type="submit" [disabled]="loading()">
-        {{ loading() ? 'Signing in...' : 'Sign in' }}
+    <mat-form-field appearance="outline">
+      <mat-label>Password</mat-label>
+      <input
+        matInput
+        [type]="showPassword() ? 'text' : 'password'"
+        formControlName="password"
+        autocomplete="current-password"
+      />
+      <button
+        class="visibility-toggle"
+        mat-button
+        matSuffix
+        type="button"
+        [attr.aria-label]="showPassword() ? 'Hide password' : 'Show password'"
+        (click)="showPassword.set(!showPassword())"
+      >
+        {{ showPassword() ? 'Hide' : 'Show' }}
       </button>
-    </form>
-  </section>
-</main>
+      @if (form.controls.password.touched && form.controls.password.hasError('required')) {
+        <mat-error>Password is required</mat-error>
+      }
+    </mat-form-field>
+
+    <button class="auth-submit" mat-flat-button type="submit" [disabled]="loading()">
+      <span class="auth-submit-content">
+        @if (loading()) {
+          <mat-spinner diameter="18" />
+          Signing in…
+        } @else {
+          Sign in
+        }
+      </span>
+    </button>
+  </form>
+</app-auth-layout>

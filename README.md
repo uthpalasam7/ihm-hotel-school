@@ -4,7 +4,7 @@ Phase 4 provides the authentication foundation, branch and user administration, 
 
 ## Stack
 
-- Frontend: Angular 22, TypeScript, SCSS
+- Frontend: Angular 22, Angular Material 22.0.2, TypeScript, SCSS
 - Backend: Java 17 target, Spring Boot 3.5.x, Maven Wrapper
 - Database: PostgreSQL through Docker Compose
 - Migrations: Flyway
@@ -22,6 +22,7 @@ The backend targets Java 17 and requires a JDK 17 or newer. A JRE alone is not e
 ├── docs/
 ├── branding/
 ├── docker-compose.yml
+├── dev.sh
 └── .env.example
 ```
 
@@ -33,6 +34,18 @@ Copy the environment template and replace placeholder values for local use:
 cp .env.example .env
 ```
 
+Start PostgreSQL, the backend, and the frontend together:
+
+```bash
+./dev.sh
+```
+
+Press `Ctrl+C` to stop the backend and frontend. PostgreSQL remains available for
+later development sessions; stop it when needed with `docker compose down`.
+
+The individual startup commands are available below for troubleshooting or when
+only one service is needed.
+
 Start PostgreSQL:
 
 ```bash
@@ -43,6 +56,9 @@ Run the backend:
 
 ```bash
 cd backend
+set -a
+source ../.env
+set +a
 ./mvnw spring-boot:run
 ```
 
@@ -99,6 +115,11 @@ Open:
 http://localhost:4200
 ```
 
+The authentication UI uses a responsive IHM split layout. Protected navigation
+shows a reason on the Login page when sign-in is required or a session expires,
+and authenticated users without a required role are sent to `/forbidden`.
+Password changes retain the existing forced-change and sign-out flow.
+
 ## Build and Test
 
 Backend:
@@ -129,7 +150,9 @@ docker compose config
 
 Implemented:
 
-- Angular application shell with IHM branding
+- Responsive Angular Material application shell with IHM branding
+- IHM Material 3 theme and shared page feedback patterns
+- Dashboard branch context and role-authorized shortcuts without fake metrics
 - Spring Boot backend scaffold
 - Public backend health endpoint under `/api/v1/health`
 - Actuator health endpoint
@@ -141,8 +164,9 @@ Implemented:
 - JWT login, refresh, logout, current-user, and password-change endpoints
 - Default roles and default branch seed data
 - Environment-driven first-super-admin bootstrap
-- Angular login page, auth guard, interceptor, and role-aware navigation
-- Branch list, create, edit, and activation/deactivation APIs and screens
+- Modernized Angular login and password-change screens, auth guard, interceptor, and role-aware Forbidden state
+- Server-paginated Branch list and guarded Branch create/edit flow
+- Branch create, edit, and activation/deactivation APIs
 - User list, create, edit, role assignment, branch assignment, activation/deactivation, and password reset APIs and screens
 - Lecturer account creation by assigned-branch administrators
 - Audit event persistence for branch and user administration actions

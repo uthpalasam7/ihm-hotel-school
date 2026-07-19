@@ -1,5 +1,6 @@
 import { Routes } from '@angular/router';
 import { ChangePasswordComponent } from './auth/change-password.component';
+import { AccessDeniedComponent } from './auth/access-denied.component';
 import { LoginComponent } from './auth/login.component';
 import { BatchFormComponent } from './batches/batch-form.component';
 import { BatchListComponent } from './batches/batch-list.component';
@@ -12,6 +13,7 @@ import { ShellComponent } from './dashboard/shell.component';
 import { DashboardHomeComponent } from './dashboard/dashboard-home.component';
 import { UserFormComponent } from './users/user-form.component';
 import { UserListComponent } from './users/user-list.component';
+import { unsavedChangesGuard } from './shared/unsaved-changes.guard';
 
 export const routes: Routes = [
   { path: 'login', component: LoginComponent, canActivate: [guestGuard] },
@@ -22,9 +24,20 @@ export const routes: Routes = [
     canActivate: [authGuard],
     children: [
       { path: '', pathMatch: 'full', component: DashboardHomeComponent },
+      { path: 'forbidden', component: AccessDeniedComponent },
       { path: 'branches', component: BranchListComponent, canActivate: [roleGuard(['SUPER_ADMIN'])] },
-      { path: 'branches/new', component: BranchFormComponent, canActivate: [roleGuard(['SUPER_ADMIN'])] },
-      { path: 'branches/:id/edit', component: BranchFormComponent, canActivate: [roleGuard(['SUPER_ADMIN'])] },
+      {
+        path: 'branches/new',
+        component: BranchFormComponent,
+        canActivate: [roleGuard(['SUPER_ADMIN'])],
+        canDeactivate: [unsavedChangesGuard],
+      },
+      {
+        path: 'branches/:id/edit',
+        component: BranchFormComponent,
+        canActivate: [roleGuard(['SUPER_ADMIN'])],
+        canDeactivate: [unsavedChangesGuard],
+      },
       { path: 'users', component: UserListComponent, canActivate: [roleGuard(['SUPER_ADMIN', 'ADMIN'])] },
       { path: 'users/new', component: UserFormComponent, canActivate: [roleGuard(['SUPER_ADMIN', 'ADMIN'])] },
       { path: 'users/:id/edit', component: UserFormComponent, canActivate: [roleGuard(['SUPER_ADMIN', 'ADMIN'])] },

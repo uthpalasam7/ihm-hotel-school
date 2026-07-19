@@ -1,102 +1,77 @@
 :host {
+  display: block;
+}
+
+.branch-form-page {
   display: grid;
-  gap: 1rem;
+  gap: var(--ihm-space-4);
+  margin: 0 auto;
+  max-width: 62rem;
 }
 
-.page-header {
-  align-items: center;
-  display: flex;
-  justify-content: space-between;
-}
-
-.page-header a,
-.form-actions a {
-  color: #292929;
-  font-weight: 800;
+.form-card {
+  background: var(--ihm-surface);
 }
 
 form {
-  background: #fdfdfd;
-  border: 1px solid #e5e5e5;
-  border-radius: 0.5rem;
   display: grid;
-  gap: 1rem;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  padding: 1rem;
+  gap: var(--ihm-space-5);
+  padding: var(--ihm-space-5);
 }
 
-label {
-  color: #4d4d4d;
+.form-error {
+  background: #fdecec;
+  border: 1px solid var(--ihm-error-border);
+  border-radius: var(--ihm-radius-sm);
+  color: var(--ihm-error);
   display: grid;
-  font-size: 0.82rem;
-  font-weight: 800;
-  gap: 0.35rem;
+  gap: var(--ihm-space-1);
+  padding: var(--ihm-space-3);
+}
+
+.form-introduction {
+  display: grid;
+  gap: var(--ihm-space-1);
+}
+
+.form-introduction h2,
+.form-introduction p {
+  margin: 0;
+}
+
+.form-introduction h2 {
+  color: var(--ihm-charcoal);
+  font-size: 1.2rem;
+}
+
+.form-introduction p {
+  color: var(--ihm-text-muted);
+}
+
+.form-grid {
+  display: grid;
+  gap: var(--ihm-space-4);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .wide {
   grid-column: 1 / -1;
 }
 
-input,
-select,
-textarea {
-  border: 1px solid #cfcfcf;
-  border-radius: 0.375rem;
-  font: inherit;
-  padding: 0.6rem 0.7rem;
-}
-
-span {
-  color: #9b1c1c;
-  font-weight: 700;
-}
-
 .form-actions {
   align-items: center;
+  border-top: 1px solid var(--ihm-border);
   display: flex;
-  gap: 0.75rem;
-  grid-column: 1 / -1;
-}
-
-button {
-  background: #b0852c;
-  border: 0;
-  border-radius: 0.375rem;
-  color: #fff;
-  cursor: pointer;
-  font: inherit;
-  font-weight: 800;
-  min-height: 2.5rem;
-  padding: 0.55rem 0.9rem;
-}
-
-button:disabled {
-  cursor: wait;
-  opacity: 0.7;
-}
-
-.notice {
-  background: #fdfdfd;
-  border: 1px solid #e5e5e5;
-  border-radius: 0.5rem;
-  grid-column: 1 / -1;
-  margin: 0;
-  padding: 1rem;
-}
-
-.error {
-  border-color: #e09a9a;
-  color: #9b1c1c;
+  gap: var(--ihm-space-2);
+  padding-top: var(--ihm-space-4);
 }
 
 @media (max-width: 640px) {
-  .page-header {
-    align-items: flex-start;
-    flex-direction: column;
-    gap: 0.75rem;
+  form {
+    padding: var(--ihm-space-4);
   }
 
-  form {
+  .form-grid {
     grid-template-columns: 1fr;
   }
 }

@@ -1,62 +1,98 @@
-<section class="page-header">
-  <div>
-    <p class="eyebrow">Branch</p>
-    <h2>{{ editingId() ? 'Edit branch' : 'Add branch' }}</h2>
-  </div>
-  <a routerLink="/branches">Back to branches</a>
+<section class="branch-form-page">
+  <app-page-header
+    eyebrow="Branch administration"
+    [title]="editingId() ? 'Edit branch' : 'Add branch'"
+    subtitle="Maintain the location and contact details used across the school system."
+  >
+    <a mat-button routerLink="/branches">Back to branches</a>
+  </app-page-header>
+
+  <app-page-state
+    [loading]="loading()"
+    [error]="loading() || serverError() ? null : error()"
+    loadingLabel="Loading branch…"
+    (retry)="loadBranch()"
+  />
+
+  @if (!loading() && (!error() || serverError())) {
+    <mat-card appearance="outlined" class="form-card">
+      <form [formGroup]="form" (ngSubmit)="save()" novalidate>
+        @if (error()) {
+          <div class="form-error" role="alert">
+            <strong>Branch could not be saved</strong>
+            <span>{{ error() }}</span>
+          </div>
+        }
+
+        <div class="form-introduction">
+          <h2>Branch details</h2>
+          <p>Fields marked with an asterisk are required.</p>
+        </div>
+
+        <div class="form-grid">
+          <mat-form-field appearance="outline">
+            <mat-label>Code</mat-label>
+            <input matInput formControlName="code" autocomplete="off" maxlength="30" />
+            <mat-hint align="end">{{ form.controls.code.value.length }}/30</mat-hint>
+            @if (form.controls.code.touched && form.controls.code.hasError('required')) {
+              <mat-error>Code is required</mat-error>
+            } @else if (form.controls.code.touched && form.controls.code.hasError('maxlength')) {
+              <mat-error>Code must be 30 characters or fewer</mat-error>
+            } @else if (fieldError('code')) {
+              <mat-error>{{ fieldError('code') }}</mat-error>
+            }
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Name</mat-label>
+            <input matInput formControlName="name" autocomplete="organization" maxlength="150" />
+            <mat-hint align="end">{{ form.controls.name.value.length }}/150</mat-hint>
+            @if (form.controls.name.touched && form.controls.name.hasError('required')) {
+              <mat-error>Name is required</mat-error>
+            } @else if (form.controls.name.touched && form.controls.name.hasError('maxlength')) {
+              <mat-error>Name must be 150 characters or fewer</mat-error>
+            } @else if (fieldError('name')) {
+              <mat-error>{{ fieldError('name') }}</mat-error>
+            }
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Contact number</mat-label>
+            <input matInput formControlName="contactNumber" autocomplete="tel" maxlength="30" />
+            @if (form.controls.contactNumber.touched && form.controls.contactNumber.hasError('maxlength')) {
+              <mat-error>Contact number must be 30 characters or fewer</mat-error>
+            } @else if (fieldError('contactNumber')) {
+              <mat-error>{{ fieldError('contactNumber') }}</mat-error>
+            }
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Status</mat-label>
+            <mat-select formControlName="status">
+              <mat-option value="ACTIVE">Active</mat-option>
+              <mat-option value="INACTIVE">Inactive</mat-option>
+            </mat-select>
+            @if (fieldError('status')) {
+              <mat-error>{{ fieldError('status') }}</mat-error>
+            }
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="wide">
+            <mat-label>Address</mat-label>
+            <textarea matInput formControlName="address" rows="4"></textarea>
+            @if (fieldError('address')) {
+              <mat-error>{{ fieldError('address') }}</mat-error>
+            }
+          </mat-form-field>
+        </div>
+
+        <div class="form-actions">
+          <button mat-flat-button type="submit" [disabled]="form.invalid || saving()">
+            {{ saving() ? 'Saving…' : 'Save branch' }}
+          </button>
+          <a mat-button routerLink="/branches">Cancel</a>
+        </div>
+      </form>
+    </mat-card>
+  }
 </section>
-
-@if (loading()) {
-  <p class="notice">Loading branch...</p>
-} @else {
-  <form [formGroup]="form" (ngSubmit)="save()" novalidate>
-    @if (error()) {
-      <p class="notice error">{{ error() }}</p>
-    }
-
-    <label>
-      Code
-      <input formControlName="code" autocomplete="off" />
-      @if (form.controls.code.touched && form.controls.code.hasError('required')) {
-        <span>Code is required</span>
-      }
-      @if (fieldError('code')) {
-        <span>{{ fieldError('code') }}</span>
-      }
-    </label>
-
-    <label>
-      Name
-      <input formControlName="name" autocomplete="off" />
-      @if (form.controls.name.touched && form.controls.name.hasError('required')) {
-        <span>Name is required</span>
-      }
-      @if (fieldError('name')) {
-        <span>{{ fieldError('name') }}</span>
-      }
-    </label>
-
-    <label>
-      Contact number
-      <input formControlName="contactNumber" autocomplete="off" />
-    </label>
-
-    <label>
-      Status
-      <select formControlName="status">
-        <option value="ACTIVE">Active</option>
-        <option value="INACTIVE">Inactive</option>
-      </select>
-    </label>
-
-    <label class="wide">
-      Address
-      <textarea formControlName="address" rows="4"></textarea>
-    </label>
-
-    <div class="form-actions">
-      <button type="submit" [disabled]="saving()">{{ saving() ? 'Saving...' : 'Save branch' }}</button>
-      <a routerLink="/branches">Cancel</a>
-    </div>
-  </form>
-}

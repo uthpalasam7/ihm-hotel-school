@@ -1,0 +1,15 @@
+mat-dialog-content {
+  display: grid;
+  gap: var(--ihm-space-4);
+  min-width: min(26rem, 72vw);
+}
+
+p {
+  color: var(--ihm-text-muted);
+  line-height: 1.55;
+  margin: 0;
+}
+
+mat-form-field {
+  width: 100%;
+}

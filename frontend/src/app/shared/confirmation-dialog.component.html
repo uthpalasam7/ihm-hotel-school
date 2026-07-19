@@ -1,0 +1,17 @@
+<h2 mat-dialog-title>{{ data.title }}</h2>
+<mat-dialog-content>
+  <p>{{ data.message }}</p>
+  @if (data.reasonLabel) {
+    <mat-form-field appearance="outline">
+      <mat-label>{{ data.reasonLabel }}</mat-label>
+      <textarea matInput [formControl]="reason" rows="3"></textarea>
+      @if (reason.touched && reason.hasError('required')) {
+        <mat-error>A reason is required</mat-error>
+      }
+    </mat-form-field>
+  }
+</mat-dialog-content>
+<mat-dialog-actions align="end">
+  <button mat-button type="button" mat-dialog-close>{{ data.cancelLabel || 'Cancel' }}</button>
+  <button mat-flat-button type="button" (click)="confirm()">{{ data.confirmLabel || 'Confirm' }}</button>
+</mat-dialog-actions>

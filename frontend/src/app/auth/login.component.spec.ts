@@ -1,15 +1,19 @@
 import { TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { ActivatedRoute, convertToParamMap, provideRouter, Router } from '@angular/router';
 import { of, throwError } from 'rxjs';
+import { vi } from 'vitest';
 import { AuthResponse } from '../core/auth/auth.models';
 import { AuthService } from '../core/auth/auth.service';
 import { LoginComponent } from './login.component';
 
 describe('LoginComponent', () => {
   let login: AuthService['login'];
+  let response: AuthResponse;
+  let queryParams: Record<string, string>;
 
   beforeEach(async () => {
-    const authResponse: AuthResponse = {
+    queryParams = {};
+    response = {
       accessToken: 'access-token',
       accessTokenExpiresAt: '2026-06-26T12:00:00Z',
       refreshToken: 'refresh-token',
@@ -24,12 +28,22 @@ describe('LoginComponent', () => {
         branches: [{ id: 1, code: 'IHM-MAIN', name: 'IHM Hotel School' }],
       },
     };
-    login = () => of(authResponse);
+    login = () => of(response);
 
     await TestBed.configureTestingModule({
       imports: [LoginComponent],
       providers: [
         provideRouter([]),
+        {
+          provide: ActivatedRoute,
+          useValue: {
+            snapshot: {
+              get queryParamMap() {
+                return convertToParamMap(queryParams);
+              },
+            },
+          },
+        },
         {
           provide: AuthService,
           useValue: {
@@ -70,9 +84,58 @@ describe('LoginComponent', () => {
     await fixture.whenStable();
     fixture.detectChanges();
 
-    const submitButton = fixture.nativeElement.querySelector('.submit-button') as HTMLButtonElement;
+    const submitButton = fixture.nativeElement.querySelector('.auth-submit') as HTMLButtonElement;
     expect(fixture.nativeElement.textContent).toContain('Invalid username or password');
     expect(submitButton.disabled).toBeFalsy();
     expect(submitButton.textContent).toContain('Sign in');
+  });
+
+  it('explains when a session has expired', () => {
+    queryParams = { reason: 'session-expired' };
+    const fixture = TestBed.createComponent(LoginComponent);
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.textContent).toContain('Your session expired. Sign in again to continue.');
+  });
+
+  it('shows the password-changed confirmation', () => {
+    queryParams = { passwordChanged: 'true' };
+    const fixture = TestBed.createComponent(LoginComponent);
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.textContent).toContain('Password changed. Sign in with your new password.');
+  });
+
+  it('offers an accessible password visibility control', () => {
+    const fixture = TestBed.createComponent(LoginComponent);
+    fixture.detectChanges();
+
+    const password = fixture.nativeElement.querySelector('input[formControlName="password"]') as HTMLInputElement;
+    const toggle = fixture.nativeElement.querySelector('.visibility-toggle') as HTMLButtonElement;
+    expect(password.type).toBe('password');
+    expect(toggle.getAttribute('aria-label')).toBe('Show password');
+
+    toggle.click();
+    fixture.detectChanges();
+
+    expect(password.type).toBe('text');
+    expect(toggle.getAttribute('aria-label')).toBe('Hide password');
+  });
+
+  it('preserves the forced-password-change redirect after login', () => {
+    response = {
+      ...response,
+      user: { ...response.user, passwordChangeRequired: true },
+    };
+    const router = TestBed.inject(Router);
+    const navigate = vi.spyOn(router, 'navigateByUrl');
+    const fixture = TestBed.createComponent(LoginComponent);
+    fixture.detectChanges();
+
+    fixture.componentInstance['form'].setValue({ username: 'admin', password: 'Admin@123' });
+    fixture.nativeElement.querySelector('form').dispatchEvent(new Event('submit'));
+    fixture.detectChanges();
+
+    expect(navigate).toHaveBeenCalledWith('/change-password');
   });
 });

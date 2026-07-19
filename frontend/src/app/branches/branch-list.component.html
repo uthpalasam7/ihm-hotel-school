@@ -1,67 +1,118 @@
-<section class="page-header">
-  <div>
-    <p class="eyebrow">Administration</p>
-    <h2>Branches</h2>
-  </div>
-  <a class="primary-action" routerLink="/branches/new">Add branch</a>
-</section>
+<section class="branch-page">
+  <app-page-header
+    eyebrow="Administration"
+    title="Branches"
+    subtitle="Manage the school locations available across the system."
+  >
+    <a mat-flat-button routerLink="/branches/new">Add branch</a>
+  </app-page-header>
 
-<section class="toolbar" aria-label="Branch filters">
-  <label>
-    Search
-    <input type="search" [(ngModel)]="search" (keyup.enter)="load()" placeholder="Name or code" />
-  </label>
-  <label>
-    Status
-    <select [(ngModel)]="status" (change)="load()">
-      <option value="">All statuses</option>
-      <option value="ACTIVE">Active</option>
-      <option value="INACTIVE">Inactive</option>
-    </select>
-  </label>
-  <button type="button" (click)="load()">Apply</button>
-</section>
+  <mat-card appearance="outlined" class="filter-card">
+    <mat-card-content>
+      <div class="filters" aria-label="Branch filters">
+        <mat-form-field appearance="outline" subscriptSizing="dynamic">
+          <mat-label>Search</mat-label>
+          <input
+            matInput
+            type="search"
+            [(ngModel)]="search"
+            (keyup.enter)="applyFilters()"
+            placeholder="Name or code"
+          />
+        </mat-form-field>
 
-@if (success()) {
-  <p class="notice success">{{ success() }}</p>
-}
-@if (error()) {
-  <p class="notice error">{{ error() }}</p>
-}
-@if (loading()) {
-  <p class="notice">Loading branches...</p>
-} @else if (branches().length === 0) {
-  <p class="empty-state">No branches match the current filters.</p>
-} @else {
-  <div class="table-wrap">
-    <table>
-      <thead>
-        <tr>
-          <th>Code</th>
-          <th>Name</th>
-          <th>Contact</th>
-          <th>Status</th>
-          <th>Default</th>
-          <th>Actions</th>
-        </tr>
-      </thead>
-      <tbody>
-        @for (branch of branches(); track branch.id) {
-          <tr>
-            <td><strong>{{ branch.code }}</strong></td>
-            <td>{{ branch.name }}</td>
-            <td>{{ branch.contactNumber || 'Not set' }}</td>
-            <td><span class="badge" [class.is-danger]="branch.status === 'INACTIVE'">{{ branch.status }}</span></td>
-            <td>{{ branch.defaultBranch ? 'Yes' : 'No' }}</td>
-            <td class="actions">
-              <a [routerLink]="['/branches', branch.id, 'edit']">Edit</a>
-              <button type="button" (click)="changeStatus(branch)">
-                {{ branch.status === 'ACTIVE' ? 'Deactivate' : 'Activate' }}
+        <mat-form-field appearance="outline" subscriptSizing="dynamic">
+          <mat-label>Status</mat-label>
+          <mat-select [(ngModel)]="status" (selectionChange)="applyFilters()">
+            <mat-option value="">All statuses</mat-option>
+            <mat-option value="ACTIVE">Active</mat-option>
+            <mat-option value="INACTIVE">Inactive</mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <div class="filter-actions">
+          <button mat-flat-button type="button" (click)="applyFilters()">Apply filters</button>
+          <button mat-button type="button" (click)="clearFilters()">Reset</button>
+        </div>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <app-page-state
+    [loading]="loading()"
+    [error]="error()"
+    [empty]="!loading() && !error() && branches().length === 0"
+    loadingLabel="Loading branches…"
+    emptyTitle="No branches found"
+    emptyMessage="No branches match the current filters."
+    (retry)="load()"
+  >
+    <button mat-stroked-button type="button" (click)="clearFilters()">Clear filters</button>
+  </app-page-state>
+
+  @if (!loading() && !error() && branches().length) {
+    <mat-card appearance="outlined" class="table-card">
+      <div class="table-wrap">
+        <table mat-table [dataSource]="branches()" aria-label="Branches">
+          <ng-container matColumnDef="code">
+            <th mat-header-cell *matHeaderCellDef>Code</th>
+            <td mat-cell *matCellDef="let branch"><strong>{{ branch.code }}</strong></td>
+          </ng-container>
+
+          <ng-container matColumnDef="name">
+            <th mat-header-cell *matHeaderCellDef>Name</th>
+            <td mat-cell *matCellDef="let branch">{{ branch.name }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="contactNumber">
+            <th mat-header-cell *matHeaderCellDef>Contact</th>
+            <td mat-cell *matCellDef="let branch">{{ branch.contactNumber || 'Not set' }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="status">
+            <th mat-header-cell *matHeaderCellDef>Status</th>
+            <td mat-cell *matCellDef="let branch"><app-status-chip [value]="branch.status" /></td>
+          </ng-container>
+
+          <ng-container matColumnDef="defaultBranch">
+            <th mat-header-cell *matHeaderCellDef>Default</th>
+            <td mat-cell *matCellDef="let branch">{{ branch.defaultBranch ? 'Yes' : 'No' }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="actions">
+            <th mat-header-cell *matHeaderCellDef><span class="visually-hidden">Actions</span></th>
+            <td mat-cell *matCellDef="let branch" class="action-cell">
+              <button
+                mat-button
+                type="button"
+                [matMenuTriggerFor]="rowMenu"
+                [disabled]="updatingId() === branch.id"
+                [attr.aria-label]="'Actions for ' + branch.code"
+              >
+                {{ updatingId() === branch.id ? 'Updating…' : 'Actions' }}
               </button>
+              <mat-menu #rowMenu="matMenu" xPosition="before">
+                <a mat-menu-item [routerLink]="['/branches', branch.id, 'edit']">Edit</a>
+                <button mat-menu-item type="button" (click)="changeStatus(branch)">
+                  {{ branch.status === 'ACTIVE' ? 'Deactivate' : 'Activate' }}
+                </button>
+              </mat-menu>
             </td>
-          </tr>
-        }
-      </tbody>
-    </table>
-  </div>
-}
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+          <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+        </table>
+      </div>
+      <mat-paginator
+        [length]="total()"
+        [pageIndex]="pageIndex()"
+        [pageSize]="pageSize()"
+        [pageSizeOptions]="[10, 20, 50, 100]"
+        [showFirstLastButtons]="true"
+        (page)="changePage($event)"
+        aria-label="Branch pages"
+      />
+    </mat-card>
+  }
+</section>

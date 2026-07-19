@@ -1,13 +1,24 @@
-import { CommonModule } from '@angular/common';
 import { Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { MatButtonModule } from '@angular/material/button';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { ActivatedRoute, Router } from '@angular/router';
 import { finalize } from 'rxjs';
 import { AuthService } from '../core/auth/auth.service';
+import { AuthLayoutComponent } from './auth-layout.component';
 
 @Component({
   selector: 'app-login',
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [
+    AuthLayoutComponent,
+    MatButtonModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatProgressSpinnerModule,
+    ReactiveFormsModule,
+  ],
   templateUrl: './login.component.html',
   styleUrl: './login.component.scss',
 })
@@ -20,6 +31,7 @@ export class LoginComponent {
   protected readonly showPassword = signal(false);
   protected readonly loading = signal(false);
   protected readonly errorMessage = signal('');
+  protected readonly infoMessage = signal(this.loginReasonMessage());
   protected readonly successMessage = signal(
     this.route.snapshot.queryParamMap.get('passwordChanged') === 'true'
       ? 'Password changed. Sign in with your new password.'
@@ -32,6 +44,9 @@ export class LoginComponent {
   });
 
   protected submit(): void {
+    if (this.loading()) {
+      return;
+    }
     if (this.form.invalid) {
       this.form.markAllAsTouched();
       return;
@@ -55,5 +70,16 @@ export class LoginComponent {
         this.errorMessage.set('Invalid username or password');
       },
     });
+  }
+
+  private loginReasonMessage(): string {
+    switch (this.route.snapshot.queryParamMap.get('reason')) {
+      case 'session-expired':
+        return 'Your session expired. Sign in again to continue.';
+      case 'sign-in-required':
+        return 'Sign in to continue to the management system.';
+      default:
+        return '';
+    }
   }
 }

@@ -1,12 +1,287 @@
+@use '@angular/material' as mat;
+
+$ihm-font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+
+:root {
+  --ihm-font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --ihm-primary: #b0852c;
+  --ihm-primary-strong: #806018;
+  --ihm-primary-soft: #f8e9c6;
+  --ihm-secondary: #8d4f0c;
+  --ihm-charcoal: #292929;
+  --ihm-text: #343434;
+  --ihm-text-muted: #686868;
+  --ihm-page: #f5f5f1;
+  --ihm-surface: #fdfdfd;
+  --ihm-border: #e5e5e5;
+  --ihm-error: #981b1b;
+  --ihm-error-border: #e8a5a5;
+  --ihm-space-1: 0.25rem;
+  --ihm-space-2: 0.5rem;
+  --ihm-space-3: 0.75rem;
+  --ihm-space-4: 1rem;
+  --ihm-space-5: 1.5rem;
+  --ihm-space-6: 2rem;
+  --ihm-radius-sm: 0.5rem;
+  --ihm-radius-lg: 0.875rem;
+  --ihm-shadow-sm: 0 0.125rem 0.5rem rgb(41 41 41 / 8%);
+  --ihm-content-width: 90rem;
+}
+
 * {
   box-sizing: border-box;
 }
 
 html {
-  background: #f7f7f4;
-  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  color-scheme: light;
+  background: var(--ihm-page);
+  font-family: $ihm-font-family;
+
+  @include mat.theme((
+    color: mat.$yellow-palette,
+    typography: (
+      plain-family: $ihm-font-family,
+      brand-family: $ihm-font-family,
+      bold-weight: 700,
+      medium-weight: 500,
+      regular-weight: 400,
+    ),
+    density: 0,
+  ), $overrides: (
+    primary: #b0852c,
+    on-primary: #211a0b,
+    primary-container: #f8e9c6,
+    on-primary-container: #342607,
+    secondary: #8d4f0c,
+    on-secondary: #ffffff,
+    secondary-container: #ffddba,
+    on-secondary-container: #321300,
+    surface: #fdfdfd,
+    surface-container: #f5f5f1,
+    surface-container-low: #fafaf7,
+    outline: #77736a,
+    outline-variant: #ddd8cc,
+    error: #981b1b,
+  ));
+
+  @include mat.button-overrides((
+    filled-container-color: #765716,
+    filled-label-text-color: #ffffff,
+    filled-state-layer-color: #ffffff,
+    filled-ripple-color: rgb(255 255 255 / 18%),
+    filled-hover-state-layer-opacity: 0.08,
+    filled-focus-state-layer-opacity: 0.12,
+    filled-pressed-state-layer-opacity: 0.16,
+    filled-disabled-container-color: #dedbd3,
+    filled-disabled-label-text-color: #77736a,
+    filled-container-shape: 0.55rem,
+    filled-container-height: 2.625rem,
+    filled-horizontal-padding: 1.1rem,
+    filled-label-text-weight: 600,
+    outlined-container-shape: 0.55rem,
+    text-container-shape: 0.45rem,
+    text-label-text-color: #6c5015,
+    text-label-text-weight: 600,
+  ));
 }
 
 body {
+  color: var(--ihm-text);
+  font-family: var(--ihm-font-family);
   margin: 0;
+  min-width: 20rem;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+a,
+button {
+  -webkit-tap-highlight-color: transparent;
+}
+
+:focus-visible {
+  outline: 0.1875rem solid #5f450e;
+  outline-offset: 0.125rem;
+}
+
+.app-startup {
+  align-content: center;
+  color: var(--ihm-text-muted);
+  display: grid;
+  gap: var(--ihm-space-3);
+  justify-items: center;
+  min-height: 100vh;
+  padding: var(--ihm-space-5);
+  text-align: center;
+}
+
+.app-startup img {
+  background: #ffffff;
+  border-radius: var(--ihm-radius-sm);
+  box-shadow: var(--ihm-shadow-sm);
+  height: 4rem;
+  object-fit: contain;
+  padding: 0.125rem;
+  width: 4rem;
+}
+
+.app-startup strong {
+  color: var(--ihm-charcoal);
+}
+
+.auth-form {
+  display: grid;
+  gap: var(--ihm-space-3);
+}
+
+.auth-form mat-form-field {
+  width: 100%;
+}
+
+.auth-form .visibility-toggle {
+  font-size: 0.78rem;
+  margin-right: 0.15rem;
+  min-width: 3.5rem;
+}
+
+.auth-message {
+  border: 1px solid var(--ihm-border);
+  border-radius: var(--ihm-radius-sm);
+  display: grid;
+  font-size: 0.88rem;
+  gap: var(--ihm-space-1);
+  line-height: 1.45;
+  margin: 0;
+  padding: var(--ihm-space-3);
+}
+
+.auth-message.is-error {
+  background: #fdecec;
+  border-color: var(--ihm-error-border);
+  color: var(--ihm-error);
+}
+
+.auth-message.is-success {
+  background: #e9f6ed;
+  border-color: #b6dbc1;
+  color: #17652c;
+}
+
+.auth-message.is-info {
+  background: #fff8e8;
+  border-color: #e3c782;
+  color: #5f4209;
+}
+
+.auth-submit {
+  width: 100%;
+
+  @include mat.progress-spinner-overrides((
+    active-indicator-color: #5f5a50,
+  ));
+}
+
+.auth-submit-content {
+  align-items: center;
+  display: inline-flex;
+  gap: var(--ihm-space-2);
+  justify-content: center;
+}
+
+.auth-secondary-actions {
+  align-items: center;
+  display: flex;
+  justify-content: center;
+}
+
+.password-guidance {
+  color: var(--ihm-text-muted);
+  font-size: 0.8rem;
+  line-height: 1.45;
+  margin: -0.35rem 0 0;
+}
+
+.auth-field-error {
+  color: var(--ihm-error);
+  font-size: 0.75rem;
+  line-height: 1.35;
+  margin: -0.6rem 1rem 0;
+}
+
+.branch-menu-copy {
+  display: grid;
+  flex: 1 1 auto;
+  line-height: 1.25;
+  min-width: 13rem;
+  padding-block: 0.2rem;
+}
+
+.branch-menu-copy strong {
+  font-size: 0.86rem;
+  font-weight: 600;
+}
+
+.branch-menu-copy small {
+  color: var(--ihm-text-muted);
+  font-size: 0.75rem;
+}
+
+.branch-menu-item.is-selected {
+  background: var(--ihm-primary-soft);
+  box-shadow: inset 0.2rem 0 var(--ihm-primary);
+}
+
+.branch-current-label {
+  color: var(--ihm-secondary);
+  font-size: 0.68rem;
+  font-weight: 700;
+  margin-left: var(--ihm-space-3);
+}
+
+.account-menu-header {
+  border-bottom: 1px solid var(--ihm-border);
+  display: grid;
+  gap: 0.15rem;
+  line-height: 1.3;
+  margin-bottom: var(--ihm-space-1);
+  max-width: 18rem;
+  padding: var(--ihm-space-3) var(--ihm-space-4);
+}
+
+.account-menu-header strong,
+.account-menu-header span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.account-menu-header strong {
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.account-menu-header span {
+  color: var(--ihm-text-muted);
+  font-size: 0.75rem;
+}
+
+.ihm-snackbar-success {
+  @include mat.snack-bar-overrides((
+    container-color: #1f6b3a,
+    supporting-text-color: #ffffff,
+    button-color: #ffffff,
+  ));
+}
+
+.ihm-snackbar-error {
+  @include mat.snack-bar-overrides((
+    container-color: #981b1b,
+    supporting-text-color: #ffffff,
+    button-color: #ffffff,
+  ));
 }

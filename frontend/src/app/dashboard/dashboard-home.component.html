@@ -1,0 +1,65 @@
+<section class="dashboard-page">
+  @if (!activeBranch()) {
+    <app-page-header
+      eyebrow="Dashboard"
+      title="Welcome back"
+      subtitle="Select an authorized branch to continue."
+    />
+    <app-page-state
+      [empty]="true"
+      emptyTitle="No active branch"
+      emptyMessage="Select an authorized branch before opening branch-scoped areas."
+    />
+  } @else {
+    <mat-card appearance="outlined" class="welcome-card">
+      <mat-card-content>
+        <div class="welcome-copy">
+          <p class="eyebrow">Dashboard</p>
+          <h1>Welcome back</h1>
+          <p class="welcome-message">
+            <strong>{{ user()?.fullName }}</strong>, choose a workspace below to continue managing school operations.
+          </p>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    @if (quickActions().length) {
+      <section class="workspace-section" aria-labelledby="quick-actions-heading">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">Your workspace</p>
+            <h2 id="quick-actions-heading">Continue your work</h2>
+            <p>Open a management area to view or update its records.</p>
+          </div>
+        </div>
+        <div class="quick-action-grid">
+          @for (action of quickActions(); track action.path) {
+            <a
+              class="quick-action-link"
+              [routerLink]="action.path"
+              [attr.aria-label]="action.actionLabel + '. ' + action.description"
+            >
+              <mat-card appearance="outlined" class="quick-action-card">
+                <mat-card-content>
+                  <span class="action-category">{{ action.category }}</span>
+                  <h3>{{ action.label }}</h3>
+                  <p>{{ action.description }}</p>
+                  <span class="action-cta">
+                    {{ action.actionLabel }}
+                    <span aria-hidden="true">→</span>
+                  </span>
+                </mat-card-content>
+              </mat-card>
+            </a>
+          }
+        </div>
+      </section>
+    } @else {
+      <section class="workspace-note" aria-labelledby="workspace-note-heading">
+        <p class="eyebrow">Your workspace</p>
+        <h2 id="workspace-note-heading">Teaching tools will appear here</h2>
+        <p>Your assigned sessions and attendance areas will become available as those modules are introduced.</p>
+      </section>
+    }
+  }
+</section>
