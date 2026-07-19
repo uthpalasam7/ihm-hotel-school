@@ -522,9 +522,9 @@ git diff --check
 
 The backend does not need to be changed for a purely visual migration. If backend files are changed to fix a confirmed defect, run the complete backend test suite and build.
 
-### Stage 2 - Authentication Screens
+### Stage 2 - Authentication Screens (Completed)
 
-When Stage 2 is implemented, add or update tests for:
+Stage 2 includes tests for:
 
 - Login page loading, validation, and authentication error states
 - Initial and forced password change screens
@@ -533,7 +533,7 @@ When Stage 2 is implemented, add or update tests for:
 - Role-denied navigation and the dedicated Forbidden page
 - Immediate logout behaviour
 
-Stage 2 tests should verify that the existing JWT, refresh-token, authorization,
+Stage 2 tests verify that the existing JWT, refresh-token, authorization,
 logout, and forced-password-change behaviour is preserved. The only redirect
 changes are explanatory Login query parameters and routing authenticated users
 without a required role to `/forbidden`.
@@ -542,39 +542,45 @@ without a required role to `/forbidden`.
 
 ## 17. Implementation Order
 
-Follow this order:
+UI modernization stages are separate from the product implementation phases.
+A UI stage may start only when its underlying routes, APIs, authorization, and
+business workflows already exist.
 
-1. Inspect the current Angular version and frontend architecture.
-2. Confirm compatible Angular Material dependencies.
-3. Add Angular Material and CDK.
-4. Create the global IHM theme.
-5. Add shared layout and feedback foundations.
-6. Refactor the application shell.
-7. Refactor the Dashboard.
-8. Refactor the Branch list.
-9. Refactor the Branch create/edit form.
-10. Add and update tests.
-11. Run tests and production build.
-12. Perform desktop and mobile visual checks.
-13. Stop and request review.
-14. After approval, modernize Stage 2 - Authentication Screens.
-15. After Stage 2 approval, modernize Stage 3 - Courses and Batches.
-16. After Stage 3 approval, modernize Stage 4 - Users and Access Administration.
-17. After Stage 4 approval, modernize Stage 5 - Students and Enrollments.
-18. After Stage 5 approval, modernize Stage 6 - Sessions and Attendance.
-19. After Stage 6 approval, modernize Stage 7 - Payments, Reports, Audit, and Settings.
+Current order and progress:
 
-Do not continue to other modules until the first pilot has been reviewed and approved.
+1. **Stage 1 - Completed and reviewed:** Material foundation, application
+   shell, Dashboard, Branch list, and Branch add/edit flow.
+2. **Stage 2 - Completed:** Login, password-change flows, authentication
+   feedback, startup state, and Forbidden page.
+3. **Stage 3 - Completed:** Courses, Batches, fee-plan presentation,
+   schedule-mode presentation, and lecturer selection.
+4. **Stage 4 - Next and ready:** Users, roles, branch assignments, account
+   status, and password-reset administration. The underlying frontend screens
+   and backend APIs are implemented.
+5. **Stage 5 - Not ready:** Implement Students and Enrollments as a product
+   phase before starting their UI modernization.
+6. **Stage 6 - Not ready:** Implement Sessions and Attendance as product phases
+   before starting their UI modernization.
+7. **Stage 7 - Not ready:** Implement Payments, Reports, the Audit view, and
+   Settings before starting their UI modernization.
+
+Complete and review one ready UI stage at a time. Do not create visual-only
+screens for modules that currently contain placeholders.
 
 ---
 
-## 18. Future UI Migration Stages
+## 18. UI Migration Stages and Current Status
 
-After the first pilot is approved, migrate other areas gradually.
+Status verified against the repository on 2026-07-19.
 
-Suggested order:
+### Stage 1 - Completed
 
-### Stage 2
+- Application shell and navigation
+- Dashboard
+- Branch list
+- Branch add/edit flow
+
+### Stage 2 - Completed
 
 - Login
 - Initial or forced password change
@@ -603,35 +609,66 @@ navigation refinements:
 
 Do not add forgotten-password functionality unless it is separately specified.
 
-### Stage 3
+### Stage 3 - Completed
 
 - Courses
 - Batch list
 - Batch add/edit flow
 - Lecturer selection
 
-### Stage 4
+Stage 3 uses Material filter controls, server-side pagination, shared loading,
+empty, error, notification, and status patterns, and responsive list
+presentations. The Batch list keeps its desktop table and changes to
+information-dense cards on phones. Batch add/edit is a guided, linear workflow
+covering general details, the fee-plan preview, schedule mode, optional
+lecturer assignments, and a final review. Course and Batch forms warn before
+discarding unsaved changes. Batch date filters and the batch start, end, and
+examination due-date controls use accessible Material calendar pickers with
+day/month/year entry while retaining the existing `YYYY-MM-DD` API contract.
+
+The modernization preserves the existing Course and Batch APIs, branch
+authorization, lecturer-assignment rules, fee-plan calculations and
+display-only charge preview, validation, status-change reasons, save
+sequencing, and audit behaviour.
+
+### Stage 4 - Next and ready
 
 - Users
 - Roles
 - User branch assignments
 
-### Stage 5
+The User administration routes and APIs already exist, so Stage 4 can begin
+after Stage 3 is reviewed. Preserve role restrictions, administrator branch
+scope, password reset, account status, reasons, and audit behaviour.
+
+### Stage 5 - Blocked by product implementation
 
 - Students
 - Enrollments
 
-### Stage 6
+The repository currently contains placeholder frontend folders only and no
+Student or Enrollment backend modules. Implement and stabilize those business
+workflows before modernizing their UI.
+
+### Stage 6 - Blocked by product implementation
 
 - Sessions
 - Attendance
 
-### Stage 7
+The repository currently contains placeholder frontend folders only and no
+Session or Attendance backend modules. Implement and stabilize those business
+workflows before modernizing their UI.
+
+### Stage 7 - Blocked by product implementation
 
 - Payments
 - Reports
 - Audit
 - Settings
+
+Audit-event persistence exists for current administrative actions, but there is
+no Audit view workflow. Payment, Report, and Settings screens and their
+supporting APIs are also not implemented.
 
 Each stage should reuse the approved theme and shared UI patterns.
 
@@ -639,7 +676,7 @@ Each stage should reuse the approved theme and shared UI patterns.
 
 ## 19. Restrictions
 
-During the first pilot:
+Stage 1 pilot boundaries (completed):
 
 - Do not redesign the entire application.
 - Do not begin a new business-development phase.
@@ -657,13 +694,23 @@ During the first pilot:
 - Do not migrate Courses, Batches, Users, or future modules.
 - Do not commit generated build output or environment secrets.
 
-During Stage 2:
+Stage 2 boundaries (completed):
 
 - Do not change the existing JWT, refresh-token, authorization, immediate logout, post-login Dashboard, or forced-password-change behaviour.
 - Limit redirect changes to the approved Login reason messages and dedicated `/forbidden` route.
 - Do not add forgotten-password functionality unless it is separately specified.
 - Do not change backend authentication rules or API contracts unless a confirmed defect requires it.
 - Do not weaken authentication or authorization.
+
+For Stages 3 through 7:
+
+- Start only stages marked ready in Section 18.
+- Preserve existing APIs, authorization, branch scope, validation, status
+  transitions, audit behaviour, and business rules.
+- Do not use fake data or placeholder pages to make an unimplemented product
+  phase appear complete.
+- Complete the underlying product implementation and tests before modernizing a
+  blocked stage.
 
 ---
 
@@ -690,4 +737,6 @@ After completing the first pilot, provide:
 - Screens still using the old design
 - Any remaining risks
 
-Stop after completing the first pilot and wait for approval before modernizing Stage 2 or any later stage.
+Stages 1, 2, and 3 are complete. Stage 4 is the next ready modernization
+target. Stop for review after each UI stage. Do not start Stage 5 or later
+while its underlying product workflows remain unimplemented.

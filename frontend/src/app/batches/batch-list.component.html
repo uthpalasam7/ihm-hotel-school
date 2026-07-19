@@ -1,95 +1,221 @@
-<section class="page-header">
-  <div>
-    <p class="eyebrow">Academics</p>
-    <h2>Batches</h2>
-  </div>
-  <a class="primary-action" routerLink="/batches/new">Add batch</a>
-</section>
+<section class="batch-page">
+  <app-page-header
+    eyebrow="Academics"
+    title="Batches"
+    subtitle="Manage course intakes, dates, fees, schedule mode, and lecturer assignments."
+  >
+    <a mat-flat-button routerLink="/batches/new">Add batch</a>
+  </app-page-header>
 
-<section class="toolbar" aria-label="Batch filters">
-  <label>
-    Search
-    <input type="search" [(ngModel)]="search" (keyup.enter)="load()" placeholder="Batch number or course" />
-  </label>
-  <label>
-    Course
-    <select [(ngModel)]="courseId" (change)="load()">
-      <option value="">All courses</option>
-      @for (course of courses(); track course.id) {
-        <option [value]="course.id">{{ course.shortCode }} - {{ course.name }}</option>
-      }
-    </select>
-  </label>
-  <label>
-    Status
-    <select [(ngModel)]="status" (change)="load()">
-      <option value="">All statuses</option>
-      <option value="UPCOMING">Upcoming</option>
-      <option value="ACTIVE">Active</option>
-      <option value="COMPLETED">Completed</option>
-      <option value="CANCELLED">Cancelled</option>
-    </select>
-  </label>
-  <label>
-    From
-    <input type="date" [(ngModel)]="startDateFrom" (change)="load()" />
-  </label>
-  <label>
-    To
-    <input type="date" [(ngModel)]="startDateTo" (change)="load()" />
-  </label>
-  <button type="button" (click)="load()">Apply</button>
-</section>
+  <mat-card appearance="outlined" class="filter-card">
+    <mat-card-content>
+      <div class="filters" aria-label="Batch filters">
+        <mat-form-field appearance="outline" subscriptSizing="dynamic" class="search-filter">
+          <mat-label>Search</mat-label>
+          <input
+            matInput
+            type="search"
+            [(ngModel)]="search"
+            (keyup.enter)="applyFilters()"
+            placeholder="Batch number or course"
+          />
+        </mat-form-field>
 
-@if (success()) {
-  <p class="notice success">{{ success() }}</p>
-}
-@if (error()) {
-  <p class="notice error">{{ error() }}</p>
-}
-@if (loading()) {
-  <p class="notice">Loading batches...</p>
-} @else if (batches().length === 0) {
-  <p class="empty-state">No batches match the current filters.</p>
-} @else {
-  <div class="table-wrap">
-    <table>
-      <thead>
-        <tr>
-          <th>Batch</th>
-          <th>Course</th>
-          <th>Branch</th>
-          <th>Dates</th>
-          <th>Duration</th>
-          <th>Status</th>
-          <th>Lecturers</th>
-          <th>Students</th>
-          <th>Actions</th>
-        </tr>
-      </thead>
-      <tbody>
+        <mat-form-field appearance="outline" subscriptSizing="dynamic">
+          <mat-label>Course</mat-label>
+          <mat-select [(ngModel)]="courseId">
+            <mat-option value="">All courses</mat-option>
+            @for (course of courses(); track course.id) {
+              <mat-option [value]="course.id">{{ course.shortCode }} — {{ course.name }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" subscriptSizing="dynamic">
+          <mat-label>Status</mat-label>
+          <mat-select [(ngModel)]="status">
+            <mat-option value="">All statuses</mat-option>
+            <mat-option value="UPCOMING">Upcoming</mat-option>
+            <mat-option value="ACTIVE">Active</mat-option>
+            <mat-option value="COMPLETED">Completed</mat-option>
+            <mat-option value="CANCELLED">Cancelled</mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" subscriptSizing="dynamic">
+          <mat-label>Starts from</mat-label>
+          <input matInput [matDatepicker]="startDateFromPicker" [(ngModel)]="startDateFrom" />
+          <mat-hint>DD/MM/YYYY</mat-hint>
+          <mat-datepicker-toggle matIconSuffix [for]="startDateFromPicker" />
+          <mat-datepicker #startDateFromPicker />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" subscriptSizing="dynamic">
+          <mat-label>Starts before</mat-label>
+          <input matInput [matDatepicker]="startDateToPicker" [(ngModel)]="startDateTo" />
+          <mat-hint>DD/MM/YYYY</mat-hint>
+          <mat-datepicker-toggle matIconSuffix [for]="startDateToPicker" />
+          <mat-datepicker #startDateToPicker />
+        </mat-form-field>
+
+        <div class="filter-actions">
+          <button mat-flat-button type="button" (click)="applyFilters()">Apply filters</button>
+          <button mat-button type="button" (click)="clearFilters()">Reset</button>
+        </div>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <app-page-state
+    [loading]="loading()"
+    [error]="error()"
+    [empty]="!loading() && !error() && batches().length === 0"
+    loadingLabel="Loading batches…"
+    emptyTitle="No batches found"
+    emptyMessage="No batches match the current filters for the active branch."
+    (retry)="load()"
+  >
+    <button mat-stroked-button type="button" (click)="clearFilters()">Clear filters</button>
+  </app-page-state>
+
+  @if (!loading() && !error() && batches().length) {
+    <mat-card appearance="outlined" class="results-card">
+      <div class="desktop-table">
+        <div class="table-wrap">
+          <table mat-table [dataSource]="batches()" aria-label="Batches">
+            <ng-container matColumnDef="batch">
+              <th mat-header-cell *matHeaderCellDef>Batch</th>
+              <td mat-cell *matCellDef="let batch" class="batch-cell">
+                <strong>{{ batch.batchNumber }}</strong>
+                <span>{{ batch.scheduleMode === 'REGULAR' ? 'Regular schedule' : 'Manual sessions' }}</span>
+                <span>{{ batch.feePlanConfigured ? 'Fee plan configured' : 'Fee plan not configured' }}</span>
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="course">
+              <th mat-header-cell *matHeaderCellDef>Course</th>
+              <td mat-cell *matCellDef="let batch">
+                <strong>{{ batch.course.shortCode }}</strong>
+                <span class="secondary">{{ batch.course.name }}</span>
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="branch">
+              <th mat-header-cell *matHeaderCellDef>Branch</th>
+              <td mat-cell *matCellDef="let batch">{{ batch.branch.code }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="dates">
+              <th mat-header-cell *matHeaderCellDef>Dates</th>
+              <td mat-cell *matCellDef="let batch">
+                {{ batch.startDate | date:'d MMM y' }}<br />
+                <span class="secondary">to {{ batch.endDate | date:'d MMM y' }}</span>
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="duration">
+              <th mat-header-cell *matHeaderCellDef>Duration</th>
+              <td mat-cell *matCellDef="let batch">{{ batch.durationMonths }} months</td>
+            </ng-container>
+
+            <ng-container matColumnDef="status">
+              <th mat-header-cell *matHeaderCellDef>Status</th>
+              <td mat-cell *matCellDef="let batch"><app-status-chip [value]="batch.status" /></td>
+            </ng-container>
+
+            <ng-container matColumnDef="counts">
+              <th mat-header-cell *matHeaderCellDef>People</th>
+              <td mat-cell *matCellDef="let batch">
+                {{ batch.lecturerCount }} lecturer(s)<br />
+                <span class="secondary">{{ batch.studentCount }} student(s)</span>
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="actions">
+              <th mat-header-cell *matHeaderCellDef><span class="visually-hidden">Actions</span></th>
+              <td mat-cell *matCellDef="let batch" class="action-cell">
+                <button
+                  mat-button
+                  type="button"
+                  [matMenuTriggerFor]="rowMenu"
+                  [disabled]="updatingId() === batch.id"
+                  [attr.aria-label]="'Actions for ' + batch.batchNumber"
+                >
+                  {{ updatingId() === batch.id ? 'Updating…' : 'Actions' }}
+                </button>
+                <mat-menu #rowMenu="matMenu" xPosition="before">
+                  <a mat-menu-item [routerLink]="['/batches', batch.id, 'edit']">Edit</a>
+                  <button mat-menu-item type="button" (click)="changeStatus(batch)">
+                    {{ batch.status === 'CANCELLED' ? 'Reopen' : 'Cancel' }}
+                  </button>
+                </mat-menu>
+              </td>
+            </ng-container>
+
+            <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+            <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+          </table>
+        </div>
+      </div>
+
+      <div class="mobile-cards" aria-label="Batches">
         @for (batch of batches(); track batch.id) {
-          <tr>
-            <td>
-              <strong>{{ batch.batchNumber }}</strong>
-              <span>{{ batch.scheduleMode }} · {{ batch.feePlanConfigured ? 'Fee plan set' : 'No fee plan' }}</span>
-            </td>
-            <td>{{ batch.course.shortCode }}</td>
-            <td>{{ batch.branch.code }}</td>
-            <td>{{ batch.startDate }} to {{ batch.endDate }}</td>
-            <td>{{ batch.durationMonths }} months</td>
-            <td><span class="badge" [class.is-danger]="batch.status === 'CANCELLED'">{{ batch.status }}</span></td>
-            <td>{{ batch.lecturerCount }}</td>
-            <td>{{ batch.studentCount }}</td>
-            <td class="actions">
-              <a [routerLink]="['/batches', batch.id, 'edit']">Edit</a>
-              <button type="button" (click)="changeStatus(batch)">
-                {{ batch.status === 'CANCELLED' ? 'Reopen' : 'Cancel' }}
+          <article class="batch-card">
+            <div class="batch-card-heading">
+              <div>
+                <span class="course-code">{{ batch.course.shortCode }}</span>
+                <h2>{{ batch.batchNumber }}</h2>
+                <p>{{ batch.course.name }}</p>
+              </div>
+              <app-status-chip [value]="batch.status" />
+            </div>
+
+            <dl>
+              <div>
+                <dt>Dates</dt>
+                <dd>{{ batch.startDate | date:'d MMM y' }} – {{ batch.endDate | date:'d MMM y' }}</dd>
+              </div>
+              <div>
+                <dt>Duration</dt>
+                <dd>{{ batch.durationMonths }} months</dd>
+              </div>
+              <div>
+                <dt>Schedule</dt>
+                <dd>{{ batch.scheduleMode === 'REGULAR' ? 'Regular' : 'Manual' }}</dd>
+              </div>
+              <div>
+                <dt>Fee plan</dt>
+                <dd>{{ batch.feePlanConfigured ? 'Configured' : 'Not configured' }}</dd>
+              </div>
+              <div>
+                <dt>Lecturers</dt>
+                <dd>{{ batch.lecturerCount }}</dd>
+              </div>
+              <div>
+                <dt>Students</dt>
+                <dd>{{ batch.studentCount }}</dd>
+              </div>
+            </dl>
+
+            <div class="batch-card-actions">
+              <a mat-button [routerLink]="['/batches', batch.id, 'edit']">Edit batch</a>
+              <button mat-button type="button" (click)="changeStatus(batch)" [disabled]="updatingId() === batch.id">
+                {{ updatingId() === batch.id ? 'Updating…' : batch.status === 'CANCELLED' ? 'Reopen' : 'Cancel' }}
               </button>
-            </td>
-          </tr>
+            </div>
+          </article>
         }
-      </tbody>
-    </table>
-  </div>
-}
+      </div>
+
+      <mat-paginator
+        [length]="total()"
+        [pageIndex]="pageIndex()"
+        [pageSize]="pageSize()"
+        [pageSizeOptions]="[10, 20, 50, 100]"
+        [showFirstLastButtons]="true"
+        (page)="changePage($event)"
+        aria-label="Batch pages"
+      />
+    </mat-card>
+  }
+</section>

@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { provideNativeDateAdapter } from '@angular/material/core';
 import { provideRouter } from '@angular/router';
 import { of } from 'rxjs';
 import { vi } from 'vitest';
@@ -53,17 +54,14 @@ describe('BatchListComponent', () => {
       imports: [BatchListComponent],
       providers: [
         provideRouter([]),
+        provideNativeDateAdapter(),
         { provide: BatchService, useValue: batchService },
         {
           provide: CourseService,
           useValue: {
-            list: () => of({
-              content: [{ id: 5, name: 'Pastry & Bakery', shortCode: 'PB', description: null, status: 'ACTIVE', batchCount: 1, createdAt: '', updatedAt: '', version: 0 }],
-              page: 0,
-              size: 100,
-              totalElements: 1,
-              totalPages: 1,
-            }),
+            listAllActive: () => of([
+              { id: 5, name: 'Pastry & Bakery', shortCode: 'PB', description: null, status: 'ACTIVE', batchCount: 1, createdAt: '', updatedAt: '', version: 0 },
+            ]),
           },
         },
       ],
@@ -88,7 +86,7 @@ describe('BatchListComponent', () => {
 
     const text = fixture.nativeElement.textContent as string;
     expect(text).toContain('2026/PB02');
-    expect(text).toContain('Fee plan set');
+    expect(text).toContain('Fee plan configured');
     expect(text).toContain('PB');
   });
 
@@ -102,5 +100,25 @@ describe('BatchListComponent', () => {
     await fixture.whenStable();
 
     expect(batchService.list.mock.calls.length).toBeGreaterThanOrEqual(2);
+  });
+
+  it('serializes selected filter dates for the existing API', async () => {
+    fixture = TestBed.createComponent(BatchListComponent);
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    const component = fixture.componentInstance as unknown as {
+      startDateFrom: Date;
+      startDateTo: Date;
+      load: () => void;
+    };
+    component.startDateFrom = new Date(2026, 6, 1);
+    component.startDateTo = new Date(2026, 6, 31);
+    component.load();
+
+    expect(batchService.list).toHaveBeenLastCalledWith(expect.objectContaining({
+      startDateFrom: '2026-07-01',
+      startDateTo: '2026-07-31',
+    }));
   });
 });

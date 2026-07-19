@@ -1,54 +1,88 @@
-<section class="page-header">
-  <div>
-    <p class="eyebrow">Academics</p>
-    <h2>{{ editingId() ? 'Edit course' : 'Add course' }}</h2>
-  </div>
-  <a routerLink="/courses">Back to courses</a>
+<section class="course-form-page">
+  <app-page-header
+    eyebrow="Course administration"
+    [title]="editingId() ? 'Edit course' : 'Add course'"
+    subtitle="Maintain the course definition used when creating batches and enrollments."
+  >
+    <a mat-button routerLink="/courses">Back to courses</a>
+  </app-page-header>
+
+  <app-page-state
+    [loading]="loading()"
+    [error]="loading() || serverError() ? null : error()"
+    loadingLabel="Loading course…"
+    (retry)="loadCourse()"
+  />
+
+  @if (!loading() && (!error() || serverError())) {
+    <mat-card appearance="outlined" class="form-card">
+      <form [formGroup]="form" (ngSubmit)="save()" novalidate>
+        @if (error()) {
+          <div class="form-error" role="alert">
+            <strong>Course could not be saved</strong>
+            <span>{{ error() }}</span>
+          </div>
+        }
+
+        <div class="form-introduction">
+          <h2>Course details</h2>
+          <p>Fields marked with an asterisk are required.</p>
+        </div>
+
+        <div class="form-grid">
+          <mat-form-field appearance="outline">
+            <mat-label>Course name</mat-label>
+            <input matInput formControlName="name" maxlength="200" autocomplete="off" />
+            <mat-hint align="end">{{ form.controls.name.value.length }}/200</mat-hint>
+            @if (form.controls.name.touched && form.controls.name.hasError('required')) {
+              <mat-error>Course name is required</mat-error>
+            } @else if (form.controls.name.touched && form.controls.name.hasError('maxlength')) {
+              <mat-error>Course name must be 200 characters or fewer</mat-error>
+            } @else if (fieldError('name')) {
+              <mat-error>{{ fieldError('name') }}</mat-error>
+            }
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Short code</mat-label>
+            <input matInput formControlName="shortCode" maxlength="20" autocomplete="off" />
+            <mat-hint>Saved in uppercase · {{ form.controls.shortCode.value.length }}/20</mat-hint>
+            @if (form.controls.shortCode.touched && form.controls.shortCode.hasError('required')) {
+              <mat-error>Short code is required</mat-error>
+            } @else if (form.controls.shortCode.touched && form.controls.shortCode.hasError('maxlength')) {
+              <mat-error>Short code must be 20 characters or fewer</mat-error>
+            } @else if (fieldError('shortCode')) {
+              <mat-error>{{ fieldError('shortCode') }}</mat-error>
+            }
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Status</mat-label>
+            <mat-select formControlName="status">
+              <mat-option value="ACTIVE">Active</mat-option>
+              <mat-option value="INACTIVE">Inactive</mat-option>
+            </mat-select>
+            @if (fieldError('status')) {
+              <mat-error>{{ fieldError('status') }}</mat-error>
+            }
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="wide">
+            <mat-label>Description</mat-label>
+            <textarea matInput formControlName="description" rows="5"></textarea>
+            @if (fieldError('description')) {
+              <mat-error>{{ fieldError('description') }}</mat-error>
+            }
+          </mat-form-field>
+        </div>
+
+        <div class="form-actions">
+          <button mat-flat-button type="submit" [disabled]="form.invalid || saving()">
+            {{ saving() ? 'Saving…' : 'Save course' }}
+          </button>
+          <a mat-button routerLink="/courses">Cancel</a>
+        </div>
+      </form>
+    </mat-card>
+  }
 </section>
-
-@if (loading()) {
-  <p class="notice">Loading course...</p>
-} @else {
-  <form [formGroup]="form" (ngSubmit)="save()">
-    @if (error()) {
-      <p class="notice error">{{ error() }}</p>
-    }
-
-    <label>
-      Course name
-      <input formControlName="name" />
-      @if (form.controls.name.touched && form.controls.name.invalid) {
-        <span>Name is required.</span>
-      }
-      @if (fieldError('name')) {
-        <span>{{ fieldError('name') }}</span>
-      }
-    </label>
-
-    <label>
-      Short code
-      <input formControlName="shortCode" />
-      @if (form.controls.shortCode.touched && form.controls.shortCode.invalid) {
-        <span>Short code is required.</span>
-      }
-      @if (fieldError('shortCode')) {
-        <span>{{ fieldError('shortCode') }}</span>
-      }
-    </label>
-
-    <label>
-      Description
-      <textarea formControlName="description" rows="4"></textarea>
-    </label>
-
-    <label>
-      Status
-      <select formControlName="status">
-        <option value="ACTIVE">Active</option>
-        <option value="INACTIVE">Inactive</option>
-      </select>
-    </label>
-
-    <button type="submit" [disabled]="saving()">{{ saving() ? 'Saving...' : 'Save course' }}</button>
-  </form>
-}

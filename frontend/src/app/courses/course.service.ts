@@ -1,6 +1,6 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
-import { Observable } from 'rxjs';
+import { EMPTY, Observable, expand, map, reduce } from 'rxjs';
 import { PageResponse } from '../shared/page.model';
 import { Course, CourseRequest, CourseStatus } from './course.models';
 
@@ -19,6 +19,17 @@ export class CourseService {
       params = params.set('status', filters.status);
     }
     return this.http.get<PageResponse<Course>>('/api/v1/courses', { params });
+  }
+
+  listAllActive(): Observable<Course[]> {
+    const size = 100;
+    return this.list({ status: 'ACTIVE', page: 0, size }).pipe(
+      expand((page) => page.page + 1 < page.totalPages
+        ? this.list({ status: 'ACTIVE', page: page.page + 1, size })
+        : EMPTY),
+      reduce((courses, page) => [...courses, ...page.content], [] as Course[]),
+      map((courses) => courses.sort((left, right) => left.shortCode.localeCompare(right.shortCode))),
+    );
   }
 
   get(id: number): Observable<Course> {

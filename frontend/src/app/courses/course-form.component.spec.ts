@@ -52,7 +52,7 @@ describe('CourseFormComponent', () => {
     fixture.detectChanges();
 
     expect(courseService.create).not.toHaveBeenCalled();
-    expect(fixture.nativeElement.textContent).toContain('Name is required');
+    expect(fixture.nativeElement.textContent).toContain('Course name is required');
     expect(fixture.nativeElement.textContent).toContain('Short code is required');
   });
 
@@ -78,5 +78,19 @@ describe('CourseFormComponent', () => {
       description: 'Certificate course',
       status: 'ACTIVE',
     });
+  });
+
+  it('reports unsaved changes after the form is edited', () => {
+    fixture = TestBed.createComponent(CourseFormComponent);
+    fixture.detectChanges();
+    const component = fixture.componentInstance as unknown as {
+      form: { patchValue: (value: unknown) => void; markAsDirty: () => void };
+      hasUnsavedChanges: () => boolean;
+    };
+
+    component.form.patchValue({ name: 'Pastry & Bakery' });
+    component.form.markAsDirty();
+
+    expect(component.hasUnsavedChanges()).toBe(true);
   });
 });

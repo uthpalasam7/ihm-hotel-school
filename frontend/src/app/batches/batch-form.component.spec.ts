@@ -1,5 +1,6 @@
 import { Component } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { provideNativeDateAdapter } from '@angular/material/core';
 import { ActivatedRoute } from '@angular/router';
 import { provideRouter } from '@angular/router';
 import { of } from 'rxjs';
@@ -103,6 +104,7 @@ describe('BatchFormComponent', () => {
           { path: 'batches', component: BlankComponent },
           { path: 'batches/:id/edit', component: BatchFormComponent },
         ]),
+        provideNativeDateAdapter(),
         {
           provide: ActivatedRoute,
           useValue: {
@@ -117,25 +119,17 @@ describe('BatchFormComponent', () => {
         {
           provide: CourseService,
           useValue: {
-            list: () => of({
-              content: [{ id: 5, name: 'Pastry & Bakery', shortCode: 'PB', description: null, status: 'ACTIVE', batchCount: 0, createdAt: '', updatedAt: '', version: 0 }],
-              page: 0,
-              size: 100,
-              totalElements: 1,
-              totalPages: 1,
-            }),
+            listAllActive: () => of([
+              { id: 5, name: 'Pastry & Bakery', shortCode: 'PB', description: null, status: 'ACTIVE', batchCount: 0, createdAt: '', updatedAt: '', version: 0 },
+            ]),
           },
         },
         {
           provide: BranchService,
           useValue: {
-            list: () => of({
-              content: [{ id: 1, code: 'IHM-MAIN', name: 'IHM Hotel School', status: 'ACTIVE', defaultBranch: true, createdAt: '', updatedAt: '', version: 0 }],
-              page: 0,
-              size: 100,
-              totalElements: 1,
-              totalPages: 1,
-            }),
+            listAllActive: () => of([
+              { id: 1, code: 'IHM-MAIN', name: 'IHM Hotel School', status: 'ACTIVE', defaultBranch: true, createdAt: '', updatedAt: '', version: 0 },
+            ]),
           },
         },
         {
@@ -186,6 +180,43 @@ describe('BatchFormComponent', () => {
     expect(charges.reduce((total, charge) => total + charge.amount, 0)).toBe(17500);
   });
 
+  it('blocks guided navigation until the current step is valid', async () => {
+    fixture = TestBed.createComponent(BatchFormComponent);
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    const next = vi.fn();
+    const component = fixture.componentInstance as unknown as {
+      generalForm: {
+        patchValue: (value: unknown) => void;
+        markAllAsTouched: () => void;
+        invalid: boolean;
+      };
+      next: (stepper: { next: () => void }, control: unknown) => void;
+    };
+    component.generalForm.patchValue({ batchNumber: '', startDate: '', endDate: '' });
+
+    component.next({ next }, component.generalForm);
+
+    expect(next).not.toHaveBeenCalled();
+  });
+
+  it('validates the batch date order', async () => {
+    fixture = TestBed.createComponent(BatchFormComponent);
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    const component = fixture.componentInstance as unknown as {
+      generalForm: {
+        patchValue: (value: unknown) => void;
+        hasError: (error: string) => boolean;
+      };
+    };
+    component.generalForm.patchValue({ startDate: '2026-08-01', endDate: '2026-07-01' });
+
+    expect(component.generalForm.hasError('dateOrder')).toBe(true);
+  });
+
   it('saves the batch, fee plan, and selected lecturer assignment', async () => {
     fixture = TestBed.createComponent(BatchFormComponent);
     fixture.detectChanges();
@@ -195,7 +226,6 @@ describe('BatchFormComponent', () => {
       generalForm: { patchValue: (value: unknown) => void };
       feeForm: { patchValue: (value: unknown) => void };
       scheduleForm: { patchValue: (value: unknown) => void };
-      lecturerForm: { patchValue: (value: unknown) => void };
       selectedLecturerIds: number[];
       save: () => void;
     };
@@ -203,8 +233,8 @@ describe('BatchFormComponent', () => {
       courseId: 5,
       branchId: 1,
       batchNumber: '2026/PB02',
-      startDate: '2026-07-01',
-      endDate: '2026-12-31',
+      startDate: new Date(2026, 6, 1),
+      endDate: new Date(2026, 11, 31),
       durationMonths: 6,
       status: 'UPCOMING',
     });
@@ -213,11 +243,10 @@ describe('BatchFormComponent', () => {
       courseFee: 10000,
       examinationFee: 2500,
       monthlyDueDay: 10,
-      examinationDueDate: '2026-12-15',
+      examinationDueDate: new Date(2026, 11, 15),
       currencyCode: 'LKR',
     });
     component.scheduleForm.patchValue({ scheduleMode: 'MANUAL' });
-    component.lecturerForm.patchValue({ assignmentStartDate: '2026-07-01' });
     component.selectedLecturerIds = [9];
 
     component.save();
@@ -226,17 +255,21 @@ describe('BatchFormComponent', () => {
       courseId: 5,
       branchId: 1,
       batchNumber: '2026/PB02',
+      startDate: '2026-07-01',
+      endDate: '2026-12-31',
       scheduleMode: 'MANUAL',
     }));
     expect(batchService.saveFeePlan).toHaveBeenCalledWith(30, expect.objectContaining({
       registrationFee: 5000,
       courseFee: 10000,
       examinationFee: 2500,
+      examinationDueDate: '2026-12-15',
       currencyCode: 'LKR',
     }));
     expect(batchService.syncLecturers).toHaveBeenCalledWith(30, expect.objectContaining({
       lecturerUserIds: [9],
       assignmentStartDate: '2026-07-01',
+      assignmentEndDate: null,
     }));
     expect(batchService.addLecturer).not.toHaveBeenCalled();
   });
@@ -323,7 +356,7 @@ describe('BatchFormComponent', () => {
         lecturerFullName: 'Chef Lecturer',
         lecturerUsername: 'chef',
         assignmentStartDate: '2026-07-01',
-        assignmentEndDate: null,
+        assignmentEndDate: '2026-10-31',
         status: 'ACTIVE',
         createdAt: '2026-06-28T00:00:00Z',
         updatedAt: '2026-06-28T00:00:00Z',
@@ -340,18 +373,19 @@ describe('BatchFormComponent', () => {
       selectedLecturerIds: number[];
       isLecturerSelected: (id: number) => boolean;
       selectedLecturerSummaries: () => Array<{ fullName: string }>;
-      setStep: (step: number) => void;
+      assignments: () => Array<{ assignmentStartDate: string; assignmentEndDate: string | null }>;
     };
-    component.setStep(4);
-    fixture.detectChanges();
 
     expect(component.selectedLecturerIds).toEqual([9]);
     expect(component.isLecturerSelected(9)).toBe(true);
     expect(component.selectedLecturerSummaries().map((lecturer) => lecturer.fullName)).toEqual(['Chef Lecturer']);
-    expect(fixture.nativeElement.textContent).toContain('Chef Lecturer');
+    expect(component.assignments()[0]).toEqual(expect.objectContaining({
+      assignmentStartDate: '2026-07-01',
+      assignmentEndDate: '2026-10-31',
+    }));
   });
 
-  it('syncs edited lecturer additions, removals, and repeated saves without duplicate create calls', async () => {
+  it('syncs edited lecturer additions and removals without duplicate submissions', async () => {
     const batch = {
       id: 30,
       course: { id: 5, name: 'Pastry & Bakery', shortCode: 'PB' },
@@ -421,14 +455,11 @@ describe('BatchFormComponent', () => {
     component.save();
     component.save();
 
-    expect(batchService.syncLecturers).toHaveBeenCalledTimes(2);
-    expect(batchService.syncLecturers).toHaveBeenNthCalledWith(1, 30, expect.objectContaining({
+    expect(batchService.syncLecturers).toHaveBeenCalledTimes(1);
+    expect(batchService.syncLecturers).toHaveBeenCalledWith(30, expect.objectContaining({
       lecturerUserIds: [10],
       assignmentStartDate: '2026-07-01',
-    }));
-    expect(batchService.syncLecturers).toHaveBeenNthCalledWith(2, 30, expect.objectContaining({
-      lecturerUserIds: [10],
-      assignmentStartDate: '2026-07-01',
+      assignmentEndDate: null,
     }));
     expect(batchService.addLecturer).not.toHaveBeenCalled();
   });

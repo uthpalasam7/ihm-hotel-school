@@ -170,8 +170,10 @@ Implemented:
 - User list, create, edit, role assignment, branch assignment, activation/deactivation, and password reset APIs and screens
 - Lecturer account creation by assigned-branch administrators
 - Audit event persistence for branch and user administration actions
-- Course list, create, edit, activation/deactivation APIs and screens
-- Course batch list, create, edit, status-change APIs and screens
+- Modernized Material Course list and guarded create/edit flow with
+  server-side pagination and validation feedback
+- Responsive Course batch list and guided add/edit wizard with preserved
+  status-change APIs and branch authorization
 - Branch-scoped batch filtering through the active branch context
 - Batch fee-plan configuration with installment preview only
 - Batch schedule-mode selection

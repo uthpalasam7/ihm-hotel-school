@@ -1,68 +1,116 @@
-<section class="page-header">
-  <div>
-    <p class="eyebrow">Academics</p>
-    <h2>Courses</h2>
-  </div>
-  <a class="primary-action" routerLink="/courses/new">Add course</a>
-</section>
+<section class="course-page">
+  <app-page-header
+    eyebrow="Academics"
+    title="Courses"
+    subtitle="Manage the reusable course definitions offered by IHM Hotel School."
+  >
+    <a mat-flat-button routerLink="/courses/new">Add course</a>
+  </app-page-header>
 
-<section class="toolbar" aria-label="Course filters">
-  <label>
-    Search
-    <input type="search" [(ngModel)]="search" (keyup.enter)="load()" placeholder="Name or short code" />
-  </label>
-  <label>
-    Status
-    <select [(ngModel)]="status" (change)="load()">
-      <option value="">All statuses</option>
-      <option value="ACTIVE">Active</option>
-      <option value="INACTIVE">Inactive</option>
-    </select>
-  </label>
-  <button type="button" (click)="load()">Apply</button>
-</section>
+  <mat-card appearance="outlined" class="filter-card">
+    <mat-card-content>
+      <div class="filters" aria-label="Course filters">
+        <mat-form-field appearance="outline" subscriptSizing="dynamic">
+          <mat-label>Search</mat-label>
+          <input
+            matInput
+            type="search"
+            [(ngModel)]="search"
+            (keyup.enter)="applyFilters()"
+            placeholder="Name or short code"
+          />
+        </mat-form-field>
 
-@if (success()) {
-  <p class="notice success">{{ success() }}</p>
-}
-@if (error()) {
-  <p class="notice error">{{ error() }}</p>
-}
-@if (loading()) {
-  <p class="notice">Loading courses...</p>
-} @else if (courses().length === 0) {
-  <p class="empty-state">No courses match the current filters.</p>
-} @else {
-  <div class="table-wrap">
-    <table>
-      <thead>
-        <tr>
-          <th>Course</th>
-          <th>Short code</th>
-          <th>Batches</th>
-          <th>Status</th>
-          <th>Actions</th>
-        </tr>
-      </thead>
-      <tbody>
-        @for (course of courses(); track course.id) {
-          <tr>
-            <td>
+        <mat-form-field appearance="outline" subscriptSizing="dynamic">
+          <mat-label>Status</mat-label>
+          <mat-select [(ngModel)]="status" (selectionChange)="applyFilters()">
+            <mat-option value="">All statuses</mat-option>
+            <mat-option value="ACTIVE">Active</mat-option>
+            <mat-option value="INACTIVE">Inactive</mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <div class="filter-actions">
+          <button mat-flat-button type="button" (click)="applyFilters()">Apply filters</button>
+          <button mat-button type="button" (click)="clearFilters()">Reset</button>
+        </div>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <app-page-state
+    [loading]="loading()"
+    [error]="error()"
+    [empty]="!loading() && !error() && courses().length === 0"
+    loadingLabel="Loading courses…"
+    emptyTitle="No courses found"
+    emptyMessage="No courses match the current filters."
+    (retry)="load()"
+  >
+    <button mat-stroked-button type="button" (click)="clearFilters()">Clear filters</button>
+  </app-page-state>
+
+  @if (!loading() && !error() && courses().length) {
+    <mat-card appearance="outlined" class="table-card">
+      <div class="table-wrap">
+        <table mat-table [dataSource]="courses()" aria-label="Courses">
+          <ng-container matColumnDef="course">
+            <th mat-header-cell *matHeaderCellDef>Course</th>
+            <td mat-cell *matCellDef="let course" class="course-cell">
               <strong>{{ course.name }}</strong>
-              <span>{{ course.description || 'No description' }}</span>
+              <span>{{ course.description || 'No description provided' }}</span>
             </td>
-            <td>{{ course.shortCode }}</td>
-            <td>{{ course.batchCount }}</td>
-            <td><span class="badge" [class.is-danger]="course.status === 'INACTIVE'">{{ course.status }}</span></td>
-            <td class="actions">
-              <a [routerLink]="['/courses', course.id, 'edit']">Edit</a>
-              <button type="button" (click)="changeStatus(course)">
-                {{ course.status === 'ACTIVE' ? 'Deactivate' : 'Activate' }}
+          </ng-container>
+
+          <ng-container matColumnDef="shortCode">
+            <th mat-header-cell *matHeaderCellDef>Short code</th>
+            <td mat-cell *matCellDef="let course"><strong>{{ course.shortCode }}</strong></td>
+          </ng-container>
+
+          <ng-container matColumnDef="batchCount">
+            <th mat-header-cell *matHeaderCellDef>Batches</th>
+            <td mat-cell *matCellDef="let course">{{ course.batchCount }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="status">
+            <th mat-header-cell *matHeaderCellDef>Status</th>
+            <td mat-cell *matCellDef="let course"><app-status-chip [value]="course.status" /></td>
+          </ng-container>
+
+          <ng-container matColumnDef="actions">
+            <th mat-header-cell *matHeaderCellDef><span class="visually-hidden">Actions</span></th>
+            <td mat-cell *matCellDef="let course" class="action-cell">
+              <button
+                mat-button
+                type="button"
+                [matMenuTriggerFor]="rowMenu"
+                [disabled]="updatingId() === course.id"
+                [attr.aria-label]="'Actions for ' + course.shortCode"
+              >
+                {{ updatingId() === course.id ? 'Updating…' : 'Actions' }}
               </button>
+              <mat-menu #rowMenu="matMenu" xPosition="before">
+                <a mat-menu-item [routerLink]="['/courses', course.id, 'edit']">Edit</a>
+                <button mat-menu-item type="button" (click)="changeStatus(course)">
+                  {{ course.status === 'ACTIVE' ? 'Deactivate' : 'Activate' }}
+                </button>
+              </mat-menu>
             </td>
-          </tr>
-        }
-      </tbody>
-    </table>
-  </div>
-}
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+          <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+        </table>
+      </div>
+      <mat-paginator
+        [length]="total()"
+        [pageIndex]="pageIndex()"
+        [pageSize]="pageSize()"
+        [pageSizeOptions]="[10, 20, 50, 100]"
+        [showFirstLastButtons]="true"
+        (page)="changePage($event)"
+        aria-label="Course pages"
+      />
+    </mat-card>
+  }
+</section>

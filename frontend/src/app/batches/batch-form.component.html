@@ -1,216 +1,572 @@
-<section class="page-header">
-  <div>
-    <p class="eyebrow">Academics</p>
-    <h2>{{ editingId() ? 'Edit batch' : 'Add batch' }}</h2>
-  </div>
-  <a routerLink="/batches">Back to batches</a>
-</section>
+<section class="batch-form-page">
+  <app-page-header
+    eyebrow="Batch administration"
+    [title]="editingId() ? 'Edit batch' : 'Add batch'"
+    subtitle="Configure the intake, fee plan, schedule mode, and lecturer assignments."
+  >
+    <a mat-button routerLink="/batches">Back to batches</a>
+  </app-page-header>
 
-@if (loading()) {
-  <p class="notice">Loading batch...</p>
-} @else {
-  <nav class="steps" aria-label="Batch wizard steps">
-    <button type="button" [class.is-active]="step() === 1" (click)="setStep(1)">General</button>
-    <button type="button" [class.is-active]="step() === 2" (click)="setStep(2)">Fees</button>
-    <button type="button" [class.is-active]="step() === 3" (click)="setStep(3)">Schedule</button>
-    <button type="button" [class.is-active]="step() === 4" (click)="setStep(4)">Lecturers</button>
-    <button type="button" [class.is-active]="step() === 5" (click)="setStep(5)">Review</button>
-  </nav>
+  <app-page-state
+    [loading]="loading()"
+    [error]="loading() || serverError() ? null : error()"
+    loadingLabel="Loading batch…"
+  />
 
-  @if (error()) {
-    <p class="notice error">{{ error() }}</p>
-  }
-
-  @if (step() === 1) {
-    <form [formGroup]="generalForm" class="panel">
-      <label>
-        Branch
-        <select formControlName="branchId" (change)="branchChanged()">
-          @for (branch of branches(); track branch.id) {
-            <option [value]="branch.id">{{ branch.code }} - {{ branch.name }}</option>
-          }
-        </select>
-      </label>
-      <label>
-        Course
-        <select formControlName="courseId">
-          @for (course of courses(); track course.id) {
-            <option [value]="course.id">{{ course.shortCode }} - {{ course.name }}</option>
-          }
-        </select>
-      </label>
-      <label>
-        Batch number
-        <input formControlName="batchNumber" placeholder="2026/PB02" />
-        @if (generalForm.controls.batchNumber.touched && generalForm.controls.batchNumber.invalid) {
-          <span>Batch number is required.</span>
-        }
-        @if (fieldError('batchNumber')) {
-          <span>{{ fieldError('batchNumber') }}</span>
-        }
-      </label>
-      <div class="grid">
-        <label>
-          Start date
-          <input type="date" formControlName="startDate" (change)="syncAssignmentStartDate()" />
-        </label>
-        <label>
-          End date
-          <input type="date" formControlName="endDate" />
-        </label>
-        <label>
-          Duration months
-          <input type="number" min="1" formControlName="durationMonths" />
-        </label>
+  @if (!loading() && (!error() || serverError())) {
+    @if (error()) {
+      <div class="form-error" role="alert">
+        <strong>Batch could not be saved</strong>
+        <span>{{ error() }}</span>
       </div>
-      <label>
-        Status
-        <select formControlName="status">
-          <option value="UPCOMING">Upcoming</option>
-          <option value="ACTIVE">Active</option>
-          <option value="COMPLETED">Completed</option>
-          <option value="CANCELLED">Cancelled</option>
-        </select>
-      </label>
-      <label>
-        Remarks
-        <textarea formControlName="remarks" rows="3"></textarea>
-      </label>
-    </form>
-  }
-
-  @if (step() === 2) {
-    <form [formGroup]="feeForm" class="panel">
-      <div class="grid">
-        <label>
-          Registration fee
-          <input type="number" min="0" step="0.01" formControlName="registrationFee" />
-        </label>
-        <label>
-          Total course fee
-          <input type="number" min="0" step="0.01" formControlName="courseFee" />
-        </label>
-        <label>
-          Examination fee
-          <input type="number" min="0" step="0.01" formControlName="examinationFee" />
-        </label>
-      </div>
-      <div class="grid">
-        <label>
-          Monthly due day
-          <input type="number" min="1" max="31" formControlName="monthlyDueDay" />
-        </label>
-        <label>
-          Examination due date
-          <input type="date" formControlName="examinationDueDate" />
-        </label>
-        <label>
-          Currency
-          <input formControlName="currencyCode" />
-        </label>
-      </div>
-      <div class="preview">
-        <h3>Installment preview</h3>
-        @for (charge of previewCharges(); track charge.type + '-' + charge.installmentNumber) {
-          <div>
-            <span>{{ charge.description }}</span>
-            <strong>{{ charge.dueDate }} · {{ feeForm.controls.currencyCode.value }} {{ charge.amount.toFixed(2) }}</strong>
-          </div>
-        }
-      </div>
-    </form>
-  }
-
-  @if (step() === 3) {
-    <form [formGroup]="scheduleForm" class="panel">
-      <fieldset>
-        <legend>Schedule mode</legend>
-        <label class="option">
-          <input type="radio" formControlName="scheduleMode" value="REGULAR" />
-          Regular weekly schedule
-        </label>
-        <label class="option">
-          <input type="radio" formControlName="scheduleMode" value="MANUAL" />
-          Manual sessions
-        </label>
-      </fieldset>
-    </form>
-  }
-
-  @if (step() === 4) {
-    <form [formGroup]="lecturerForm" class="panel">
-      <div class="lecturer-select">
-        <label class="search-field">
-          Search lecturers
-          <input type="search" [value]="lecturerSearch()" (input)="lecturerSearch.set($any($event.target).value)" placeholder="Search by name or username" />
-        </label>
-        <div class="selected-lecturers" aria-live="polite">
-          @if (selectedLecturerSummaries().length) {
-            @for (lecturer of selectedLecturerSummaries(); track lecturer.id) {
-              <span class="chip">
-                {{ lecturer.fullName }}
-                <button type="button" (click)="removeSelectedLecturer(lecturer.id)" [attr.aria-label]="'Remove ' + lecturer.fullName">x</button>
-              </span>
-            }
-          } @else {
-            <p>No lecturers selected.</p>
-          }
-        </div>
-        <div class="lecturer-options">
-          @if (filteredLecturers().length) {
-            @for (lecturer of filteredLecturers(); track lecturer.id) {
-              <label class="lecturer-option" [class.is-selected]="isLecturerSelected(lecturer.id)">
-                <input type="checkbox" [checked]="isLecturerSelected(lecturer.id)" (change)="toggleLecturer(lecturer.id, $any($event.target).checked)" />
-                <span>
-                  <strong>{{ lecturer.fullName }}</strong>
-                  <small>{{ lecturer.username }}</small>
-                </span>
-              </label>
-            }
-          } @else {
-            <p class="empty">No active lecturers found for this branch.</p>
-          }
-        </div>
-      </div>
-      <div class="grid">
-        <label>
-          Assignment start
-          <input type="date" formControlName="assignmentStartDate" />
-        </label>
-        <label>
-          Assignment end
-          <input type="date" formControlName="assignmentEndDate" />
-        </label>
-      </div>
-      @if (assignments().length) {
-        <div class="preview">
-          <h3>Current assignments</h3>
-          @for (assignment of assignments(); track assignment.id) {
-            <div>
-              <span>{{ assignment.lecturerFullName }}</span>
-              <strong>{{ assignment.status }}</strong>
-            </div>
-          }
-        </div>
-      }
-    </form>
-  }
-
-  @if (step() === 5) {
-    <section class="panel review">
-      <h3>{{ generalForm.controls.batchNumber.value || 'New batch' }}</h3>
-      <p>{{ scheduleForm.controls.scheduleMode.value }} schedule · {{ generalForm.controls.durationMonths.value }} months</p>
-      <p>{{ feeForm.controls.currencyCode.value }} {{ feeForm.controls.courseFee.value.toFixed(2) }} course fee</p>
-      <p>{{ selectedLecturerIds.length }} selected lecturer(s)</p>
-    </section>
-  }
-
-  <div class="actions">
-    <button type="button" (click)="previous()" [disabled]="step() === 1">Back</button>
-    @if (step() < 5) {
-      <button type="button" (click)="next()">Next</button>
-    } @else {
-      <button type="button" (click)="save()" [disabled]="saving()">{{ saving() ? 'Saving...' : 'Save batch' }}</button>
     }
-  </div>
-}
+
+    <mat-card appearance="outlined" class="wizard-card">
+      <mat-stepper
+        #stepper
+        [linear]="true"
+        [orientation]="stepperOrientation()"
+        aria-label="Batch setup"
+      >
+        <ng-template matStepperIcon="edit">
+          <span class="step-complete-icon" aria-hidden="true">✓</span>
+        </ng-template>
+        <ng-template matStepperIcon="done">
+          <span class="step-complete-icon" aria-hidden="true">✓</span>
+        </ng-template>
+
+        <mat-step [stepControl]="generalForm" label="General">
+          <form [formGroup]="generalForm" class="step-content" novalidate>
+            <div class="step-heading">
+              <h2>General details</h2>
+              <p>Define where and when this course intake will run.</p>
+            </div>
+
+            <div class="form-grid">
+              @if (branches().length === 1) {
+                <div class="context-field">
+                  <span>Branch</span>
+                  <strong>{{ branches()[0].code }} — {{ branches()[0].name }}</strong>
+                  <small>This is the only branch available to your account.</small>
+                </div>
+              } @else {
+                <mat-form-field appearance="outline">
+                  <mat-label>Branch</mat-label>
+                  <mat-select formControlName="branchId" (selectionChange)="branchChanged()">
+                    @for (branch of branches(); track branch.id) {
+                      <mat-option [value]="branch.id">
+                        {{ branch.code }} — {{ branch.name }}{{ branch.status === 'INACTIVE' ? ' (inactive)' : '' }}
+                      </mat-option>
+                    }
+                  </mat-select>
+                  @if (generalForm.controls.branchId.touched && generalForm.controls.branchId.invalid) {
+                    <mat-error>Branch is required</mat-error>
+                  } @else if (fieldError('branchId')) {
+                    <mat-error>{{ fieldError('branchId') }}</mat-error>
+                  }
+                </mat-form-field>
+              }
+
+              <mat-form-field appearance="outline">
+                <mat-label>Course</mat-label>
+                <mat-select formControlName="courseId">
+                  @for (course of courses(); track course.id) {
+                    <mat-option [value]="course.id">
+                      {{ course.shortCode }} — {{ course.name }}{{ course.status === 'INACTIVE' ? ' (inactive)' : '' }}
+                    </mat-option>
+                  }
+                </mat-select>
+                @if (generalForm.controls.courseId.touched && generalForm.controls.courseId.invalid) {
+                  <mat-error>Course is required</mat-error>
+                } @else if (fieldError('courseId')) {
+                  <mat-error>{{ fieldError('courseId') }}</mat-error>
+                }
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" class="wide">
+                <mat-label>Batch number</mat-label>
+                <input matInput formControlName="batchNumber" maxlength="60" placeholder="2026/PB02" autocomplete="off" />
+                <mat-hint align="end">{{ generalForm.controls.batchNumber.value.length }}/60</mat-hint>
+                @if (generalForm.controls.batchNumber.touched && generalForm.controls.batchNumber.hasError('required')) {
+                  <mat-error>Batch number is required</mat-error>
+                } @else if (generalForm.controls.batchNumber.touched && generalForm.controls.batchNumber.hasError('maxlength')) {
+                  <mat-error>Batch number must be 60 characters or fewer</mat-error>
+                } @else if (fieldError('batchNumber')) {
+                  <mat-error>{{ fieldError('batchNumber') }}</mat-error>
+                }
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Start date</mat-label>
+                <input matInput [matDatepicker]="batchStartDatePicker" formControlName="startDate" />
+                <mat-hint>DD/MM/YYYY</mat-hint>
+                <mat-datepicker-toggle matIconSuffix [for]="batchStartDatePicker" />
+                <mat-datepicker #batchStartDatePicker [touchUi]="stepperOrientation() === 'vertical'" />
+                @if (generalForm.controls.startDate.touched && generalForm.controls.startDate.hasError('required')) {
+                  <mat-error>Start date is required</mat-error>
+                } @else if (fieldError('startDate')) {
+                  <mat-error>{{ fieldError('startDate') }}</mat-error>
+                }
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>End date</mat-label>
+                <input matInput [matDatepicker]="batchEndDatePicker" formControlName="endDate" />
+                <mat-hint>DD/MM/YYYY</mat-hint>
+                <mat-datepicker-toggle matIconSuffix [for]="batchEndDatePicker" />
+                <mat-datepicker #batchEndDatePicker [touchUi]="stepperOrientation() === 'vertical'" />
+                @if (generalForm.controls.endDate.touched && generalForm.controls.endDate.hasError('required')) {
+                  <mat-error>End date is required</mat-error>
+                } @else if (fieldError('endDate')) {
+                  <mat-error>{{ fieldError('endDate') }}</mat-error>
+                }
+              </mat-form-field>
+              @if (generalForm.controls.endDate.touched && generalForm.hasError('dateOrder')) {
+                <p class="field-error wide" role="alert">End date cannot be before the start date.</p>
+              }
+
+              <mat-form-field appearance="outline">
+                <mat-label>Duration</mat-label>
+                <input matInput type="number" min="1" formControlName="durationMonths" />
+                <span matTextSuffix>months</span>
+                @if (generalForm.controls.durationMonths.touched && generalForm.controls.durationMonths.hasError('min')) {
+                  <mat-error>Duration must be at least one month</mat-error>
+                } @else if (fieldError('durationMonths')) {
+                  <mat-error>{{ fieldError('durationMonths') }}</mat-error>
+                }
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Status</mat-label>
+                <mat-select formControlName="status">
+                  <mat-option value="UPCOMING">Upcoming</mat-option>
+                  <mat-option value="ACTIVE">Active</mat-option>
+                  <mat-option value="COMPLETED">Completed</mat-option>
+                  <mat-option value="CANCELLED">Cancelled</mat-option>
+                </mat-select>
+                @if (fieldError('status')) {
+                  <mat-error>{{ fieldError('status') }}</mat-error>
+                }
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" class="wide">
+                <mat-label>Remarks</mat-label>
+                <textarea matInput formControlName="remarks" rows="4"></textarea>
+                @if (fieldError('remarks')) {
+                  <mat-error>{{ fieldError('remarks') }}</mat-error>
+                }
+              </mat-form-field>
+            </div>
+
+            <div class="step-actions">
+              <a mat-button routerLink="/batches">Cancel</a>
+              <button mat-flat-button type="button" (click)="next(stepper, generalForm)">Continue to fees</button>
+            </div>
+          </form>
+        </mat-step>
+
+        <mat-step [stepControl]="feeForm" label="Fees">
+          <form [formGroup]="feeForm" class="step-content" novalidate>
+            <div class="step-heading">
+              <h2>Fee plan</h2>
+              <p>Set the fees and preview how the course fee is divided across the batch duration.</p>
+            </div>
+
+            <div class="form-grid three-columns">
+              <mat-form-field appearance="outline">
+                <mat-label>Registration fee</mat-label>
+                <input matInput type="number" min="0" step="0.01" formControlName="registrationFee" />
+                <span matTextPrefix>{{ feeForm.controls.currencyCode.value }}&nbsp;</span>
+                @if (feeForm.controls.registrationFee.touched && feeForm.controls.registrationFee.hasError('min')) {
+                  <mat-error>Registration fee cannot be negative</mat-error>
+                } @else if (fieldError('registrationFee')) {
+                  <mat-error>{{ fieldError('registrationFee') }}</mat-error>
+                }
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Total course fee</mat-label>
+                <input matInput type="number" min="0" step="0.01" formControlName="courseFee" />
+                <span matTextPrefix>{{ feeForm.controls.currencyCode.value }}&nbsp;</span>
+                @if (feeForm.controls.courseFee.touched && feeForm.controls.courseFee.hasError('min')) {
+                  <mat-error>Course fee cannot be negative</mat-error>
+                } @else if (fieldError('courseFee')) {
+                  <mat-error>{{ fieldError('courseFee') }}</mat-error>
+                }
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Examination fee</mat-label>
+                <input matInput type="number" min="0" step="0.01" formControlName="examinationFee" />
+                <span matTextPrefix>{{ feeForm.controls.currencyCode.value }}&nbsp;</span>
+                @if (feeForm.controls.examinationFee.touched && feeForm.controls.examinationFee.hasError('min')) {
+                  <mat-error>Examination fee cannot be negative</mat-error>
+                } @else if (fieldError('examinationFee')) {
+                  <mat-error>{{ fieldError('examinationFee') }}</mat-error>
+                }
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" subscriptSizing="dynamic">
+                <mat-label>Monthly due day</mat-label>
+                <input matInput type="number" min="1" max="31" formControlName="monthlyDueDay" />
+                <mat-hint>Uses the month’s final day when unavailable.</mat-hint>
+                @if (feeForm.controls.monthlyDueDay.touched && (feeForm.controls.monthlyDueDay.hasError('min') || feeForm.controls.monthlyDueDay.hasError('max'))) {
+                  <mat-error>Choose a day from 1 to 31</mat-error>
+                } @else if (fieldError('monthlyDueDay')) {
+                  <mat-error>{{ fieldError('monthlyDueDay') }}</mat-error>
+                }
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Examination due date</mat-label>
+                <input matInput [matDatepicker]="examinationDueDatePicker" formControlName="examinationDueDate" />
+                <mat-hint>DD/MM/YYYY</mat-hint>
+                <mat-datepicker-toggle matIconSuffix [for]="examinationDueDatePicker" />
+                <mat-datepicker #examinationDueDatePicker [touchUi]="stepperOrientation() === 'vertical'" />
+                @if (feeForm.controls.examinationDueDate.touched && feeForm.controls.examinationDueDate.hasError('required')) {
+                  <mat-error>Examination due date is required</mat-error>
+                } @else if (fieldError('examinationDueDate')) {
+                  <mat-error>{{ fieldError('examinationDueDate') }}</mat-error>
+                }
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Currency</mat-label>
+                <input matInput formControlName="currencyCode" minlength="3" maxlength="3" />
+                @if (feeForm.controls.currencyCode.touched && feeForm.controls.currencyCode.invalid) {
+                  <mat-error>Currency must be a three-letter code</mat-error>
+                } @else if (fieldError('currencyCode')) {
+                  <mat-error>{{ fieldError('currencyCode') }}</mat-error>
+                }
+              </mat-form-field>
+            </div>
+
+            <section class="fee-preview" aria-labelledby="fee-preview-title">
+              <div class="preview-heading">
+                <div>
+                  <p class="section-eyebrow">Preview</p>
+                  <h3 id="fee-preview-title">Installment schedule</h3>
+                </div>
+                <span class="preview-total">
+                  <small>Total fee plan</small>
+                  <strong>{{ feeForm.controls.currencyCode.value }} {{ previewTotal() | number:'1.2-2' }}</strong>
+                </span>
+              </div>
+
+              <div class="installment-summary">
+                <div>
+                  <span>Course installments</span>
+                  <strong>{{ generalForm.controls.durationMonths.value }}</strong>
+                </div>
+                <div>
+                  <span>Monthly due day</span>
+                  <strong>Day {{ feeForm.controls.monthlyDueDay.value }}</strong>
+                </div>
+                <div>
+                  <span>Examination due</span>
+                  <strong>{{ feeForm.controls.examinationDueDate.value | date:'d MMM y' }}</strong>
+                </div>
+              </div>
+
+              <div class="installment-table-wrap">
+                <table class="installment-table" aria-label="Installment schedule preview">
+                  <thead>
+                    <tr>
+                      <th scope="col">Charge</th>
+                      <th scope="col">Due date</th>
+                      <th scope="col">Amount</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (charge of previewCharges(); track charge.type + '-' + charge.installmentNumber) {
+                      <tr>
+                        <td>
+                          <span class="charge-marker">
+                            {{ charge.type === 'REGISTRATION_FEE' ? 'R' : charge.type === 'EXAMINATION_FEE' ? 'E' : charge.installmentNumber }}
+                          </span>
+                          <strong>{{ charge.description }}</strong>
+                        </td>
+                        <td data-label="Due date">{{ charge.dueDate | date:'d MMM y' }}</td>
+                        <td data-label="Amount"><strong>{{ feeForm.controls.currencyCode.value }} {{ charge.amount | number:'1.2-2' }}</strong></td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+              <p class="preview-note">This preview does not create student charges. Charges are created only during enrollment.</p>
+            </section>
+
+            <div class="step-actions">
+              <button mat-button type="button" matStepperPrevious>Back</button>
+              <button mat-flat-button type="button" (click)="next(stepper, feeForm)">Continue to schedule</button>
+            </div>
+          </form>
+        </mat-step>
+
+        <mat-step [stepControl]="scheduleForm" label="Schedule">
+          <form [formGroup]="scheduleForm" class="step-content" novalidate>
+            <div class="step-heading">
+              <h2>Schedule mode</h2>
+              <p>Choose how class sessions will be organized for this batch.</p>
+            </div>
+
+            <mat-radio-group formControlName="scheduleMode" class="schedule-options" aria-label="Schedule mode">
+              <mat-radio-button value="REGULAR" class="schedule-option">
+                <span>
+                  <strong>Regular weekly schedule</strong>
+                  <small>Use when the batch follows repeating weekly class times.</small>
+                </span>
+              </mat-radio-button>
+              <mat-radio-button value="MANUAL" class="schedule-option">
+                <span>
+                  <strong>Manual sessions</strong>
+                  <small>Use when individual sessions will be added as needed.</small>
+                </span>
+              </mat-radio-button>
+            </mat-radio-group>
+
+            <p class="information-note">
+              This step selects the scheduling method only. Session planning and generation belong to the Sessions phase.
+            </p>
+
+            <div class="step-actions">
+              <button mat-button type="button" matStepperPrevious>Back</button>
+              <button mat-flat-button type="button" (click)="next(stepper, scheduleForm)">Continue to lecturers</button>
+            </div>
+          </form>
+        </mat-step>
+
+        <mat-step label="Lecturers">
+          <section class="step-content">
+            <div class="step-heading">
+              <h2>Lecturer assignments</h2>
+              <p>Select active lecturers assigned to the chosen branch. This step is optional.</p>
+            </div>
+
+            <div class="lecturer-workspace">
+              <section class="lecturer-picker" aria-labelledby="available-lecturers-title">
+                <div class="lecturer-toolbar">
+                  <div>
+                    <p class="section-eyebrow">Available</p>
+                    <h3 id="available-lecturers-title">Choose lecturers</h3>
+                  </div>
+                  <div class="lecturer-search">
+                    <mat-form-field appearance="outline" subscriptSizing="dynamic">
+                      <mat-label>Search lecturers</mat-label>
+                      <input
+                        matInput
+                        type="search"
+                        [value]="lecturerSearch()"
+                        (input)="lecturerSearch.set($any($event.target).value)"
+                        (keyup.enter)="applyLecturerSearch()"
+                        placeholder="Name or username"
+                      />
+                    </mat-form-field>
+                    <button mat-stroked-button type="button" (click)="applyLecturerSearch()">Search</button>
+                  </div>
+                </div>
+
+                @if (lecturersLoading()) {
+                  <div class="lecturer-loading" role="status">
+                    <mat-spinner diameter="28" />
+                    <span>Loading lecturers…</span>
+                  </div>
+                } @else if (lecturers().length) {
+                  <div class="lecturer-options">
+                    @for (lecturer of lecturers(); track lecturer.id) {
+                      <div class="lecturer-option" [class.is-selected]="isLecturerSelected(lecturer.id)">
+                        <mat-checkbox
+                          [checked]="isLecturerSelected(lecturer.id)"
+                          (change)="toggleLecturer(lecturer.id, $event.checked)"
+                        >
+                          <span class="lecturer-option-content">
+                            <span class="lecturer-avatar" aria-hidden="true">{{ lecturerInitials(lecturer.fullName) }}</span>
+                            <span class="lecturer-copy">
+                              <strong>{{ lecturer.fullName }}</strong>
+                              <small>{{ lecturer.username }}</small>
+                            </span>
+                          </span>
+                        </mat-checkbox>
+                      </div>
+                    }
+                  </div>
+                } @else {
+                  <div class="lecturer-empty">
+                    <strong>No lecturers found</strong>
+                    <p>No active lecturer accounts match this branch and search.</p>
+                  </div>
+                }
+
+                <mat-paginator
+                  [length]="lecturerTotal()"
+                  [pageIndex]="lecturerPageIndex()"
+                  [pageSize]="lecturerPageSize()"
+                  [pageSizeOptions]="[5, 10, 20]"
+                  (page)="changeLecturerPage($event)"
+                  aria-label="Lecturer pages"
+                />
+              </section>
+
+              <aside class="selected-lecturers" aria-live="polite" aria-labelledby="selected-lecturers-title">
+                <div class="selection-heading">
+                  <div>
+                    <p class="section-eyebrow">Selection</p>
+                    <h3 id="selected-lecturers-title">Assigned to this batch</h3>
+                  </div>
+                  <span>{{ selectedLecturerIds.length }}</span>
+                </div>
+
+                @if (selectedLecturerSummaries().length) {
+                  <div class="selected-list">
+                    @for (lecturer of selectedLecturerSummaries(); track lecturer.id) {
+                      <div class="selected-item">
+                        <span class="selected-person">
+                          <span class="lecturer-avatar" aria-hidden="true">{{ lecturerInitials(lecturer.fullName) }}</span>
+                          <span>
+                            <strong>{{ lecturer.fullName }}</strong>
+                            <small>{{ lecturer.username }}</small>
+                          </span>
+                        </span>
+                        <button
+                          mat-button
+                          type="button"
+                          (click)="removeSelectedLecturer(lecturer.id)"
+                          [attr.aria-label]="'Remove ' + lecturer.fullName"
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    }
+                  </div>
+
+                } @else {
+                  <div class="selection-empty">
+                    <strong>No lecturer assigned</strong>
+                    <p>This is optional. You can save the batch and assign lecturers later.</p>
+                  </div>
+                }
+              </aside>
+            </div>
+
+            @if (assignments().length) {
+              <details class="assignment-history">
+                <summary>Assignment history ({{ assignments().length }})</summary>
+                <div class="assignment-history-list">
+                  @for (assignment of assignments(); track assignment.id) {
+                    <div>
+                      <span>
+                        <strong>{{ assignment.lecturerFullName }}</strong>
+                        <small>{{ assignment.assignmentStartDate | date:'d MMM y' }}{{ assignment.assignmentEndDate ? ' – ' + (assignment.assignmentEndDate | date:'d MMM y') : '' }}</small>
+                      </span>
+                      <strong>{{ assignment.status === 'ACTIVE' ? 'Active' : 'Inactive' }}</strong>
+                    </div>
+                  }
+                </div>
+              </details>
+            }
+
+            <div class="step-actions">
+              <button mat-button type="button" matStepperPrevious>Back</button>
+              <button mat-flat-button type="button" matStepperNext>Review batch</button>
+            </div>
+          </section>
+        </mat-step>
+
+        <mat-step label="Review">
+          <section class="step-content review-step">
+            <div class="step-heading">
+              <h2>Review batch</h2>
+              <p>Confirm the intake, fee plan, and teaching setup before saving.</p>
+            </div>
+
+            <section class="review-summary">
+              <div>
+                <p class="section-eyebrow">Ready to save</p>
+                <h3>{{ generalForm.controls.batchNumber.value || 'New batch' }}</h3>
+                <p>
+                  {{ selectedCourse()?.shortCode }} — {{ selectedCourse()?.name }}
+                  <span aria-hidden="true">·</span>
+                  {{ selectedBranch()?.code }}
+                </p>
+              </div>
+              <div class="review-total">
+                <span>Total fee plan</span>
+                <strong>{{ feeForm.controls.currencyCode.value }} {{ previewTotal() | number:'1.2-2' }}</strong>
+              </div>
+            </section>
+
+            <div class="review-grid">
+              <section class="review-card">
+                <header>
+                  <div>
+                    <p class="section-eyebrow">Batch</p>
+                    <h3>Intake details</h3>
+                  </div>
+                  <button mat-button type="button" (click)="goToStep(stepper, 0)">Edit</button>
+                </header>
+                <dl>
+                  <div><dt>Branch</dt><dd>{{ selectedBranch()?.code }} — {{ selectedBranch()?.name }}</dd></div>
+                  <div><dt>Course</dt><dd>{{ selectedCourse()?.shortCode }} — {{ selectedCourse()?.name }}</dd></div>
+                  <div><dt>Dates</dt><dd>{{ generalForm.controls.startDate.value | date:'d MMM y' }} – {{ generalForm.controls.endDate.value | date:'d MMM y' }}</dd></div>
+                  <div><dt>Duration</dt><dd>{{ generalForm.controls.durationMonths.value }} months</dd></div>
+                  <div><dt>Schedule</dt><dd>{{ scheduleForm.controls.scheduleMode.value === 'REGULAR' ? 'Regular weekly schedule' : 'Manual sessions' }}</dd></div>
+                  <div><dt>Status</dt><dd><app-status-chip [value]="generalForm.controls.status.value" /></dd></div>
+                </dl>
+              </section>
+
+              <section class="review-card">
+                <header>
+                  <div>
+                    <p class="section-eyebrow">Fees</p>
+                    <h3>Payment plan</h3>
+                  </div>
+                  <button mat-button type="button" (click)="goToStep(stepper, 1)">Edit</button>
+                </header>
+                <dl>
+                  <div><dt>Registration fee</dt><dd>{{ feeForm.controls.currencyCode.value }} {{ feeForm.controls.registrationFee.value | number:'1.2-2' }}</dd></div>
+                  <div><dt>Course fee</dt><dd>{{ feeForm.controls.currencyCode.value }} {{ feeForm.controls.courseFee.value | number:'1.2-2' }}</dd></div>
+                  <div><dt>Examination fee</dt><dd>{{ feeForm.controls.currencyCode.value }} {{ feeForm.controls.examinationFee.value | number:'1.2-2' }}</dd></div>
+                  <div><dt>Installments</dt><dd>{{ generalForm.controls.durationMonths.value }} payments · due day {{ feeForm.controls.monthlyDueDay.value }}</dd></div>
+                  <div><dt>Examination due</dt><dd>{{ feeForm.controls.examinationDueDate.value | date:'d MMM y' }}</dd></div>
+                </dl>
+              </section>
+
+              <section class="review-card review-lecturers">
+                <header>
+                  <div>
+                    <p class="section-eyebrow">Teaching team</p>
+                    <h3>{{ selectedLecturerIds.length ? selectedLecturerIds.length + ' lecturer(s)' : 'Assign later' }}</h3>
+                  </div>
+                  <button mat-button type="button" (click)="goToStep(stepper, 3)">Edit</button>
+                </header>
+
+                @if (selectedLecturerSummaries().length) {
+                  <div class="review-lecturer-list">
+                    @for (lecturer of selectedLecturerSummaries(); track lecturer.id) {
+                      <div>
+                        <span class="lecturer-avatar" aria-hidden="true">{{ lecturerInitials(lecturer.fullName) }}</span>
+                        <span>
+                          <strong>{{ lecturer.fullName }}</strong>
+                          <small>{{ lecturer.username }}</small>
+                        </span>
+                      </div>
+                    }
+                  </div>
+                } @else {
+                  <p class="review-empty">No lecturer is assigned yet. The batch can still be saved and staffed later.</p>
+                }
+              </section>
+            </div>
+
+            <div class="step-actions">
+              <button mat-button type="button" matStepperPrevious>Back</button>
+              <button mat-flat-button type="button" (click)="save()" [disabled]="saving()">
+                {{ saving() ? 'Saving batch…' : 'Save batch' }}
+              </button>
+            </div>
+          </section>
+        </mat-step>
+      </mat-stepper>
+    </mat-card>
+  }
+</section>
