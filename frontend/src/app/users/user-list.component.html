@@ -1,103 +1,235 @@
-<section class="page-header">
-  <div>
-    <p class="eyebrow">Administration</p>
-    <h2>Users</h2>
-  </div>
-  <a class="primary-action" routerLink="/users/new">Add user</a>
-</section>
+<section class="user-page">
+  <app-page-header
+    eyebrow="Administration"
+    title="Users"
+    subtitle="Manage staff access, roles, branch assignments, and account security."
+  >
+    <a mat-flat-button routerLink="/users/new">Add user</a>
+  </app-page-header>
 
-<section class="toolbar" aria-label="User filters">
-  <label>
-    Search
-    <input type="search" [(ngModel)]="search" (keyup.enter)="load()" placeholder="Name, username, or email" />
-  </label>
-  <label>
-    Role
-    <select [(ngModel)]="role" (change)="load()">
-      <option value="">All roles</option>
-      @for (roleOption of roles(); track roleOption.code) {
-        <option [value]="roleOption.code">{{ roleOption.name }}</option>
-      }
-    </select>
-  </label>
-  <label>
-    Branch
-    <select [(ngModel)]="branchId" (change)="load()">
-      <option value="">All branches</option>
-      @for (branch of branches(); track branch.id) {
-        <option [value]="branch.id">{{ branch.code }}</option>
-      }
-    </select>
-  </label>
-  <label>
-    Status
-    <select [(ngModel)]="status" (change)="load()">
-      <option value="">All statuses</option>
-      <option value="ACTIVE">Active</option>
-      <option value="PASSWORD_CHANGE_REQUIRED">Password change required</option>
-      <option value="DISABLED">Disabled</option>
-    </select>
-  </label>
-  <button type="button" (click)="load()">Apply</button>
-</section>
+  <mat-card appearance="outlined" class="filter-card">
+    <mat-card-content>
+      <div class="filters" aria-label="User filters">
+        <mat-form-field appearance="outline" subscriptSizing="dynamic" class="search-filter">
+          <mat-label>Search</mat-label>
+          <input
+            matInput
+            type="search"
+            [(ngModel)]="search"
+            (keyup.enter)="applyFilters()"
+            placeholder="Name, username, or email"
+          />
+        </mat-form-field>
 
-@if (success()) {
-  <p class="notice success">{{ success() }}</p>
-}
-@if (temporaryPassword()) {
-  <p class="notice warning"><strong>Temporary password:</strong> {{ temporaryPassword() }}</p>
-}
-@if (error()) {
-  <p class="notice error">{{ error() }}</p>
-}
-@if (loading()) {
-  <p class="notice">Loading users...</p>
-} @else if (users().length === 0) {
-  <p class="empty-state">No users match the current filters.</p>
-} @else {
-  <div class="table-wrap">
-    <table>
-      <thead>
-        <tr>
-          <th>User</th>
-          <th>Roles</th>
-          <th>Branches</th>
-          <th>Status</th>
-          <th>Last login</th>
-          <th>Actions</th>
-        </tr>
-      </thead>
-      <tbody>
-        @for (user of users(); track user.id) {
-          <tr>
-            <td>
-              <strong>{{ user.fullName }}</strong>
-              <span>{{ user.username }} · {{ user.email || 'No email' }}</span>
-            </td>
-            <td>{{ user.roles.length ? user.roles[0].code : 'No role' }}</td>
-            <td>
-              @if (user.branches.length) {
-                <div class="branch-badges" [attr.aria-label]="user.fullName + ' assigned branches'">
-                  @for (branch of user.branches; track branch.id) {
-                    <span class="branch-badge" [title]="branch.name">{{ branch.code }}</span>
+        <mat-form-field appearance="outline" subscriptSizing="dynamic">
+          <mat-label>Role</mat-label>
+          <mat-select [(ngModel)]="role">
+            <mat-option value="">All manageable roles</mat-option>
+            @for (roleOption of roles(); track roleOption.code) {
+              <mat-option [value]="roleOption.code">{{ roleOption.name }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" subscriptSizing="dynamic">
+          <mat-label>Branch</mat-label>
+          <mat-select [(ngModel)]="branchId">
+            <mat-option value="">{{ currentBranchLabel() }}</mat-option>
+            @for (branch of branches(); track branch.id) {
+              <mat-option [value]="branch.id">{{ branch.code }} — {{ branch.name }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" subscriptSizing="dynamic">
+          <mat-label>Status</mat-label>
+          <mat-select [(ngModel)]="status">
+            <mat-option value="">All statuses</mat-option>
+            <mat-option value="ACTIVE">Active</mat-option>
+            <mat-option value="PASSWORD_CHANGE_REQUIRED">Password change required</mat-option>
+            <mat-option value="DISABLED">Disabled</mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <div class="filter-actions">
+          <button mat-flat-button type="button" (click)="applyFilters()">Apply filters</button>
+          <button mat-button type="button" (click)="clearFilters()">Reset</button>
+        </div>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <app-page-state
+    [loading]="loading()"
+    [error]="error()"
+    [empty]="!loading() && !error() && users().length === 0"
+    loadingLabel="Loading users…"
+    emptyTitle="No users found"
+    emptyMessage="No manageable users match the current filters."
+    (retry)="load()"
+  >
+    <button mat-stroked-button type="button" (click)="clearFilters()">Clear filters</button>
+  </app-page-state>
+
+  @if (!loading() && !error() && users().length) {
+    <mat-card appearance="outlined" class="results-card">
+      <div class="desktop-table">
+        <div class="table-wrap">
+          <table mat-table [dataSource]="users()" aria-label="Users">
+            <ng-container matColumnDef="user">
+              <th mat-header-cell *matHeaderCellDef>User</th>
+              <td mat-cell *matCellDef="let user">
+                <div class="user-identity">
+                  <span class="user-avatar" aria-hidden="true">{{ user.fullName.charAt(0) }}</span>
+                  <div>
+                    <strong>{{ user.fullName }}</strong>
+                    <span>{{ user.username }} · {{ user.email || 'No email' }}</span>
+                  </div>
+                </div>
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="roles">
+              <th mat-header-cell *matHeaderCellDef>Roles</th>
+              <td mat-cell *matCellDef="let user">
+                <div class="tag-list">
+                  @for (role of user.roles; track role.code) {
+                    <span class="role-tag">{{ role.name }}</span>
+                  } @empty {
+                    <span class="secondary">No role</span>
                   }
                 </div>
-              } @else {
-                <span>No branch</span>
-              }
-            </td>
-            <td><span class="badge" [class.is-danger]="user.status === 'DISABLED'">{{ user.status }}</span></td>
-            <td>{{ user.lastLoginAt || 'Never' }}</td>
-            <td class="actions">
-              <a [routerLink]="['/users', user.id, 'edit']">Edit</a>
-              <button type="button" (click)="resetPassword(user)">Reset</button>
-              <button type="button" (click)="changeStatus(user)">
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="branches">
+              <th mat-header-cell *matHeaderCellDef>Branches</th>
+              <td mat-cell *matCellDef="let user">
+                <div class="tag-list" [attr.aria-label]="user.fullName + ' assigned branches'">
+                  @for (branch of user.branches; track branch.id) {
+                    <span class="branch-tag" [title]="branch.name">{{ branch.code }}</span>
+                  } @empty {
+                    <span class="secondary">No branch</span>
+                  }
+                </div>
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="status">
+              <th mat-header-cell *matHeaderCellDef>Status</th>
+              <td mat-cell *matCellDef="let user"><app-status-chip [value]="user.status" /></td>
+            </ng-container>
+
+            <ng-container matColumnDef="lastLogin">
+              <th mat-header-cell *matHeaderCellDef>Last login</th>
+              <td mat-cell *matCellDef="let user">
+                {{ user.lastLoginAt ? (user.lastLoginAt | date:'d MMM y, h:mm a') : 'Never' }}
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="actions">
+              <th mat-header-cell *matHeaderCellDef><span class="visually-hidden">Actions</span></th>
+              <td mat-cell *matCellDef="let user" class="action-cell">
+                <button
+                  mat-button
+                  type="button"
+                  [matMenuTriggerFor]="userActions"
+                  [disabled]="updatingId() === user.id"
+                  [attr.aria-label]="'Actions for ' + user.fullName"
+                >
+                  {{ updatingId() === user.id ? 'Updating…' : 'Actions' }}
+                </button>
+                <mat-menu #userActions="matMenu" xPosition="before">
+                  <a mat-menu-item [routerLink]="['/users', user.id, 'edit']">Edit user</a>
+                  <button mat-menu-item type="button" (click)="resetPassword(user)">Reset password</button>
+                  <button
+                    mat-menu-item
+                    type="button"
+                    (click)="changeStatus(user)"
+                    [disabled]="isCurrentUser(user) && user.status !== 'DISABLED'"
+                  >
+                    {{ user.status === 'DISABLED' ? 'Activate user' : 'Deactivate user' }}
+                  </button>
+                </mat-menu>
+              </td>
+            </ng-container>
+
+            <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+            <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+          </table>
+        </div>
+      </div>
+
+      <div class="mobile-cards" aria-label="Users">
+        @for (user of users(); track user.id) {
+          <article class="user-card">
+            <div class="user-card-heading">
+              <div class="user-identity">
+                <span class="user-avatar" aria-hidden="true">{{ user.fullName.charAt(0) }}</span>
+                <div>
+                  <h2>{{ user.fullName }}</h2>
+                  <p>{{ user.username }}</p>
+                </div>
+              </div>
+              <app-status-chip [value]="user.status" />
+            </div>
+
+            <dl>
+              <div>
+                <dt>Email</dt>
+                <dd>{{ user.email || 'Not provided' }}</dd>
+              </div>
+              <div>
+                <dt>Last login</dt>
+                <dd>{{ user.lastLoginAt ? (user.lastLoginAt | date:'d MMM y, h:mm a') : 'Never' }}</dd>
+              </div>
+            </dl>
+
+            <div class="card-section">
+              <span class="section-label">Roles</span>
+              <div class="tag-list">
+                @for (role of user.roles; track role.code) {
+                  <span class="role-tag">{{ role.name }}</span>
+                }
+              </div>
+            </div>
+
+            <div class="card-section">
+              <span class="section-label">Branches</span>
+              <div class="tag-list">
+                @for (branch of user.branches; track branch.id) {
+                  <span class="branch-tag">{{ branch.code }}</span>
+                }
+              </div>
+            </div>
+
+            <div class="user-card-actions">
+              <a mat-button [routerLink]="['/users', user.id, 'edit']">Edit</a>
+              <button mat-button type="button" (click)="resetPassword(user)" [disabled]="updatingId() === user.id">
+                Reset password
+              </button>
+              <button
+                mat-button
+                type="button"
+                (click)="changeStatus(user)"
+                [disabled]="updatingId() === user.id || (isCurrentUser(user) && user.status !== 'DISABLED')"
+              >
                 {{ user.status === 'DISABLED' ? 'Activate' : 'Deactivate' }}
               </button>
-            </td>
-          </tr>
+            </div>
+          </article>
         }
-      </tbody>
-    </table>
-  </div>
-}
+      </div>
+
+      <mat-paginator
+        [length]="total()"
+        [pageIndex]="pageIndex()"
+        [pageSize]="pageSize()"
+        [pageSizeOptions]="[10, 20, 50, 100]"
+        [showFirstLastButtons]="true"
+        (page)="changePage($event)"
+        aria-label="User pages"
+      />
+    </mat-card>
+  }
+</section>

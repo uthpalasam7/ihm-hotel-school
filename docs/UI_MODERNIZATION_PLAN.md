@@ -554,9 +554,8 @@ Current order and progress:
    feedback, startup state, and Forbidden page.
 3. **Stage 3 - Completed:** Courses, Batches, fee-plan presentation,
    schedule-mode presentation, and lecturer selection.
-4. **Stage 4 - Next and ready:** Users, roles, branch assignments, account
-   status, and password-reset administration. The underlying frontend screens
-   and backend APIs are implemented.
+4. **Stage 4 - Completed:** Users, roles, branch assignments, account status,
+   and password-reset administration.
 5. **Stage 5 - Not ready:** Implement Students and Enrollments as a product
    phase before starting their UI modernization.
 6. **Stage 6 - Not ready:** Implement Sessions and Attendance as product phases
@@ -631,15 +630,26 @@ authorization, lecturer-assignment rules, fee-plan calculations and
 display-only charge preview, validation, status-change reasons, save
 sequencing, and audit behaviour.
 
-### Stage 4 - Next and ready
+### Stage 4 - Completed
 
 - Users
 - Roles
 - User branch assignments
+- Account activation and deactivation
+- Password-reset administration
 
-The User administration routes and APIs already exist, so Stage 4 can begin
-after Stage 3 is reviewed. Preserve role restrictions, administrator branch
-scope, password reset, account status, reasons, and audit behaviour.
+Stage 4 uses Material filters, server-side pagination, desktop tables, mobile
+cards, shared loading and error states, status chips, action menus, and
+confirmation dialogs. The grouped User form separates identity, authorized
+roles, branch access, and initial sign-in settings without introducing an
+unnecessary wizard. User form routes warn before discarding unsaved changes.
+
+Password creation and reset continue to use the existing server workflow.
+Temporary passwords are displayed once in a dedicated dialog with a copy
+action and are not placed in notifications, URLs, or persistent browser
+storage. Deactivation and password reset preserve refresh-token revocation,
+optional reasons, audit events, role restrictions, and administrator branch
+scope.
 
 ### Stage 5 - Blocked by product implementation
 
@@ -737,6 +747,7 @@ After completing the first pilot, provide:
 - Screens still using the old design
 - Any remaining risks
 
-Stages 1, 2, and 3 are complete. Stage 4 is the next ready modernization
-target. Stop for review after each UI stage. Do not start Stage 5 or later
-while its underlying product workflows remain unimplemented.
+Stages 1, 2, 3, and 4 are complete. Stage 5 remains blocked until the Student
+and Enrollment product workflows are implemented and stabilized. Stop for
+review after each UI stage. Do not create visual-only screens for Stage 5 or
+later while their underlying product workflows remain unimplemented.

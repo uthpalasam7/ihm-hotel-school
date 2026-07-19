@@ -1,117 +1,207 @@
-<section class="page-header">
-  <div>
-    <p class="eyebrow">User</p>
-    <h2>{{ editingId() ? 'Edit user' : 'Add user' }}</h2>
-  </div>
-  <a routerLink="/users">Back to users</a>
-</section>
+<section class="user-form-page">
+  <app-page-header
+    eyebrow="User administration"
+    [title]="editingId() ? 'Edit user' : 'Add user'"
+    [subtitle]="editingId()
+      ? 'Update identity, roles, and branch access without changing account history.'
+      : 'Create a staff account and define the access they need.'"
+  >
+    <a mat-stroked-button routerLink="/users">Back to users</a>
+  </app-page-header>
 
-@if (loading()) {
-  <p class="notice">Loading user...</p>
-} @else {
-  @if (temporaryPassword()) {
-    <section class="notice success">
-      <strong>User created.</strong>
-      <p>Temporary password: {{ temporaryPassword() }}</p>
-      <a routerLink="/users">Return to users</a>
-    </section>
-  } @else {
+  <app-page-state
+    [loading]="loading()"
+    [error]="error()"
+    loadingLabel="Loading user settings…"
+    (retry)="load()"
+  />
+
+  @if (!loading() && !error()) {
     <form [formGroup]="form" (ngSubmit)="save()" novalidate>
-      @if (error()) {
-        <p class="notice error">{{ error() }}</p>
-      }
+      <mat-card appearance="outlined" class="form-card">
+        <mat-card-header>
+          <mat-card-title>Identity</mat-card-title>
+          <mat-card-subtitle>Basic contact and sign-in information for this staff member.</mat-card-subtitle>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="form-grid">
+            <mat-form-field appearance="outline">
+              <mat-label>Username</mat-label>
+              <input matInput formControlName="username" maxlength="100" autocomplete="off" />
+              <mat-hint align="end">{{ form.controls.username.value.length }}/100</mat-hint>
+              @if (form.controls.username.touched && form.controls.username.hasError('required')) {
+                <mat-error>Username is required</mat-error>
+              } @else if (form.controls.username.touched && form.controls.username.hasError('maxlength')) {
+                <mat-error>Username must be 100 characters or fewer</mat-error>
+              } @else if (fieldError('username')) {
+                <mat-error>{{ fieldError('username') }}</mat-error>
+              }
+            </mat-form-field>
 
-      <label>
-        Username
-        <input formControlName="username" autocomplete="off" />
-        @if (form.controls.username.touched && form.controls.username.hasError('required')) {
-          <span>Username is required</span>
-        }
-        @if (fieldError('username')) {
-          <span>{{ fieldError('username') }}</span>
-        }
-      </label>
+            <mat-form-field appearance="outline">
+              <mat-label>Full name</mat-label>
+              <input matInput formControlName="fullName" maxlength="200" autocomplete="name" />
+              <mat-hint align="end">{{ form.controls.fullName.value.length }}/200</mat-hint>
+              @if (form.controls.fullName.touched && form.controls.fullName.hasError('required')) {
+                <mat-error>Full name is required</mat-error>
+              } @else if (form.controls.fullName.touched && form.controls.fullName.hasError('maxlength')) {
+                <mat-error>Full name must be 200 characters or fewer</mat-error>
+              } @else if (fieldError('fullName')) {
+                <mat-error>{{ fieldError('fullName') }}</mat-error>
+              }
+            </mat-form-field>
 
-      <label>
-        Full name
-        <input formControlName="fullName" autocomplete="off" />
-        @if (form.controls.fullName.touched && form.controls.fullName.hasError('required')) {
-          <span>Full name is required</span>
-        }
-        @if (fieldError('fullName')) {
-          <span>{{ fieldError('fullName') }}</span>
-        }
-      </label>
+            <mat-form-field appearance="outline">
+              <mat-label>Email</mat-label>
+              <input matInput formControlName="email" type="email" maxlength="200" autocomplete="email" />
+              @if (form.controls.email.touched && form.controls.email.hasError('email')) {
+                <mat-error>Enter a valid email address</mat-error>
+              } @else if (fieldError('email')) {
+                <mat-error>{{ fieldError('email') }}</mat-error>
+              }
+            </mat-form-field>
 
-      <label>
-        Email
-        <input formControlName="email" type="email" autocomplete="off" />
-        @if (form.controls.email.touched && form.controls.email.hasError('email')) {
-          <span>Enter a valid email address</span>
-        }
-      </label>
+            <mat-form-field appearance="outline">
+              <mat-label>Contact number</mat-label>
+              <input matInput formControlName="contactNumber" maxlength="30" autocomplete="tel" />
+              @if (form.controls.contactNumber.touched && form.controls.contactNumber.hasError('maxlength')) {
+                <mat-error>Contact number must be 30 characters or fewer</mat-error>
+              } @else if (fieldError('contactNumber')) {
+                <mat-error>{{ fieldError('contactNumber') }}</mat-error>
+              }
+            </mat-form-field>
+          </div>
+        </mat-card-content>
+      </mat-card>
 
-      <label>
-        Contact number
-        <input formControlName="contactNumber" autocomplete="off" />
-      </label>
+      <mat-card appearance="outlined" class="form-card">
+        <mat-card-header>
+          <mat-card-title>Access</mat-card-title>
+          <mat-card-subtitle>Assign at least one authorized role and branch.</mat-card-subtitle>
+        </mat-card-header>
+        <mat-card-content class="access-content">
+          <section class="selection-section" aria-labelledby="roles-title">
+            <div class="selection-heading">
+              <div>
+                <h2 id="roles-title">Roles</h2>
+                <p>Only roles you are authorized to assign are shown.</p>
+              </div>
+              <span>{{ form.controls.roleCodes.value.length }} selected</span>
+            </div>
+
+            <div class="selection-grid roles-grid">
+              @for (role of roles(); track role.code) {
+                <div class="selection-card" [class.is-selected]="hasRole(role.code)">
+                  <mat-checkbox
+                    [checked]="hasRole(role.code)"
+                    (change)="toggleRole(role.code, $event.checked)"
+                  >
+                    {{ role.name }}
+                  </mat-checkbox>
+                  <span>{{ roleDescription(role.code) }}</span>
+                </div>
+              }
+            </div>
+            @if (fieldError('roleCodes')) {
+              <p class="field-error" role="alert">{{ fieldError('roleCodes') }}</p>
+            } @else if (form.controls.roleCodes.touched && form.controls.roleCodes.invalid) {
+              <p class="field-error" role="alert">Select at least one role.</p>
+            }
+          </section>
+
+          <section class="selection-section" aria-labelledby="branches-title">
+            <div class="selection-heading">
+              <div>
+                <h2 id="branches-title">Branch access</h2>
+                <p>The user can work only with records from assigned branches.</p>
+              </div>
+              <span>{{ form.controls.branchIds.value.length }} selected</span>
+            </div>
+
+            <div class="selection-grid branches-grid">
+              @for (branch of branches(); track branch.id) {
+                <div class="selection-card branch-card" [class.is-selected]="hasBranch(branch.id)">
+                  <mat-checkbox
+                    [checked]="hasBranch(branch.id)"
+                    (change)="toggleBranch(branch.id, $event.checked)"
+                  >
+                    {{ branch.name }}
+                  </mat-checkbox>
+                  <span>{{ branch.code }}</span>
+                </div>
+              }
+            </div>
+            @if (fieldError('branchIds')) {
+              <p class="field-error" role="alert">{{ fieldError('branchIds') }}</p>
+            } @else if (form.controls.branchIds.touched && form.controls.branchIds.invalid) {
+              <p class="field-error" role="alert">Select at least one branch.</p>
+            }
+          </section>
+        </mat-card-content>
+      </mat-card>
 
       @if (!editingId()) {
-        <label>
-          Status
-          <select formControlName="status">
-            <option value="ACTIVE">Active after password change</option>
-            <option value="DISABLED">Disabled</option>
-          </select>
-        </label>
+        <mat-card appearance="outlined" class="form-card">
+          <mat-card-header>
+            <mat-card-title>Initial sign-in</mat-card-title>
+            <mat-card-subtitle>Control whether the account can sign in and how its first password is created.</mat-card-subtitle>
+          </mat-card-header>
+          <mat-card-content>
+            <div class="form-grid">
+              <mat-form-field appearance="outline">
+                <mat-label>Initial account status</mat-label>
+                <mat-select formControlName="status">
+                  <mat-option value="ACTIVE">Active after password change</mat-option>
+                  <mat-option value="DISABLED">Create disabled</mat-option>
+                </mat-select>
+                <mat-hint>New active users must change their password at first sign-in.</mat-hint>
+                @if (fieldError('status')) {
+                  <mat-error>{{ fieldError('status') }}</mat-error>
+                }
+              </mat-form-field>
 
-        <label>
-          Temporary password
-          <input formControlName="temporaryPassword" type="text" autocomplete="off" />
-          @if (form.controls.temporaryPassword.touched && form.controls.temporaryPassword.hasError('minlength')) {
-            <span>Use at least 8 characters or leave blank to generate one</span>
-          }
-        </label>
+              <mat-form-field appearance="outline">
+                <mat-label>Temporary password</mat-label>
+                <input
+                  matInput
+                  formControlName="temporaryPassword"
+                  [type]="passwordVisible() ? 'text' : 'password'"
+                  autocomplete="new-password"
+                />
+                <button
+                  mat-button
+                  matSuffix
+                  type="button"
+                  (click)="passwordVisible.set(!passwordVisible())"
+                  [attr.aria-label]="passwordVisible() ? 'Hide temporary password' : 'Show temporary password'"
+                >
+                  {{ passwordVisible() ? 'Hide' : 'Show' }}
+                </button>
+                <mat-hint>Leave blank to generate a secure password.</mat-hint>
+                @if (form.controls.temporaryPassword.touched && form.controls.temporaryPassword.hasError('minlength')) {
+                  <mat-error>Use at least 8 characters or leave this blank</mat-error>
+                } @else if (form.controls.temporaryPassword.touched && form.controls.temporaryPassword.hasError('maxlength')) {
+                  <mat-error>Temporary password must be 128 characters or fewer</mat-error>
+                } @else if (fieldError('temporaryPassword')) {
+                  <mat-error>{{ fieldError('temporaryPassword') }}</mat-error>
+                }
+              </mat-form-field>
+            </div>
+
+            <div class="security-note">
+              <strong>One-time display</strong>
+              <span>The temporary password is shown once after creation and is never stored in the browser.</span>
+            </div>
+          </mat-card-content>
+        </mat-card>
       }
 
-      <fieldset>
-        <legend>Roles</legend>
-        @for (role of roles(); track role.code) {
-          <label class="check">
-            <input
-              type="checkbox"
-              [checked]="hasRole(role.code)"
-              (change)="toggleRole(role.code, $any($event.target).checked)"
-            />
-            {{ role.name }}
-          </label>
-        }
-        @if (form.controls.roleCodes.touched && form.controls.roleCodes.invalid) {
-          <span>Select at least one role</span>
-        }
-      </fieldset>
-
-      <fieldset>
-        <legend>Branches</legend>
-        @for (branch of branches(); track branch.id) {
-          <label class="check">
-            <input
-              type="checkbox"
-              [checked]="hasBranch(branch.id)"
-              (change)="toggleBranch(branch.id, $any($event.target).checked)"
-            />
-            {{ branch.code }} · {{ branch.name }}
-          </label>
-        }
-        @if (form.controls.branchIds.touched && form.controls.branchIds.invalid) {
-          <span>Select at least one branch</span>
-        }
-      </fieldset>
-
       <div class="form-actions">
-        <button type="submit" [disabled]="saving()">{{ saving() ? 'Saving...' : 'Save user' }}</button>
-        <a routerLink="/users">Cancel</a>
+        <a mat-button routerLink="/users">Cancel</a>
+        <button mat-flat-button type="submit" [disabled]="saving()">
+          {{ saving() ? 'Saving…' : editingId() ? 'Save changes' : 'Create user' }}
+        </button>
       </div>
     </form>
   }
-}
+</section>

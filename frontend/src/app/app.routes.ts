@@ -39,8 +39,18 @@ export const routes: Routes = [
         canDeactivate: [unsavedChangesGuard],
       },
       { path: 'users', component: UserListComponent, canActivate: [roleGuard(['SUPER_ADMIN', 'ADMIN'])] },
-      { path: 'users/new', component: UserFormComponent, canActivate: [roleGuard(['SUPER_ADMIN', 'ADMIN'])] },
-      { path: 'users/:id/edit', component: UserFormComponent, canActivate: [roleGuard(['SUPER_ADMIN', 'ADMIN'])] },
+      {
+        path: 'users/new',
+        component: UserFormComponent,
+        canActivate: [roleGuard(['SUPER_ADMIN', 'ADMIN'])],
+        canDeactivate: [unsavedChangesGuard],
+      },
+      {
+        path: 'users/:id/edit',
+        component: UserFormComponent,
+        canActivate: [roleGuard(['SUPER_ADMIN', 'ADMIN'])],
+        canDeactivate: [unsavedChangesGuard],
+      },
       { path: 'courses', component: CourseListComponent, canActivate: [roleGuard(['SUPER_ADMIN', 'ADMIN'])] },
       {
         path: 'courses/new',

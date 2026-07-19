@@ -167,7 +167,9 @@ Implemented:
 - Modernized Angular login and password-change screens, auth guard, interceptor, and role-aware Forbidden state
 - Server-paginated Branch list and guarded Branch create/edit flow
 - Branch create, edit, and activation/deactivation APIs
-- User list, create, edit, role assignment, branch assignment, activation/deactivation, and password reset APIs and screens
+- Modernized Material User list and grouped create/edit flow with responsive
+  presentation, role and branch assignment, guarded unsaved changes, account
+  status confirmations, and one-time password handling
 - Lecturer account creation by assigned-branch administrators
 - Audit event persistence for branch and user administration actions
 - Modernized Material Course list and guarded create/edit flow with
