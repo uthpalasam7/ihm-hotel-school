@@ -5,6 +5,7 @@
 backend/target/
 backend/.mvn/wrapper/maven-wrapper.jar
 backend/.mvn/repository/
+backend/data/
 
 # Node and Angular
 frontend/node_modules/

@@ -1,0 +1,33 @@
+:host { display: block; }
+.student-form-page, form { display: grid; gap: var(--ihm-space-4); }
+.form-card { background: var(--ihm-surface); }
+mat-card-header { padding: var(--ihm-space-5) var(--ihm-space-5) 0; }
+mat-card-title { color: var(--ihm-charcoal); font-size: 1.1rem; font-weight: 700; }
+mat-card-subtitle { color: var(--ihm-text-muted); margin-top: var(--ihm-space-1); }
+mat-card-content { padding: var(--ihm-space-5); }
+.form-grid { display: grid; gap: var(--ihm-space-4); grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.wide { grid-column: 1 / -1; }
+.form-error { background: #fdecec; border: 1px solid var(--ihm-error-border); border-radius: var(--ihm-radius-sm); color: var(--ihm-error); display: grid; gap: var(--ihm-space-1); padding: var(--ihm-space-3); }
+.existing-student { align-items: center; background: #fff5dd; border: 1px solid #ebd29b; border-radius: var(--ihm-radius-sm); display: flex; gap: var(--ihm-space-4); justify-content: space-between; margin-top: var(--ihm-space-4); padding: var(--ihm-space-3); }
+.existing-student div { display: grid; gap: var(--ihm-space-1); }
+.existing-student span { color: var(--ihm-text-muted); font-size: .84rem; }
+.field-error { color: var(--ihm-error); font-size: .78rem; font-weight: 700; margin: var(--ihm-space-2) 0 0; }
+.photo-editor { align-items: center; display: flex; gap: var(--ihm-space-5); }
+.photo-preview, .empty-photo { align-items: center; border: 1px solid var(--ihm-border); border-radius: 50%; display: inline-flex; flex: 0 0 9rem; height: 9rem; justify-content: center; overflow: hidden; width: 9rem; }
+.photo-preview img { height: 100%; object-fit: cover; width: 100%; }
+.empty-photo { background: var(--ihm-page); color: var(--ihm-text-muted); font-size: .78rem; text-align: center; }
+.photo-actions { align-items: flex-start; display: flex; flex-wrap: wrap; gap: var(--ihm-space-2); }
+.photo-actions > span { color: var(--ihm-text-muted); flex-basis: 100%; font-size: .8rem; overflow-wrap: anywhere; }
+.file-input { height: 1px; opacity: 0; overflow: hidden; position: absolute; width: 1px; }
+.form-actions { align-items: center; display: flex; gap: var(--ihm-space-2); justify-content: flex-end; padding-top: var(--ihm-space-2); }
+@media (max-width: 760px) {
+  mat-card-header { padding: var(--ihm-space-4) var(--ihm-space-4) 0; }
+  mat-card-content { padding: var(--ihm-space-4); }
+  .form-grid { grid-template-columns: 1fr; }
+  .wide { grid-column: auto; }
+  .photo-editor, .existing-student { align-items: flex-start; flex-direction: column; }
+}
+@media (max-width: 460px) {
+  .form-actions { align-items: stretch; flex-direction: column-reverse; }
+  .form-actions a, .form-actions button { justify-content: center; width: 100%; }
+}

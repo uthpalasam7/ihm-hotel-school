@@ -1,10 +1,13 @@
 package com.ihm.hotelschool.common.web;
 
 import com.ihm.hotelschool.auth.AuthRateLimitException;
+import com.ihm.hotelschool.student.photo.PhotoStorageException;
+import com.ihm.hotelschool.student.photo.PhotoTooLargeException;
 import jakarta.servlet.http.HttpServletRequest;
 import java.time.Instant;
 import java.util.List;
 import org.springframework.http.HttpStatus;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authorization.AuthorizationDeniedException;
@@ -15,6 +18,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
 @RestControllerAdvice
 class ApiExceptionHandler {
@@ -62,6 +66,24 @@ class ApiExceptionHandler {
 	@ResponseStatus(HttpStatus.CONFLICT)
 	ApiError conflict(ConflictException exception, HttpServletRequest request) {
 		return error(HttpStatus.CONFLICT, "CONFLICT", exception.getMessage(), List.of(), request);
+	}
+
+	@ExceptionHandler({PhotoTooLargeException.class, MaxUploadSizeExceededException.class})
+	@ResponseStatus(HttpStatus.PAYLOAD_TOO_LARGE)
+	ApiError photoTooLarge(RuntimeException exception, HttpServletRequest request) {
+		return error(HttpStatus.PAYLOAD_TOO_LARGE, "FILE_TOO_LARGE", "Student photo must be 5 MiB or smaller", List.of(), request);
+	}
+
+	@ExceptionHandler(ObjectOptimisticLockingFailureException.class)
+	@ResponseStatus(HttpStatus.CONFLICT)
+	ApiError optimisticLock(ObjectOptimisticLockingFailureException exception, HttpServletRequest request) {
+		return error(HttpStatus.CONFLICT, "CONCURRENT_UPDATE", "The record was changed by another user", List.of(), request);
+	}
+
+	@ExceptionHandler(PhotoStorageException.class)
+	@ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+	ApiError photoStorage(PhotoStorageException exception, HttpServletRequest request) {
+		return error(HttpStatus.INTERNAL_SERVER_ERROR, "PHOTO_STORAGE_ERROR", "The student photo could not be accessed", List.of(), request);
 	}
 
 	private ApiFieldError toFieldError(FieldError error) {

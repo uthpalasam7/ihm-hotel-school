@@ -33,7 +33,8 @@
 - Duplicate normalized NIC is rejected.
 - Existing student appears when matching NIC is entered.
 - Student photo is optional.
-- Search works by name, NIC, contact number, and registration number.
+- Phase 5 search works by name, NIC, and contact number. Registration-number
+  search is added with enrollments in Phase 6.
 - A student can have multiple enrollments.
 
 ## 5. Enrollments

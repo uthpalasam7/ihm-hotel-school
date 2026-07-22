@@ -1,0 +1,128 @@
+<section class="student-form-page">
+  <app-page-header
+    eyebrow="Student administration"
+    [title]="editingId() ? 'Edit student' : 'Add student'"
+    [subtitle]="editingId() ? 'Update the shared student profile without changing its history.' : 'Create one reusable student identity before enrollment.'"
+  >
+    <a mat-stroked-button routerLink="/students">Back to students</a>
+  </app-page-header>
+
+  <app-page-state [loading]="loading()" [error]="loading() || serverError() ? null : error()"
+    loadingLabel="Loading student…" (retry)="load()" />
+
+  @if (!loading() && (!error() || serverError())) {
+    <form [formGroup]="form" (ngSubmit)="save()" novalidate>
+      @if (error()) {
+        <div class="form-error" role="alert"><strong>Student could not be saved</strong><span>{{ error() }}</span></div>
+      }
+
+      <mat-card appearance="outlined" class="form-card">
+        <mat-card-header><mat-card-title>Identity</mat-card-title><mat-card-subtitle>NIC identifies the student across every branch.</mat-card-subtitle></mat-card-header>
+        <mat-card-content>
+          <div class="form-grid">
+            <mat-form-field appearance="outline">
+              <mat-label>Full name</mat-label>
+              <input matInput formControlName="fullName" maxlength="250" autocomplete="name" />
+              @if (form.controls.fullName.touched && form.controls.fullName.hasError('required')) { <mat-error>Full name is required</mat-error> }
+              @else if (form.controls.fullName.touched && form.controls.fullName.hasError('maxlength')) { <mat-error>Full name must be 250 characters or fewer</mat-error> }
+              @else if (fieldError('fullName')) { <mat-error>{{ fieldError('fullName') }}</mat-error> }
+            </mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-label>NIC</mat-label>
+              <input matInput formControlName="nic" maxlength="30" autocomplete="off" (input)="normalizeNicInput()" (blur)="checkNic()" />
+              <mat-hint>{{ checkingNic() ? 'Checking NIC…' : 'Numbers and uppercase letters only.' }}</mat-hint>
+              @if (form.controls.nic.touched && form.controls.nic.hasError('required')) { <mat-error>NIC is required</mat-error> }
+              @else if (form.controls.nic.touched && form.controls.nic.hasError('maxlength')) { <mat-error>NIC must be 30 characters or fewer</mat-error> }
+              @else if (form.controls.nic.touched && form.controls.nic.hasError('pattern')) { <mat-error>NIC must contain numbers and letters only</mat-error> }
+              @else if (fieldError('nic')) { <mat-error>{{ fieldError('nic') }}</mat-error> }
+            </mat-form-field>
+          </div>
+          @if (existingStudent()) {
+            <div class="existing-student" role="alert">
+              <div><strong>Existing student found</strong><span>{{ existingStudent()?.fullName }} · {{ existingStudent()?.nic }}</span></div>
+              <a mat-stroked-button [routerLink]="['/students', existingStudent()?.id]">Open profile</a>
+            </div>
+          } @else if (nicLookupError()) {
+            <p class="field-error" role="alert">{{ nicLookupError() }}</p>
+          }
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card appearance="outlined" class="form-card">
+        <mat-card-header><mat-card-title>Contact details</mat-card-title><mat-card-subtitle>Primary contact and address information.</mat-card-subtitle></mat-card-header>
+        <mat-card-content><div class="form-grid">
+          <mat-form-field appearance="outline"><mat-label>Contact number</mat-label><input matInput formControlName="contactNumber" maxlength="10" inputmode="numeric" autocomplete="tel" (input)="normalizePhoneInput('contactNumber')" />
+            @if (form.controls.contactNumber.touched && form.controls.contactNumber.hasError('required')) { <mat-error>Contact number is required</mat-error> }
+            @else if (form.controls.contactNumber.touched && form.controls.contactNumber.hasError('pattern')) { <mat-error>Contact number must be exactly 10 digits</mat-error> }
+            @else if (fieldError('contactNumber')) { <mat-error>{{ fieldError('contactNumber') }}</mat-error> }
+          </mat-form-field>
+          <mat-form-field appearance="outline"><mat-label>Alternative contact</mat-label><input matInput formControlName="alternativeContactNumber" maxlength="10" inputmode="numeric" autocomplete="tel" (input)="normalizePhoneInput('alternativeContactNumber')" />
+            @if (form.controls.alternativeContactNumber.touched && form.controls.alternativeContactNumber.hasError('pattern')) { <mat-error>Alternative contact must be exactly 10 digits</mat-error> }
+            @else if (fieldError('alternativeContactNumber')) { <mat-error>{{ fieldError('alternativeContactNumber') }}</mat-error> }
+          </mat-form-field>
+          <mat-form-field appearance="outline"><mat-label>Email</mat-label><input matInput type="email" formControlName="email" maxlength="200" autocomplete="email" />
+            @if (form.controls.email.touched && form.controls.email.hasError('email')) { <mat-error>Enter a valid email address</mat-error> }
+            @else if (fieldError('email')) { <mat-error>{{ fieldError('email') }}</mat-error> }
+          </mat-form-field>
+          <mat-form-field appearance="outline" class="wide"><mat-label>Address</mat-label><textarea matInput formControlName="address" rows="3"></textarea>
+            @if (form.controls.address.touched && form.controls.address.hasError('required')) { <mat-error>Address is required</mat-error> }
+            @else if (fieldError('address')) { <mat-error>{{ fieldError('address') }}</mat-error> }
+          </mat-form-field>
+        </div></mat-card-content>
+      </mat-card>
+
+      <mat-card appearance="outlined" class="form-card">
+        <mat-card-header><mat-card-title>Additional details</mat-card-title><mat-card-subtitle>Optional personal information and internal remarks.</mat-card-subtitle></mat-card-header>
+        <mat-card-content><div class="form-grid">
+          <mat-form-field appearance="outline"><mat-label>Date of birth</mat-label>
+            <input matInput [matDatepicker]="birthDatePicker" formControlName="dateOfBirth" />
+            <mat-hint>DD/MM/YYYY</mat-hint><mat-datepicker-toggle matIconSuffix [for]="birthDatePicker" /><mat-datepicker #birthDatePicker />
+            @if (fieldError('dateOfBirth')) { <mat-error>{{ fieldError('dateOfBirth') }}</mat-error> }
+          </mat-form-field>
+          <mat-form-field appearance="outline"><mat-label>Gender</mat-label>
+            <mat-select formControlName="gender">
+              <mat-option value="">Not specified</mat-option>
+              @for (gender of genderOptions; track gender) {
+                <mat-option [value]="gender">{{ gender }}</mat-option>
+              }
+            </mat-select>
+            @if (fieldError('gender')) { <mat-error>{{ fieldError('gender') }}</mat-error> }
+          </mat-form-field>
+          <mat-form-field appearance="outline" class="wide"><mat-label>Remarks</mat-label><textarea matInput formControlName="remarks" rows="4"></textarea>
+            @if (fieldError('remarks')) { <mat-error>{{ fieldError('remarks') }}</mat-error> }
+          </mat-form-field>
+        </div></mat-card-content>
+      </mat-card>
+
+      <mat-card appearance="outlined" class="form-card">
+        <mat-card-header><mat-card-title>Student photo</mat-card-title><mat-card-subtitle>Optional JPEG or PNG, up to 5 MiB.</mat-card-subtitle></mat-card-header>
+        <mat-card-content>
+          <div class="photo-editor">
+            @if (photoPreview()) {
+              <span class="photo-preview"><img [src]="photoPreview()" alt="Selected student photo preview" /></span>
+            } @else if (loadedStudent()) {
+              <app-student-photo [studentId]="loadedStudent()!.id" [fullName]="loadedStudent()!.fullName"
+                [photoAvailable]="loadedStudent()!.photoAvailable" [version]="loadedStudent()!.version" variant="full" size="large" />
+            } @else {
+              <span class="empty-photo" aria-hidden="true">Photo optional</span>
+            }
+            <div class="photo-actions">
+              <input #photoInput class="file-input" type="file" accept="image/jpeg,image/png" (change)="selectPhoto($event)" />
+              <button mat-stroked-button type="button" (click)="photoInput.click()">{{ selectedPhoto() ? 'Choose another photo' : 'Choose photo' }}</button>
+              @if (selectedPhoto()) { <button mat-button type="button" (click)="clearSelectedPhoto()">Remove selection</button> }
+              @if (selectedPhoto()) { <span>{{ selectedPhoto()?.name }}</span> }
+              @if (photoError()) { <p class="field-error" role="alert">{{ photoError() }}</p> }
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <div class="form-actions">
+        <a mat-button routerLink="/students">Cancel</a>
+        <button mat-flat-button type="submit" [disabled]="form.invalid || saving() || checkingNic() || !!existingStudent()">
+          {{ saving() ? 'Saving…' : editingId() ? 'Save changes' : 'Create student' }}
+        </button>
+      </div>
+    </form>
+  }
+</section>

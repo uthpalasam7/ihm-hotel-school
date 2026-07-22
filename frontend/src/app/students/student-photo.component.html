@@ -1,0 +1,7 @@
+<span class="student-photo" [class.is-large]="size() === 'large'">
+  @if (source()) {
+    <img [src]="source()" [alt]="fullName() + ' student photo'" />
+  } @else {
+    <span class="student-photo-fallback" aria-hidden="true">{{ initials() }}</span>
+  }
+</span>

@@ -1,0 +1,32 @@
+:host { display: block; }
+.student-profile-page { display: grid; gap: var(--ihm-space-4); }
+mat-card { background: var(--ihm-surface); }
+.profile-hero mat-card-content { align-items: center; display: grid; gap: var(--ihm-space-5); grid-template-columns: auto 1fr auto; padding: var(--ihm-space-5); }
+.profile-heading { display: grid; gap: var(--ihm-space-2); justify-items: start; }
+.profile-heading h2, .profile-heading p { margin: 0; }
+.profile-heading h2 { color: var(--ihm-charcoal); font-size: 1.6rem; }
+.profile-heading p { color: var(--ihm-text-muted); }
+.profile-label { color: var(--ihm-secondary); font-size: .72rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; }
+.profile-actions { align-items: flex-end; display: flex; flex-direction: column; gap: var(--ihm-space-2); }
+.file-input { height: 1px; opacity: 0; overflow: hidden; position: absolute; width: 1px; }
+.profile-grid { display: grid; gap: var(--ihm-space-4); grid-template-columns: repeat(2, minmax(0, 1fr)); }
+mat-card-header { padding: var(--ihm-space-5) var(--ihm-space-5) 0; }
+mat-card-title { color: var(--ihm-charcoal); font-size: 1.05rem; font-weight: 700; }
+.profile-grid mat-card-content { padding: var(--ihm-space-5); }
+dl { display: grid; gap: var(--ihm-space-4); grid-template-columns: repeat(2, minmax(0, 1fr)); margin: 0; }
+dl div { display: grid; gap: var(--ihm-space-1); min-width: 0; }
+dt { color: var(--ihm-text-muted); font-size: .7rem; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; }
+dd { line-height: 1.5; margin: 0; overflow-wrap: anywhere; }
+.wide { grid-column: 1 / -1; }
+@media (max-width: 900px) {
+  .profile-hero mat-card-content { align-items: flex-start; grid-template-columns: auto 1fr; }
+  .profile-actions { align-items: flex-start; flex-direction: row; flex-wrap: wrap; grid-column: 1 / -1; }
+  .profile-grid { grid-template-columns: 1fr; }
+}
+@media (max-width: 600px) {
+  .profile-hero mat-card-content { grid-template-columns: 1fr; justify-items: start; padding: var(--ihm-space-4); }
+  .profile-actions { grid-column: auto; }
+  .profile-grid mat-card-content, mat-card-header { padding-inline: var(--ihm-space-4); }
+  dl { grid-template-columns: 1fr; }
+  .wide { grid-column: auto; }
+}

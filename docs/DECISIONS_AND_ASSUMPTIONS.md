@@ -36,6 +36,11 @@
 9. UTC timestamp storage.
 10. Student-photo storage behind an abstraction.
 11. In Phase 3, `ADMIN` users may manage lecturer accounts only within their assigned branches. `SUPER_ADMIN` remains responsible for branch management and for creating or changing `ADMIN` and `SUPER_ADMIN` accounts.
+12. Student is a global identity record. Branch and lecturer scope is derived
+    from enrollments beginning in Phase 6; Phase 5 Student Management is
+    available to `SUPER_ADMIN` and `ADMIN` only.
+13. Initial student-photo support accepts JPEG and PNG up to 5 MiB, re-encodes
+    uploads, stores them behind an abstraction, and generates a thumbnail.
 
 ## Initial Business Assumptions
 

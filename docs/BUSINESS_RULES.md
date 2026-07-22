@@ -8,6 +8,9 @@
 4. Existing students must be reused for new enrollments.
 5. Students with history must not be permanently deleted.
 6. A student may enroll in multiple different batches.
+7. Student identity is global. Branch and lecturer scope is derived through
+   enrollments; before Phase 6, only Super Administrators and Administrators
+   may access Student Management.
 
 ## 2. Course and Batch Rules
 

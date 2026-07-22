@@ -245,12 +245,14 @@ Selected users must exist, be active, have the `LECTURER` role, and be assigned 
 
 Filters:
 
-- branchId through enrollment
-- batchId
 - status
 - nic
-- registrationNumber
 - search
+
+Phase 5 treats Student as a global identity directory. `search` matches name,
+normalized NIC, primary contact number, and alternative contact number.
+Enrollment-derived `branchId`, `batchId`, and `registrationNumber` filters are
+deferred until Phase 6.
 
 ### `POST /students`
 
@@ -270,6 +272,37 @@ Request:
 }
 ```
 
+New students default to `ACTIVE`. Both `SUPER_ADMIN` and `ADMIN` may manage
+students. Lecturers cannot access Student endpoints until enrollment scope is
+available. `nic` accepts numbers and letters only and is stored in uppercase.
+`contactNumber` must be exactly 10 digits. `alternativeContactNumber` is optional
+but must be exactly 10 digits when provided. `gender` is optional and must be one
+of `Male`, `Female`, or `Other` when provided.
+
+Response:
+
+```json
+{
+  "id": 100,
+  "fullName": "Nimal Perera",
+  "nic": "200012345678",
+  "contactNumber": "0712345678",
+  "alternativeContactNumber": null,
+  "email": null,
+  "address": "Kurunegala",
+  "dateOfBirth": null,
+  "gender": null,
+  "remarks": null,
+  "status": "ACTIVE",
+  "photoAvailable": false,
+  "photoUrl": null,
+  "photoThumbnailUrl": null,
+  "createdAt": "2026-07-21T01:00:00Z",
+  "updatedAt": "2026-07-21T01:00:00Z",
+  "version": 0
+}
+```
+
 ### `GET /students/{id}`
 ### `PUT /students/{id}`
 ### `PATCH /students/{id}/status`
@@ -278,7 +311,15 @@ Request:
 ### `GET /students/{id}/photo`
 ### `DELETE /students/{id}/photo`
 
-Photo deletion removes only the current photo, not the student.
+Photo upload uses multipart field `photo`. JPEG and PNG are accepted up to
+5 MiB after MIME and image-signature validation. Images are re-encoded, the
+full variant is bounded to 1600 pixels, and a 96-pixel list thumbnail is
+available from `GET /students/{id}/photo?variant=thumbnail`.
+
+Photo responses are authenticated and served with private, no-store and
+no-sniff headers. Photo deletion removes only the current photo, not the
+student. There is no Student deletion endpoint; status changes preserve the
+record.
 
 ## 11. Enrollments
 

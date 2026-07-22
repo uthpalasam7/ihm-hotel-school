@@ -199,14 +199,14 @@ Constraints:
 |---|---|---|
 | id | BIGINT | PK |
 | full_name | VARCHAR(250) | Required |
-| nic | VARCHAR(30) | Required |
-| normalized_nic | VARCHAR(30) | Required, unique |
-| contact_number | VARCHAR(30) | Required |
-| alternative_contact_number | VARCHAR(30) | Optional |
+| nic | VARCHAR(30) | Required, uppercase alphanumeric |
+| normalized_nic | VARCHAR(30) | Required, uppercase alphanumeric, unique |
+| contact_number | VARCHAR(30) | Required, exactly 10 digits |
+| alternative_contact_number | VARCHAR(30) | Optional, exactly 10 digits when provided |
 | email | VARCHAR(200) | Optional |
 | address | TEXT | Required |
 | date_of_birth | DATE | Optional |
-| gender | VARCHAR(30) | Optional |
+| gender | VARCHAR(30) | Optional, `Male`, `Female`, or `Other` |
 | photo_storage_key | VARCHAR(500) | Optional |
 | remarks | TEXT | Optional |
 | status | VARCHAR(20) | Required |
@@ -221,6 +221,15 @@ Indexes:
 - Unique `normalized_nic`
 - Index `full_name`
 - Index `contact_number`
+- Index `status`
+
+Constraints:
+
+- Status must be `ACTIVE` or `INACTIVE`
+
+`photo_storage_key` is an opaque key owned by the configured storage
+implementation. The local implementation derives full and thumbnail files
+from this key; storage paths and keys are not returned by Student APIs.
 
 ### 3.11 `enrollments`
 

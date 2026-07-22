@@ -62,5 +62,13 @@ export class DashboardHomeComponent {
       path: '/batches',
       roles: ['SUPER_ADMIN', 'ADMIN'],
     },
+    {
+      label: 'Students',
+      description: 'Create, find, and maintain shared student profiles.',
+      category: 'People',
+      actionLabel: 'View students',
+      path: '/students',
+      roles: ['SUPER_ADMIN', 'ADMIN'],
+    },
   ];
 }

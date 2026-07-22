@@ -556,8 +556,8 @@ Current order and progress:
    schedule-mode presentation, and lecturer selection.
 4. **Stage 4 - Completed:** Users, roles, branch assignments, account status,
    and password-reset administration.
-5. **Stage 5 - Not ready:** Implement Students and Enrollments as a product
-   phase before starting their UI modernization.
+5. **Stage 5 - Partially completed:** Student product and UI workflows are
+   complete. Enrollment remains blocked until Phase 6.
 6. **Stage 6 - Not ready:** Implement Sessions and Attendance as product phases
    before starting their UI modernization.
 7. **Stage 7 - Not ready:** Implement Payments, Reports, the Audit view, and
@@ -570,7 +570,7 @@ screens for modules that currently contain placeholders.
 
 ## 18. UI Migration Stages and Current Status
 
-Status verified against the repository on 2026-07-19.
+Status verified against the repository on 2026-07-21.
 
 ### Stage 1 - Completed
 
@@ -651,14 +651,16 @@ storage. Deactivation and password reset preserve refresh-token revocation,
 optional reasons, audit events, role restrictions, and administrator branch
 scope.
 
-### Stage 5 - Blocked by product implementation
+### Stage 5 - Students completed; Enrollments blocked
 
 - Students
 - Enrollments
 
-The repository currently contains placeholder frontend folders only and no
-Student or Enrollment backend modules. Implement and stabilize those business
-workflows before modernizing their UI.
+Student list, add/edit, profile, status, duplicate-NIC, and authenticated photo
+workflows use the approved Material theme, shared page states, responsive table
+and card patterns, validation, confirmations, and notifications. Enrollment
+remains unimplemented and must not receive visual-only placeholders before
+Phase 6 provides its APIs and transactional workflow.
 
 ### Stage 6 - Blocked by product implementation
 
@@ -747,7 +749,6 @@ After completing the first pilot, provide:
 - Screens still using the old design
 - Any remaining risks
 
-Stages 1, 2, 3, and 4 are complete. Stage 5 remains blocked until the Student
-and Enrollment product workflows are implemented and stabilized. Stop for
-review after each UI stage. Do not create visual-only screens for Stage 5 or
-later while their underlying product workflows remain unimplemented.
+Stages 1 through 4 and the Student portion of Stage 5 are complete. Enrollment
+remains blocked until Phase 6. Stop for review after each UI stage and do not
+create visual-only screens for unimplemented workflows.

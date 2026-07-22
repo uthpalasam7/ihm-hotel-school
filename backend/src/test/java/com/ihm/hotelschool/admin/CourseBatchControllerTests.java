@@ -33,6 +33,7 @@ import org.springframework.test.web.servlet.MvcResult;
 		"delete from courses",
 		"delete from refresh_tokens",
 		"delete from audit_logs",
+		"delete from students",
 		"delete from user_roles",
 		"delete from user_branches",
 		"delete from users",

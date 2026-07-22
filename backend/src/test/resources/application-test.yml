@@ -22,6 +22,9 @@ app:
     password:
     full-name: Initial Super Administrator
     email:
+  student-photo:
+    storage-path: ${java.io.tmpdir}/ihm-hotel-school-test-student-photos
+    max-size: 5MB
 
 debug: false
 

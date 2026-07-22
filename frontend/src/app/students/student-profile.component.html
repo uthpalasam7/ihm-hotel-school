@@ -1,0 +1,42 @@
+<section class="student-profile-page">
+  <app-page-header eyebrow="Student profile" [title]="student()?.fullName || 'Student'" subtitle="Shared identity and contact information.">
+    <a mat-stroked-button routerLink="/students">Back to students</a>
+    @if (student()) { <a mat-flat-button [routerLink]="['/students', studentId, 'edit']">Edit student</a> }
+  </app-page-header>
+  <app-page-state [loading]="loading()" [error]="error()" loadingLabel="Loading student profile…" (retry)="load()" />
+
+  @if (!loading() && !error() && student(); as current) {
+    <mat-card appearance="outlined" class="profile-hero">
+      <mat-card-content>
+        <app-student-photo [studentId]="current.id" [fullName]="current.fullName" [photoAvailable]="current.photoAvailable" [version]="current.version" variant="full" size="large" />
+        <div class="profile-heading">
+          <span class="profile-label">Student ID {{ current.id }}</span>
+          <h2>{{ current.fullName }}</h2>
+          <p>{{ current.nic }}</p>
+          <app-status-chip [value]="current.status" />
+        </div>
+        <div class="profile-actions">
+          <input #photoInput class="file-input" type="file" accept="image/jpeg,image/png" (change)="selectPhoto($event)" />
+          <button mat-stroked-button type="button" (click)="photoInput.click()" [disabled]="updating()">{{ current.photoAvailable ? 'Replace photo' : 'Add photo' }}</button>
+          @if (current.photoAvailable) { <button mat-button type="button" (click)="deletePhoto()" [disabled]="updating()">Remove photo</button> }
+          <button mat-button type="button" (click)="changeStatus()" [disabled]="updating()">{{ current.status === 'ACTIVE' ? 'Deactivate' : 'Activate' }}</button>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <div class="profile-grid">
+      <mat-card appearance="outlined"><mat-card-header><mat-card-title>Contact information</mat-card-title></mat-card-header><mat-card-content><dl>
+        <div><dt>Primary contact</dt><dd>{{ current.contactNumber }}</dd></div>
+        <div><dt>Alternative contact</dt><dd>{{ current.alternativeContactNumber || 'Not provided' }}</dd></div>
+        <div><dt>Email</dt><dd>{{ current.email || 'Not provided' }}</dd></div>
+        <div class="wide"><dt>Address</dt><dd>{{ current.address }}</dd></div>
+      </dl></mat-card-content></mat-card>
+      <mat-card appearance="outlined"><mat-card-header><mat-card-title>Personal details</mat-card-title></mat-card-header><mat-card-content><dl>
+        <div><dt>Date of birth</dt><dd>{{ current.dateOfBirth ? (current.dateOfBirth | date:'d MMMM y') : 'Not provided' }}</dd></div>
+        <div><dt>Gender</dt><dd>{{ current.gender || 'Not provided' }}</dd></div>
+        <div class="wide"><dt>Remarks</dt><dd>{{ current.remarks || 'No remarks' }}</dd></div>
+        <div><dt>Last updated</dt><dd>{{ current.updatedAt | date:'d MMM y, h:mm a' }}</dd></div>
+      </dl></mat-card-content></mat-card>
+    </div>
+  }
+</section>

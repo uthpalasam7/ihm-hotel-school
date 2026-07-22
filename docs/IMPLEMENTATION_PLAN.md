@@ -103,6 +103,9 @@ Do not generate student charges yet.
 
 ## Phase 5 — Student Management
 
+Status: Completed on 2026-07-21. Enrollment-derived Student filters, counts,
+and lecturer visibility remain part of Phase 6.
+
 Implement:
 
 - Student CRUD

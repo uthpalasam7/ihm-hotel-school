@@ -104,15 +104,20 @@ Rules:
 
 For student photos:
 
-- Allow only approved image MIME types.
+- Allow only JPEG and PNG MIME types in the initial implementation.
 - Verify file signatures, not only extensions.
-- Enforce maximum size.
+- Enforce a 5 MiB maximum file size and a bounded request size.
 - Generate server-side file names.
 - Prevent path traversal.
 - Store outside publicly writable application directories.
 - Serve through controlled endpoints or signed URLs.
-- Remove image metadata when practical.
+- Re-encode images to remove metadata, bound source dimensions, constrain the
+  full image, and generate a small list thumbnail.
 - Reject executable content.
+
+The local filesystem root is configured with
+`IHM_STUDENT_PHOTO_STORAGE_PATH`. Photo responses require authentication and
+must not expose storage keys or original file names.
 
 ## 8. API Security
 

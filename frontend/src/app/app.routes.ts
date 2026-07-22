@@ -14,6 +14,9 @@ import { DashboardHomeComponent } from './dashboard/dashboard-home.component';
 import { UserFormComponent } from './users/user-form.component';
 import { UserListComponent } from './users/user-list.component';
 import { unsavedChangesGuard } from './shared/unsaved-changes.guard';
+import { StudentFormComponent } from './students/student-form.component';
+import { StudentListComponent } from './students/student-list.component';
+import { StudentProfileComponent } from './students/student-profile.component';
 
 export const routes: Routes = [
   { path: 'login', component: LoginComponent, canActivate: [guestGuard] },
@@ -77,6 +80,20 @@ export const routes: Routes = [
         canActivate: [roleGuard(['SUPER_ADMIN', 'ADMIN'])],
         canDeactivate: [unsavedChangesGuard],
       },
+      { path: 'students', component: StudentListComponent, canActivate: [roleGuard(['SUPER_ADMIN', 'ADMIN'])] },
+      {
+        path: 'students/new',
+        component: StudentFormComponent,
+        canActivate: [roleGuard(['SUPER_ADMIN', 'ADMIN'])],
+        canDeactivate: [unsavedChangesGuard],
+      },
+      {
+        path: 'students/:id/edit',
+        component: StudentFormComponent,
+        canActivate: [roleGuard(['SUPER_ADMIN', 'ADMIN'])],
+        canDeactivate: [unsavedChangesGuard],
+      },
+      { path: 'students/:id', component: StudentProfileComponent, canActivate: [roleGuard(['SUPER_ADMIN', 'ADMIN'])] },
     ],
   },
   { path: '**', redirectTo: '' },

@@ -25,6 +25,11 @@ Test business services for:
 - NIC required
 - Duplicate NIC rejection
 - Existing-student lookup
+- Student list pagination and search
+- Administrator and lecturer role restrictions
+- Unauthorized active-branch header rejection
+- Student create, update, status, and photo audit events
+- JPEG/PNG signature, MIME, size, dimension, thumbnail, replacement, and deletion behaviour
 
 ### Courses and Batches
 

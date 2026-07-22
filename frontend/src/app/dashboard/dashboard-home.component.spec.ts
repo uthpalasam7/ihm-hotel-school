@@ -43,6 +43,7 @@ describe('DashboardHomeComponent', () => {
     expect(text).not.toContain('Current branch');
     expect(text).toContain('Continue your work');
     expect(text).toContain('Branches');
+    expect(text).toContain('Students');
     expect(text).not.toContain('Operational metrics are coming later');
     expect(text).not.toContain('Fees collected');
 

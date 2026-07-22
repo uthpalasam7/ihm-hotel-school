@@ -225,6 +225,10 @@ Do not generate student charges until enrollment.
 
 ### Student List
 
+In Phase 5, show Photo, Full name, NIC, Contact number, Status, and Actions.
+Active-enrollment counts and registration-number search begin in Phase 6 when
+enrollment data exists.
+
 Columns:
 
 - Photo thumbnail
@@ -247,13 +251,13 @@ Search by:
 Fields:
 
 - Full name
-- NIC
-- Contact number
-- Alternative contact
+- NIC with uppercase alphanumeric input
+- Contact number as exactly 10 digits
+- Alternative contact as exactly 10 digits when provided
 - Email
 - Address
 - Date of birth
-- Gender
+- Gender dropdown with Male, Female, Other, and Not specified options
 - Photo
 - Remarks
 
@@ -264,6 +268,10 @@ When NIC matches an existing student:
 - Offer to open the record or create a new enrollment
 
 ### Student Profile
+
+Phase 5 provides the Overview and photo-management content. Enrollment,
+Attendance, Fees and payments, and Audit summary tabs are added only when their
+underlying product phases are implemented.
 
 Tabs:
 

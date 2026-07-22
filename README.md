@@ -1,6 +1,6 @@
 # IHM Hotel School Management System
 
-Phase 4 provides the authentication foundation, branch and user administration, and course/batch management for the IHM Hotel School Management System.
+Phase 5 provides the authentication foundation, branch and user administration, course/batch management, and Student Management for the IHM Hotel School Management System.
 
 ## Stack
 
@@ -72,6 +72,8 @@ IHM_INITIAL_ADMIN_EMAIL=admin@example.invalid
 IHM_JWT_SECRET=replace-with-at-least-64-random-characters
 IHM_MAX_FAILED_LOGIN_ATTEMPTS=5
 IHM_FAILED_LOGIN_LOCK_MINUTES=15
+IHM_STUDENT_PHOTO_STORAGE_PATH=./data/student-photos
+IHM_STUDENT_PHOTO_MAX_SIZE=5MB
 ```
 
 Backend health checks:
@@ -146,7 +148,11 @@ Infrastructure:
 docker compose config
 ```
 
-## Implemented Scope Through Phase 4
+Student photos are stored outside the public frontend through a replaceable
+backend storage abstraction. Local development uses `backend/data/student-photos`
+by default; include this directory in local backup procedures.
+
+## Implemented Scope Through Phase 5
 
 Implemented:
 
@@ -180,10 +186,15 @@ Implemented:
 - Batch fee-plan configuration with installment preview only
 - Batch schedule-mode selection
 - Batch lecturer assignment APIs and wizard step with multi-lecturer synchronization
+- Global Student directory for `SUPER_ADMIN` and `ADMIN`
+- Paginated Student search by name, normalized NIC, and contact number
+- Student create, profile, edit, activation/deactivation, and duplicate-NIC lookup workflows
+- Authenticated JPEG/PNG photo upload, replacement, thumbnail display, and removal
+- Student audit events for profile, status, and photo changes
 
 Not implemented yet:
 
-- Student, enrollment, attendance, payment, report, and audit-view workflows
+- Enrollment, attendance, payment, report, and audit-view workflows
 - Automatic student charge generation; fee-plan previews are display-only until enrollment is implemented
 
 Current authorization:
@@ -193,3 +204,7 @@ Current authorization:
 - `ADMIN` can manage courses and only batches in assigned branches.
 - `LECTURER` can list or view only assigned batches in authorized branches.
 - `LECTURER` cannot access branch, user, course-management, batch-management, fee-plan, or lecturer-assignment mutation endpoints.
+- Student identities are global rather than branch-owned. `SUPER_ADMIN` and `ADMIN`
+  can manage them; active branch headers are validated and retained as audit
+  context. Lecturer Student access remains disabled until Phase 6 can scope it
+  through assigned-batch enrollments.

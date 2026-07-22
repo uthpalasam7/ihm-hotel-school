@@ -16,6 +16,10 @@ spring:
       hibernate:
         jdbc:
           time_zone: UTC
+  servlet:
+    multipart:
+      max-file-size: ${IHM_STUDENT_PHOTO_MAX_SIZE:5MB}
+      max-request-size: ${IHM_STUDENT_PHOTO_MAX_REQUEST_SIZE:6MB}
 
 server:
   port: ${IHM_BACKEND_PORT:8080}
@@ -44,3 +48,6 @@ app:
     password: ${IHM_INITIAL_ADMIN_PASSWORD:}
     full-name: ${IHM_INITIAL_ADMIN_FULL_NAME:Initial Super Administrator}
     email: ${IHM_INITIAL_ADMIN_EMAIL:}
+  student-photo:
+    storage-path: ${IHM_STUDENT_PHOTO_STORAGE_PATH:./data/student-photos}
+    max-size: ${IHM_STUDENT_PHOTO_MAX_SIZE:5MB}
