@@ -52,7 +52,7 @@
 
   @if (!loading() && !error() && courses().length) {
     <mat-card appearance="outlined" class="table-card">
-      <div class="table-wrap">
+      <div class="ihm-desktop-table"><div class="table-wrap">
         <table mat-table [dataSource]="courses()" aria-label="Courses">
           <ng-container matColumnDef="course">
             <th mat-header-cell *matHeaderCellDef>Course</th>
@@ -101,6 +101,26 @@
           <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
           <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
         </table>
+      </div></div>
+      <div class="ihm-mobile-cards" aria-label="Courses">
+        @for (course of courses(); track course.id) {
+          <article class="ihm-mobile-card">
+            <div class="ihm-mobile-card__heading">
+              <div><h2>{{ course.name }}</h2><p>{{ course.shortCode }}</p></div>
+              <app-status-chip [value]="course.status" />
+            </div>
+            <p class="mobile-course-description">{{ course.description || 'No description provided' }}</p>
+            <dl class="ihm-mobile-card__details">
+              <div><dt>Batches</dt><dd>{{ course.batchCount }}</dd></div>
+            </dl>
+            <div class="ihm-mobile-card__actions">
+              <a mat-button [routerLink]="['/courses', course.id, 'edit']">Edit</a>
+              <button mat-button type="button" (click)="changeStatus(course)" [disabled]="updatingId() === course.id">
+                {{ updatingId() === course.id ? 'Updating…' : course.status === 'ACTIVE' ? 'Deactivate' : 'Activate' }}
+              </button>
+            </div>
+          </article>
+        }
       </div>
       <mat-paginator
         [length]="total()"

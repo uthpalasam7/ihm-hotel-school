@@ -109,6 +109,175 @@ button {
   outline-offset: 0.125rem;
 }
 
+/* Shared list and charge-table treatment. Keep future grids aligned with Students. */
+.ihm-data-grid {
+  background: var(--ihm-surface);
+  overflow: hidden;
+}
+
+.ihm-data-grid .table-wrap {
+  overflow-x: auto;
+}
+
+.ihm-data-grid table {
+  border-collapse: collapse;
+  min-width: 48rem;
+  width: 100%;
+}
+
+.ihm-data-grid th,
+.ihm-data-grid td {
+  border-bottom: 1px solid var(--ihm-border);
+  padding: var(--ihm-space-3) var(--ihm-space-4);
+  text-align: left;
+  vertical-align: middle;
+}
+
+.ihm-data-grid th {
+  border-bottom-color: #77736a;
+  color: var(--ihm-text-muted);
+  font-size: .72rem;
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+
+.ihm-data-grid td {
+  padding-block: var(--ihm-space-4);
+}
+
+.ihm-data-grid a {
+  color: var(--ihm-charcoal);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.ihm-data-grid a:hover {
+  text-decoration: underline;
+}
+
+.ihm-data-grid .secondary {
+  color: var(--ihm-text-muted);
+  display: block;
+  font-size: .8rem;
+  line-height: 1.35;
+  margin-top: .15rem;
+}
+
+.ihm-data-grid .amount,
+.ihm-data-grid .action-cell {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.visually-hidden {
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  height: 1px;
+  overflow: hidden;
+  position: absolute;
+  white-space: nowrap;
+  width: 1px;
+}
+
+/* Record lists use the same readable card structure on phones. */
+.ihm-mobile-cards {
+  display: none;
+}
+
+@media (max-width: 760px) {
+  .ihm-desktop-table {
+    display: none;
+  }
+
+  .ihm-mobile-cards {
+    display: grid;
+    gap: var(--ihm-space-3);
+    padding: var(--ihm-space-3);
+  }
+
+  .ihm-mobile-card {
+    border: 1px solid var(--ihm-border);
+    border-radius: var(--ihm-radius-sm);
+    display: grid;
+    gap: var(--ihm-space-3);
+    min-width: 0;
+    padding: var(--ihm-space-4);
+  }
+
+  .ihm-mobile-card__heading {
+    align-items: flex-start;
+    display: flex;
+    gap: var(--ihm-space-3);
+    justify-content: space-between;
+    min-width: 0;
+  }
+
+  .ihm-mobile-card__heading > div {
+    min-width: 0;
+  }
+
+  .ihm-mobile-card__heading h2 {
+    color: var(--ihm-charcoal);
+    font-size: 1rem;
+    line-height: 1.35;
+    margin: 0;
+    overflow-wrap: anywhere;
+  }
+
+  .ihm-mobile-card__heading p {
+    color: var(--ihm-text-muted);
+    font-size: .82rem;
+    margin: .15rem 0 0;
+    overflow-wrap: anywhere;
+  }
+
+  .ihm-mobile-card__details {
+    display: grid;
+    gap: var(--ihm-space-3);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    margin: 0;
+  }
+
+  .ihm-mobile-card__details > div {
+    min-width: 0;
+  }
+
+  .ihm-mobile-card__details dt {
+    color: var(--ihm-text-muted);
+    font-size: .7rem;
+    font-weight: 700;
+    letter-spacing: .05em;
+    text-transform: uppercase;
+  }
+
+  .ihm-mobile-card__details dd {
+    font-size: .86rem;
+    margin: .15rem 0 0;
+    overflow-wrap: anywhere;
+  }
+
+  .ihm-mobile-card__actions {
+    border-top: 1px solid var(--ihm-border);
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--ihm-space-1);
+    padding-top: var(--ihm-space-2);
+  }
+
+  .ihm-mobile-card__actions > * {
+    max-width: 100%;
+    min-width: 0;
+    white-space: normal;
+  }
+}
+
+@media (max-width: 460px) {
+  .ihm-mobile-card__details {
+    grid-template-columns: 1fr;
+  }
+}
+
 .app-startup {
   align-content: center;
   color: var(--ihm-text-muted);

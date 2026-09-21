@@ -1,0 +1,30 @@
+:host { display:block; }
+.card-page { display:grid; gap:var(--ihm-space-4); }
+mat-card-content { padding:1.5rem; }
+h2 { margin:0 0 .6rem; font-size:1.15rem; }
+p { line-height:1.5; }
+.card-toolbar { display:flex; align-items:center; justify-content:space-between; gap:1rem; flex-wrap:wrap; }
+.card-toolbar span { display:block; margin-top:.25rem; color:#656565; }
+.actions { display:flex; flex-wrap:wrap; gap:.5rem; }
+.preview-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:1rem; }
+.card-face { position:relative; aspect-ratio:85.6/53.98; min-height:230px; overflow:hidden; border-radius:.75rem; border:1px solid #d7d5cf;
+  background:white; box-shadow:0 5px 24px #2929291b; padding:7%; color:#292929; }
+.top-strip { position:absolute; top:0; left:0; right:0; height:4%; background:#b0852c; }
+.card-face header { display:flex; align-items:center; gap:1rem; padding-bottom:1rem; border-bottom:1px solid #e5e5e5; }
+.card-face header img { width:17%; max-width:65px; aspect-ratio:1; object-fit:contain; }
+.card-face header strong { display:block; font-size:clamp(.8rem,1.6vw,1.2rem); }
+.card-face header span,.overline,.small-label { display:block; color:#b0852c; font-weight:700; font-size:.7rem; letter-spacing:.08em; }
+.student-area { display:flex; justify-content:space-between; align-items:end; gap:1rem; margin-top:8%; }
+.student-area h2 { font-size:clamp(1rem,2vw,1.5rem); margin:.35rem 0 1.5rem; }
+.student-area strong { display:block; margin-top:.25rem; }
+.card-back { display:flex; align-items:center; gap:5%; }
+.card-back .qr { width:50%; aspect-ratio:1; object-fit:contain; }
+.card-back div:not(.top-strip) { flex:1; }
+.card-back strong,.card-back span,.card-back small { display:block; margin-bottom:.65rem; }
+.card-back strong { line-height:1.4; }
+.card-back .identifier { color:#986d18; font-weight:700; }
+.note { color:#626262; }
+.history-row { display:flex; flex-wrap:wrap; gap:1rem; padding:.85rem 0; border-bottom:1px solid #e5e5e5; }
+.history-row span { color:#5c5c5c; }
+.error-message { color:#b3261e; background:#fff3f1; padding:1rem; border-radius:.5rem; }
+@media(max-width:700px) { .preview-grid { grid-template-columns:1fr; } .card-face { min-height:210px; } mat-card-content { padding:1rem; } }

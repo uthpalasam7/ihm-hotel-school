@@ -66,6 +66,11 @@ Lecturers must not access:
 - Unassigned batches
 - Other branches unless assigned
 
+Phase 6 exposes students to lecturers through a batch-scoped, minimal roster
+only while their assignment is active on the current school date. The roster
+omits NIC, contact details, remarks, and charges; the shared student profile
+and general enrollment endpoints remain administrator-only.
+
 The attendance-sheet endpoint must return a reduced financial view for lecturers.
 
 ## 5. Financial Security
@@ -140,6 +145,7 @@ Do not commit:
 - JWT signing secrets
 - Production URLs containing credentials
 - Cloud-storage credentials
+- Email-provider credentials
 - Administrator passwords
 
 Provide `.env.example` with placeholder values only.
@@ -173,3 +179,35 @@ Use secret-management facilities in deployed environments.
 - Test restoration.
 - Document recovery procedures.
 - Include uploaded student photos in the backup plan.
+
+## 13. Student Cards, QR Scanning, and Email — Phases 6, 8, and 10
+
+- QR card tokens are server-generated, unpredictable, revocable, and free of
+  embedded personal or financial fields. Never accept a card token as login or as
+  permission to read a public student profile.
+- Protect stored card credentials and rendered artifacts. The Phase 6 implementation
+  stores a SHA-256 lookup hash plus AES-GCM encrypted token for reprinting. Preserve
+  the independent `IHM_CARD_SECRET` when rotating JWT secrets. Never log raw QR tokens or
+  PDF contents. Avoid placing tokens in URLs or analytics events.
+- Enforce role and enrollment-derived branch access for issuance, PDF access,
+  revocation/replacement, and card delivery. Lecturers can scan only within their
+  authorized sessions and cannot manage cards or send receipts.
+- Scanning verifies session/enrollment/assignment access on the backend. Denied
+  scans must not disclose names or other details about out-of-scope students.
+- Bound and validate scanner input, rate-limit scan endpoints appropriately, and
+  preserve database uniqueness under concurrent/replayed requests.
+- Run camera capture over HTTPS in production with explicit browser permission.
+  Do not retain camera video or frames for attendance. Static QR cards can be shared;
+  staff supervision and name/photo checks remain necessary.
+- Restrict email recipients to the student's saved, staff-checked address. Enforce
+  administrator and document-specific branch access for sending, resending, and
+  viewing delivery history. Do not expose an arbitrary-recipient mail relay.
+- Secure mail transport and sender credentials; separate mail-service configuration
+  from source code. Disable email actions clearly when unconfigured.
+- Use durable delivery jobs after records commit, bounded retries, request deduplication,
+  and document-status checks before dispatch. Record outcomes without treating provider
+  acceptance as guaranteed inbox delivery.
+- Audit card issuance/revocation/replacement and document delivery attempts without
+  exposing QR credentials or unrestricted recipient data in ordinary logs.
+- Include protected card artifacts and delivery records in retention, backup, and
+  recovery procedures. No provider has been selected by this plan.

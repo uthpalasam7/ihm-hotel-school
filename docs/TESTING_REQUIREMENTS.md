@@ -70,6 +70,25 @@ Test business services for:
 - Attendance-percentage calculation
 - Excused exclusion
 - Overdue warning does not block attendance
+- QR lookup and revoked/unknown-card rejection
+- Session, branch, assignment, and enrollment validation for scans
+- Duplicate/retried/concurrent scans preserve one attendance record and its status
+- QR capture records staff actor and check-in time; scan does not imply all-class attendance
+
+### Student Cards and Document Delivery — Planned Phases 6 and 10
+
+- One active card per student, shared across enrollments
+- Concurrent issuance/replacement, old-token revocation, and historical traceability
+- Reprint/download retains the active credential; QR and printed fields exclude NIC/fees
+- Printable PDF renders Latin, Sinhala, and Tamil student names and preserves a
+  decodable QR after the PDF back is rasterized at a realistic print resolution
+- Optional photo and email; missing email does not block core workflows
+- Administrator/branch authorization on card and delivery actions
+- Card rendering/delivery failure does not roll back enrollment or charges
+- Email failure does not undo payments, allocations, or receipt numbers
+- Durable post-commit delivery jobs, request deduplication, bounded retries, and explicit resend
+- Recipient snapshot and delivery outcomes; no raw QR/PDF/secrets in logs
+- Revoked-card and voided-receipt checks before dispatch/retry
 
 ### Fee Generation
 
@@ -131,6 +150,8 @@ Verify:
 
 - Unauthenticated requests are rejected.
 - Lecturer cannot access unassigned batch.
+- Lecturer sees a minimal roster only for a current active assignment in an
+  authorized branch; expired assignments and financial/NIC details stay hidden.
 - Lecturer cannot access financial endpoints.
 - Lecturer sees only reduced overdue data.
 - Admin cannot access unauthorized branch.
@@ -160,6 +181,11 @@ Test:
 - Report filters
 - API error display
 - Mobile layout for critical screens
+- Card preview/print layout with and without photo, including QR clear space
+- Camera permission denied/unavailable, scanner focus, and keyboard-only scan workflow
+- Explicit session selection, name/photo result, duplicate/error/success messages
+- No false success before server confirmation; manual fallback after network failure
+- Optional email recipient review, unconfigured-service state, and failed-delivery retry
 
 ## 6. End-to-End Scenarios
 
@@ -196,6 +222,11 @@ Test:
 4. Registration, monthly, and examination charges are generated.
 5. Same student is enrolled in a different batch.
 6. Duplicate enrollment in the same batch is rejected.
+7. Two concurrent enrollments get distinct sequential numbers; concurrent
+   duplicates create one enrollment only.
+8. A charge insert failure rolls back the enrollment, sequence, and audit.
+9. Fee edits leave prior snapshots and charges unchanged.
+10. A changed preview version requires the administrator to preview again.
 
 ### Scenario E: Attendance
 
@@ -234,6 +265,37 @@ Test:
 5. Allocations reverse.
 6. Charge status returns correctly.
 7. Audit records exist.
+
+### Scenario I: Student Card and QR Attendance — Phases 6 and 8
+
+1. Enroll one student in two different batches and issue one student-level card.
+2. Preview and print/download the card; verify a no-photo variant also works.
+3. Scan the physical card using a supported staff phone and USB 2D QR scanner.
+4. Select a session in each enrolled batch and verify attendance is recorded only
+   for the selected enrollment/session, with name and available photo displayed.
+5. Scan twice, retry after a lost response, and submit simultaneous scans; confirm
+   exactly one record and no silent overwrite of existing Late/Excused status.
+6. Replace the card; confirm the old QR is rejected and the new one works.
+7. Reject wrong-batch, ineligible-enrollment, cancelled-session, and unauthorized scans.
+8. Verify overdue warnings do not block scanning; manually mark a student who forgot
+   their card and review unscanned students before final submission.
+9. Deny camera permission and interrupt network access; verify useful fallback and
+   no false saved indication. Test a digital card on supported scanning equipment.
+
+### Scenario J: Card and Receipt Email — Phases 6 and 10
+
+1. Configure a test mail service; use synthetic recipients and documents only.
+2. Explicitly email a card PDF to the checked saved student address; inspect status.
+3. Post a valid payment and email its receipt without creating a second receipt.
+4. Simulate provider failure and repeated requests; retry safely and verify the
+   enrollment/payment/allocations remain intact with no duplicate jobs from retries.
+5. Intentionally resend and verify a separate audited delivery attempt for the
+   same document; distinguish provider acceptance from confirmed delivery.
+6. Revoke a queued card or void a payment before retry; do not send an invalid card
+   or a receipt PDF that conceals the voided status.
+7. Remove email or disable the mail configuration; retain print/download and all
+   core enrollment, attendance, and payment operations.
+8. Reject lecturer and unauthorized-branch delivery attempts.
 
 ## 7. Performance Checks
 

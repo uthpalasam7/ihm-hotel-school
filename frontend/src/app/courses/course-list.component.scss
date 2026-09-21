@@ -81,6 +81,14 @@ th {
 }
 
 @media (max-width: 760px) {
+  .mobile-course-description {
+    color: var(--ihm-text-muted);
+    font-size: .85rem;
+    line-height: 1.4;
+    margin: 0;
+    overflow-wrap: anywhere;
+  }
+
   .filters {
     align-items: stretch;
     grid-template-columns: 1fr;

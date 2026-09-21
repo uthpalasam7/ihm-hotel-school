@@ -85,6 +85,11 @@ mat-stepper {
   grid-column: 1 / -1;
 }
 
+.batch-number-prefix {
+  color: var(--ihm-text-muted);
+  padding-right: var(--ihm-space-2);
+}
+
 .context-field {
   background: var(--ihm-page);
   border: 1px solid var(--ihm-border);

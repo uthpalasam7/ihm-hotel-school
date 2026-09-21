@@ -1,5 +1,18 @@
 # API Specification
 
+Planning update, 20 September 2026: student-card and delivery operations (Phase 6),
+session-scoped QR attendance (Phase 8), and receipt delivery (Phase 10) are approved
+future scope, not currently available endpoints. See the
+[card, scanning, and delivery plan](STUDENT_CARDS_QR_AND_DELIVERY_PLAN.md).
+
+Define their exact request/response contracts during the corresponding phase:
+authenticated card issuance/preview/PDF/revocation/replacement; optional card and
+receipt email requests with delivery-status/retry access; and duplicate-safe scans
+bound to a session. Keep QR tokens out of URLs and public lookup routes. Apply the
+same server-side role/branch/assignment checks as the underlying resources, return
+only permitted scan details, and distinguish queued delivery from successful
+delivery. This planning update does not claim these routes are implemented.
+
 ## 1. General Standards
 
 Base path:
@@ -323,52 +336,97 @@ record.
 
 ## 11. Enrollments
 
+Implemented in the first Phase 6 delivery. Admin and Super Administrator only;
+branch authorization is enforced on reads, previews, and creation. All paths
+below are relative to `/api/v1` and support the active branch header.
+
 ### `GET /enrollments`
 
-Filters:
+Paged; filters: `branchId`, `batchId`, `studentId`, `status`, and `search`
+(registration number, student name, or batch number). Results are always
+limited to authorized branches.
 
-- branchId
-- batchId
-- studentId
-- status
-- registrationNumber
-- search
+### `POST /enrollments/preview`
+
+Read-only preview. Requires `studentId`, `batchId`, and `enrollmentDate` in the
+same shape as creation. Returns `currencyCode`, `totalAmount`, `batchVersion`,
+`feePlanVersion`, and a `charges` array with type, installment number,
+description, due date, and amount. No enrollment or charges are saved.
 
 ### `POST /enrollments`
-
-Request:
 
 ```json
 {
   "studentId": 100,
   "batchId": 10,
   "enrollmentDate": "2026-06-25",
-  "remarks": null
+  "remarks": null,
+  "expectedBatchVersion": 3,
+  "expectedFeePlanVersion": 2
 }
 ```
 
-Response:
-
-```json
-{
-  "id": 500,
-  "registrationNumber": "2026/PB02/0001",
-  "status": "ACTIVE",
-  "generatedCharges": [
-    {
-      "id": 1,
-      "type": "REGISTRATION_FEE",
-      "dueDate": "2026-06-25",
-      "amount": 5000.00
-    }
-  ]
-}
-```
+The two expected versions are optional API fields and are sent by the UI after
+preview. A changed batch or fee plan causes `409 Conflict`, so staff can review
+fresh charges. Duplicate student and batch, or an exhausted four-digit sequence,
+also returns `409`. A successful request returns `201 Created` with `id`,
+student and batch summaries, server-generated `registrationNumber`,
+`enrollmentDate`, `status`, `remarks`, `createdAt`, and `version`. Generated
+charges are read separately. Enrollment, charges, sequence, and audit record
+commit together.
 
 ### `GET /enrollments/{id}`
-### `PATCH /enrollments/{id}/status`
 ### `GET /students/{studentId}/enrollments`
 ### `GET /batches/{batchId}/enrollments`
+### `GET /enrollments/{id}/charges`
+
+Charge lists are paged. Each row includes original, discount, waiver, and final
+payable amounts; currency; due date; and an effective due status for today.
+
+### `PATCH /enrollments/{id}/status`
+
+Implemented for administrators with branch access. Request fields are `status`
+(`ACTIVE`, `SUSPENDED`, `COMPLETED`, `WITHDRAWN`, or `CANCELLED`), a required
+`reason`, and optional optimistic-lock `version`. Active enrollments may be
+suspended, completed, withdrawn, or cancelled; suspended enrollments may be
+resumed, withdrawn, or cancelled. Terminal states cannot be reopened. Each
+change is audited. Existing charges and student cards remain unchanged and
+require their own authorized workflows.
+
+### `GET /batches/{batchId}/students`
+
+Paged minimal roster for administrators with branch access and lecturers with
+a current active assignment in the batch and its branch. Rows include student
+name, registration number, enrollment date, and enrollment status. The response
+does not include NIC, contact details, enrollment remarks, or fee information.
+Lecturers cannot access general enrollment or charge endpoints.
+
+### Student card and card email — implemented Phase 6 endpoints
+
+All card operations require an administrator with access to a branch in which
+the student is enrolled. The active branch header, when supplied, must match one
+of those enrollments. No raw QR token is returned as JSON.
+
+- `GET /students/{studentId}/card`: card metadata, or `204` when not issued.
+- `POST /students/{studentId}/card`: issue, or return the active card without
+  creating a second credential.
+- `POST /students/{studentId}/card/replace`: `{ "reason": "Lost card" }`.
+- `POST /students/{studentId}/card/revoke`: `{ "reason": "Returned card" }`.
+- `GET /students/{studentId}/card/history`: paged issuance/replacement/revocation.
+- `GET /students/{studentId}/card/qr`: protected `image/png`, active card only.
+- `GET /students/{studentId}/card/pdf`: protected two-page wallet-size PDF,
+  active card only. Both document responses use `Cache-Control: no-store`.
+- `GET /document-deliveries/availability`: whether SMTP card email is configured.
+- `POST /students/{studentId}/card/email`: body contains a client-generated UUID
+  `idempotencyKey`. Returns `202` with queued delivery status. Repeating the same
+  key returns the existing request; a deliberate resend uses a new key.
+- `GET /students/{studentId}/card/deliveries`: paged delivery history with the
+  saved recipient snapshot, attempts, status, and provider-acceptance timestamp.
+
+Email sends only to the student's saved email. Missing address yields `400`;
+unconfigured SMTP yields `503`. A replaced or revoked card queued earlier will
+not be sent. `ACCEPTED` means accepted by the SMTP service, not confirmed in the
+student's inbox.
 
 ## 12. Batch Schedules
 

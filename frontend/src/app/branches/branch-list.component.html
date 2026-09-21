@@ -52,7 +52,7 @@
 
   @if (!loading() && !error() && branches().length) {
     <mat-card appearance="outlined" class="table-card">
-      <div class="table-wrap">
+      <div class="ihm-desktop-table"><div class="table-wrap">
         <table mat-table [dataSource]="branches()" aria-label="Branches">
           <ng-container matColumnDef="code">
             <th mat-header-cell *matHeaderCellDef>Code</th>
@@ -103,6 +103,26 @@
           <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
           <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
         </table>
+      </div></div>
+      <div class="ihm-mobile-cards" aria-label="Branches">
+        @for (branch of branches(); track branch.id) {
+          <article class="ihm-mobile-card">
+            <div class="ihm-mobile-card__heading">
+              <div><h2>{{ branch.name }}</h2><p>{{ branch.code }}</p></div>
+              <app-status-chip [value]="branch.status" />
+            </div>
+            <dl class="ihm-mobile-card__details">
+              <div><dt>Contact</dt><dd>{{ branch.contactNumber || 'Not set' }}</dd></div>
+              <div><dt>Default branch</dt><dd>{{ branch.defaultBranch ? 'Yes' : 'No' }}</dd></div>
+            </dl>
+            <div class="ihm-mobile-card__actions">
+              <a mat-button [routerLink]="['/branches', branch.id, 'edit']">Edit</a>
+              <button mat-button type="button" (click)="changeStatus(branch)" [disabled]="updatingId() === branch.id">
+                {{ updatingId() === branch.id ? 'Updating…' : branch.status === 'ACTIVE' ? 'Deactivate' : 'Activate' }}
+              </button>
+            </div>
+          </article>
+        }
       </div>
       <mat-paginator
         [length]="total()"

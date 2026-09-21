@@ -16,6 +16,7 @@ import { filter, finalize, switchMap } from 'rxjs';
 import { Course } from '../courses/course.models';
 import { CourseService } from '../courses/course.service';
 import { ActiveBranchService } from '../core/auth/active-branch.service';
+import { AuthService } from '../core/auth/auth.service';
 import { errorMessage } from '../shared/api-error';
 import { DateValue, toIsoDate } from '../shared/date-value';
 import {
@@ -55,6 +56,7 @@ export class BatchListComponent implements OnInit {
   private readonly batchService = inject(BatchService);
   private readonly courseService = inject(CourseService);
   private readonly activeBranchService = inject(ActiveBranchService);
+  private readonly authService = inject(AuthService);
   private readonly dialog = inject(MatDialog);
   private readonly notifications = inject(NotificationService);
   private initialized = false;
@@ -68,6 +70,7 @@ export class BatchListComponent implements OnInit {
   protected readonly pageIndex = signal(0);
   protected readonly pageSize = signal(20);
   protected readonly displayedColumns = ['batch', 'course', 'branch', 'dates', 'duration', 'status', 'counts', 'actions'];
+  protected readonly canManage = this.authService.hasAnyRole(['SUPER_ADMIN', 'ADMIN']);
   protected search = '';
   protected courseId = '';
   protected status = '';
@@ -85,10 +88,12 @@ export class BatchListComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.courseService.listAllActive().subscribe({
-      next: (courses) => this.courses.set(courses),
-      error: (error) => this.error.set(errorMessage(error)),
-    });
+    if (this.canManage) {
+      this.courseService.listAllActive().subscribe({
+        next: (courses) => this.courses.set(courses),
+        error: (error) => this.error.set(errorMessage(error)),
+      });
+    }
     this.initialized = true;
     this.load();
   }

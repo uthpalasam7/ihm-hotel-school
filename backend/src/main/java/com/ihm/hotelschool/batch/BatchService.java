@@ -21,6 +21,7 @@ import com.ihm.hotelschool.common.web.NotFoundException;
 import com.ihm.hotelschool.common.web.PageResponse;
 import com.ihm.hotelschool.course.Course;
 import com.ihm.hotelschool.course.CourseRepository;
+import com.ihm.hotelschool.enrollment.EnrollmentRepository;
 import com.ihm.hotelschool.user.Role;
 import com.ihm.hotelschool.user.UserAccount;
 import com.ihm.hotelschool.user.UserRepository;
@@ -58,6 +59,7 @@ class BatchService {
 	private static final String DEFAULT_CURRENCY = "LKR";
 
 	private final CourseBatchRepository batchRepository;
+	private final EnrollmentRepository enrollmentRepository;
 	private final CourseRepository courseRepository;
 	private final BranchRepository branchRepository;
 	private final FeePlanRepository feePlanRepository;
@@ -67,9 +69,11 @@ class BatchService {
 	private final CurrentActorService currentActorService;
 	private final AuditService auditService;
 	private final Clock clock;
+	private final java.time.ZoneId zone;
 
 	BatchService(
 			CourseBatchRepository batchRepository,
+			EnrollmentRepository enrollmentRepository,
 			CourseRepository courseRepository,
 			BranchRepository branchRepository,
 			FeePlanRepository feePlanRepository,
@@ -78,8 +82,10 @@ class BatchService {
 			BatchMapper batchMapper,
 			CurrentActorService currentActorService,
 			AuditService auditService,
-			Clock clock) {
+			Clock clock,
+			@org.springframework.beans.factory.annotation.Value("${app.timezone:Asia/Colombo}") String timezone) {
 		this.batchRepository = batchRepository;
+		this.enrollmentRepository = enrollmentRepository;
 		this.courseRepository = courseRepository;
 		this.branchRepository = branchRepository;
 		this.feePlanRepository = feePlanRepository;
@@ -89,6 +95,7 @@ class BatchService {
 		this.currentActorService = currentActorService;
 		this.auditService = auditService;
 		this.clock = clock;
+		this.zone = java.time.ZoneId.of(timezone);
 	}
 
 	@Transactional(readOnly = true)
@@ -111,7 +118,10 @@ class BatchService {
 				Join<CourseBatch, BatchLecturer> assignment = root.join("lecturerAssignments", JoinType.INNER);
 				return criteriaBuilder.and(
 						criteriaBuilder.equal(assignment.get("lecturer").get("id"), actor.id()),
-						criteriaBuilder.equal(assignment.get("status"), BatchLecturerStatus.ACTIVE));
+						criteriaBuilder.equal(assignment.get("status"), BatchLecturerStatus.ACTIVE),
+						criteriaBuilder.lessThanOrEqualTo(assignment.get("assignmentStartDate"), LocalDate.now(clock.withZone(zone))),
+						criteriaBuilder.or(criteriaBuilder.isNull(assignment.get("assignmentEndDate")),
+								criteriaBuilder.greaterThanOrEqualTo(assignment.get("assignmentEndDate"), LocalDate.now(clock.withZone(zone)))));
 			});
 		}
 		if (branchId != null) {
@@ -154,8 +164,8 @@ class BatchService {
 		CourseBatch batch = findBatch(id);
 		actor.requireBranchAccess(Set.of(batch.getBranch().getId()));
 		if (actor.hasRole("LECTURER") && !actor.hasRole("ADMIN") && !actor.superAdmin()) {
-			boolean assigned = batchLecturerRepository.findByBatchIdOrderByAssignmentStartDateAsc(batch.getId()).stream()
-					.anyMatch(assignment -> assignment.getLecturer().getId().equals(actor.id()) && assignment.getStatus() == BatchLecturerStatus.ACTIVE);
+			boolean assigned = batchLecturerRepository.hasActiveAssignmentOn(batch.getId(), actor.id(),
+					LocalDate.now(clock.withZone(zone)));
 			if (!assigned) {
 				throw new AccessDeniedException("Access denied");
 			}
@@ -200,6 +210,12 @@ class BatchService {
 		Branch branch = resolveAuthorizedBranch(request.branchId(), actor);
 		validateBatchRequest(request);
 		String batchNumber = normalizeRequired(request.batchNumber());
+        if (enrollmentRepository.existsByBatchId(id) && (
+                !batch.getCourse().getId().equals(course.getId())
+                || !batch.getBranch().getId().equals(branch.getId())
+                || !batch.getBatchNumber().equals(batchNumber))) {
+            throw new ConflictException("Course, branch, and batch number cannot change after enrollment");
+        }
 		if (batchRepository.existsByBatchNumberAndIdNot(batchNumber, id)) {
 			throw new ConflictException("Batch number already exists");
 		}
@@ -406,7 +422,7 @@ class BatchService {
 	private BatchResponse toResponse(CourseBatch batch) {
 		long lecturerCount = batchLecturerRepository.countByBatchIdAndStatus(batch.getId(), BatchLecturerStatus.ACTIVE);
 		boolean feePlanConfigured = feePlanRepository.findByBatchId(batch.getId()).isPresent();
-		return batchMapper.toResponse(batch, lecturerCount, 0, feePlanConfigured);
+		return batchMapper.toResponse(batch, lecturerCount, enrollmentRepository.countByBatchId(batch.getId()), feePlanConfigured);
 	}
 
 	private CourseBatch requireBatchManageAccess(Long batchId, Authentication authentication) {

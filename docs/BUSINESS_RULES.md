@@ -51,6 +51,17 @@
 4. If charge generation fails, enrollment creation rolls back.
 5. Cancelling an enrollment must not erase historical attendance or financial data.
 6. Attendance eligibility depends on enrollment status.
+7. New enrollments require an active student, an active or upcoming batch, and
+   an active branch and fee plan; enrollment date cannot be after batch end.
+8. Course, branch, and batch number cannot change after the first enrollment,
+   preserving historical registration numbers.
+9. Existing enrollment fees and charges are snapshots. Later changes to the
+   batch fee plan must not recalculate them.
+10. An active enrollment may be suspended, completed, withdrawn, or cancelled.
+    A suspended enrollment may be resumed, withdrawn, or cancelled. Completed,
+    withdrawn, and cancelled enrollments cannot be reopened. A reason and audit
+    record are required for status changes. Status changes do not silently waive
+    charges or revoke a student-level card.
 
 ## 5. Lecturer Access Rules
 
@@ -186,3 +197,34 @@ Sensitive actions must capture:
 - Mandatory reason where relevant
 
 Audit logs are read-only through normal business workflows.
+
+## 14. Student Cards, QR Attendance, and Delivery — Planned
+
+Approved 20 September 2026; delivery phases and workflows are defined in the
+[student cards, QR attendance, and delivery plan](STUDENT_CARDS_QR_AND_DELIVERY_PLAN.md).
+
+1. One student-level card works across courses; enrollment registration numbers
+   remain separate. Keep at most one active card credential per student.
+2. QR tokens are unpredictable and generated on the server. They contain no NIC,
+   personal profile fields, or financial details and do not grant account access.
+3. Replacement atomically revokes the old card token. Keep audit history; do not
+   modify enrollment or historical attendance. Reprinting retains the active token.
+4. Card actions require an authorized administrator with enrollment-derived student
+   branch access. Photos remain optional.
+5. A scan is always tied to one selected class session. Validate branch, assignment,
+   eligible enrollment, active card, and session status on the server.
+6. Initial scans save Present and check-in time; staff use existing controls for
+   Late, Absent, or Excused. Duplicate scans cannot create a second record or silently
+   overwrite attendance. Existing confirmation/audit rules govern corrections.
+7. QR identification requires staff supervision. Unscanned students remain unmarked
+   until review. Overdue fees never block either scanning or manual attendance.
+8. First-release scanning requires server confirmation. Retain manual marking and
+   paper fallback during outages; offline synchronization is deferred.
+9. Email is optional and staff-triggered to the checked saved student address.
+   Missing email cannot block enrollment, card printing, attendance, or payment.
+10. Card rendering and email delivery are separate from committed enrollment/charge
+    and payment/allocation transactions. Their failure does not undo those records.
+11. Delivery retries must not create new enrollment, payment, receipt, or card records.
+    Reprinting/resending an existing receipt retains its receipt number. Recheck
+    document status before delivery so revoked cards and stale unvoided receipts
+    are not sent. Intentional resends are audited.

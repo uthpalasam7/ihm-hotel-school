@@ -34,6 +34,13 @@ The first production version includes:
 - Attendance reports
 - Financial reports
 - Audit history
+- One student QR card across enrollments, with preview, PDF download, and printing
+- Supervised class-session QR attendance with manual marking retained
+- Optional staff-triggered card and receipt PDF email with delivery status and retry
+
+These additions were approved on 20 September 2026 and remain planned work for
+Phases 6, 8, and 10. See the
+[student cards, QR attendance, and delivery plan](STUDENT_CARDS_QR_AND_DELIVERY_PLAN.md).
 
 ## 4. Out of Scope for the First Version
 
@@ -48,7 +55,7 @@ The following are not part of the first release unless separately approved:
 - Online payment gateway
 - WhatsApp or SMS notifications
 - Biometric attendance
-- QR attendance
+- Unattended QR kiosks and offline attendance synchronization
 - Payroll
 - Inventory
 - Accounting-ledger integration
@@ -192,6 +199,12 @@ The NIC is mandatory and unique.
 
 A student is created once and can be enrolled in multiple batches.
 
+Phase 6 adds one student-level QR card usable across those batches. Administrators
+can preview, print, download, optionally email, revoke, and replace the card.
+Photos and email remain optional. The QR contains an opaque, replaceable server
+token, not an NIC or personal/financial data; enrollment registration numbers
+remain separate. Physical cards are the default handover.
+
 ## 10. Enrollments
 
 An enrollment connects a student to a course batch.
@@ -300,6 +313,12 @@ One attendance record is allowed per enrollment and session.
 
 Overdue fees display a warning but do not block attendance.
 
+Phase 8 adds supervised scanning from a staff phone camera or USB 2D QR scanner
+within a selected session. The server checks card validity, enrollment eligibility,
+branch access, and lecturer assignment before saving. Repeat scans do not duplicate
+or overwrite attendance. Display name and available photo for staff checks; retain
+manual marking and outage fallback. Both schedule modes support QR attendance.
+
 ## 14. Fee Plan
 
 Every batch has:
@@ -358,6 +377,12 @@ A payment may settle one or more selected charges, but every selected charge mus
 Payments cannot be deleted. Incorrect payments are voided with a mandatory reason, authorization, and audit record.
 
 Every completed payment receives a unique receipt number.
+
+Phase 10 offers receipt printing, PDF download, and optional staff-triggered PDF
+email to the student's checked saved address. Email failures must not undo payment
+or create another receipt; show delivery status and allow safe retry/resend. Reuse
+the document-delivery foundation introduced with cards in Phase 6. Email is optional
+and unavailable until the school's sending service is configured.
 
 ## 18. Overdue Warnings
 

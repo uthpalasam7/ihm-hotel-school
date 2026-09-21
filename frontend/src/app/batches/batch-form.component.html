@@ -83,54 +83,12 @@
                 }
               </mat-form-field>
 
-              <mat-form-field appearance="outline" class="wide">
-                <mat-label>Batch number</mat-label>
-                <input matInput formControlName="batchNumber" maxlength="60" placeholder="2026/PB02" autocomplete="off" />
-                <mat-hint align="end">{{ generalForm.controls.batchNumber.value.length }}/60</mat-hint>
-                @if (generalForm.controls.batchNumber.touched && generalForm.controls.batchNumber.hasError('required')) {
-                  <mat-error>Batch number is required</mat-error>
-                } @else if (generalForm.controls.batchNumber.touched && generalForm.controls.batchNumber.hasError('maxlength')) {
-                  <mat-error>Batch number must be 60 characters or fewer</mat-error>
-                } @else if (fieldError('batchNumber')) {
-                  <mat-error>{{ fieldError('batchNumber') }}</mat-error>
-                }
-              </mat-form-field>
-
-              <mat-form-field appearance="outline">
-                <mat-label>Start date</mat-label>
-                <input matInput [matDatepicker]="batchStartDatePicker" formControlName="startDate" />
-                <mat-hint>DD/MM/YYYY</mat-hint>
-                <mat-datepicker-toggle matIconSuffix [for]="batchStartDatePicker" />
-                <mat-datepicker #batchStartDatePicker [touchUi]="stepperOrientation() === 'vertical'" />
-                @if (generalForm.controls.startDate.touched && generalForm.controls.startDate.hasError('required')) {
-                  <mat-error>Start date is required</mat-error>
-                } @else if (fieldError('startDate')) {
-                  <mat-error>{{ fieldError('startDate') }}</mat-error>
-                }
-              </mat-form-field>
-
-              <mat-form-field appearance="outline">
-                <mat-label>End date</mat-label>
-                <input matInput [matDatepicker]="batchEndDatePicker" formControlName="endDate" />
-                <mat-hint>DD/MM/YYYY</mat-hint>
-                <mat-datepicker-toggle matIconSuffix [for]="batchEndDatePicker" />
-                <mat-datepicker #batchEndDatePicker [touchUi]="stepperOrientation() === 'vertical'" />
-                @if (generalForm.controls.endDate.touched && generalForm.controls.endDate.hasError('required')) {
-                  <mat-error>End date is required</mat-error>
-                } @else if (fieldError('endDate')) {
-                  <mat-error>{{ fieldError('endDate') }}</mat-error>
-                }
-              </mat-form-field>
-              @if (generalForm.controls.endDate.touched && generalForm.hasError('dateOrder')) {
-                <p class="field-error wide" role="alert">End date cannot be before the start date.</p>
-              }
-
               <mat-form-field appearance="outline">
                 <mat-label>Duration</mat-label>
-                <input matInput type="number" min="1" formControlName="durationMonths" />
+                <input matInput type="number" min="1" step="1" formControlName="durationMonths" />
                 <span matTextSuffix>months</span>
-                @if (generalForm.controls.durationMonths.touched && generalForm.controls.durationMonths.hasError('min')) {
-                  <mat-error>Duration must be at least one month</mat-error>
+                @if (generalForm.controls.durationMonths.touched && generalForm.controls.durationMonths.invalid) {
+                  <mat-error>Enter a whole number of months, at least 1</mat-error>
                 } @else if (fieldError('durationMonths')) {
                   <mat-error>{{ fieldError('durationMonths') }}</mat-error>
                 }
@@ -148,6 +106,82 @@
                   <mat-error>{{ fieldError('status') }}</mat-error>
                 }
               </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Start date</mat-label>
+                <input matInput [matDatepicker]="batchStartDatePicker" formControlName="startDate" />
+                <mat-hint>DD/MM/YYYY</mat-hint>
+                <mat-datepicker-toggle matIconSuffix [for]="batchStartDatePicker" />
+                <mat-datepicker #batchStartDatePicker [touchUi]="stepperOrientation() === 'vertical'" />
+                @if (generalForm.controls.startDate.touched && generalForm.controls.startDate.hasError('matDatepickerParse')) {
+                  <mat-error>Enter a valid date as DD/MM/YYYY</mat-error>
+                } @else if (generalForm.controls.startDate.touched && generalForm.controls.startDate.hasError('required')) {
+                  <mat-error>Start date is required</mat-error>
+                } @else if (fieldError('startDate')) {
+                  <mat-error>{{ fieldError('startDate') }}</mat-error>
+                }
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" subscriptSizing="dynamic">
+                <mat-label>End date</mat-label>
+                <input matInput [matDatepicker]="batchEndDatePicker" formControlName="endDate" />
+                <mat-hint>{{ automaticEndDate() ? 'Calculated from start date and duration; editable.' : 'Your chosen end date is kept when start or duration changes.' }}</mat-hint>
+                <mat-datepicker-toggle matIconSuffix [for]="batchEndDatePicker" />
+                <mat-datepicker #batchEndDatePicker [touchUi]="stepperOrientation() === 'vertical'" />
+                @if (generalForm.controls.endDate.touched && generalForm.controls.endDate.hasError('matDatepickerParse')) {
+                  <mat-error>Enter a valid date as DD/MM/YYYY</mat-error>
+                } @else if (generalForm.controls.endDate.touched && generalForm.controls.endDate.hasError('required')) {
+                  <mat-error>End date is required</mat-error>
+                } @else if (fieldError('endDate')) {
+                  <mat-error>{{ fieldError('endDate') }}</mat-error>
+                }
+              </mat-form-field>
+              @if (generalForm.controls.endDate.touched && generalForm.hasError('dateOrder')) {
+                <p class="field-error wide" role="alert">End date cannot be before the start date.</p>
+              }
+
+              @if (!automaticEndDate()) {
+                <div class="wide">
+                  <button mat-button type="button" (click)="useCalculatedEndDate()" [disabled]="!calculatedEndDate()">
+                    Use calculated end date
+                  </button>
+                </div>
+              }
+
+              @if (editingId()) {
+              <mat-form-field appearance="outline" class="wide">
+                <mat-label>Batch number</mat-label>
+                <input matInput formControlName="batchNumber" maxlength="60" placeholder="2026/PB02" autocomplete="off" />
+                <mat-hint align="end">{{ generalForm.controls.batchNumber.value.length }}/60</mat-hint>
+                @if (generalForm.controls.batchNumber.touched && generalForm.controls.batchNumber.hasError('required')) {
+                  <mat-error>Batch number is required</mat-error>
+                } @else if (generalForm.controls.batchNumber.touched && generalForm.controls.batchNumber.hasError('maxlength')) {
+                  <mat-error>Batch number must be 60 characters or fewer</mat-error>
+                } @else if (fieldError('batchNumber')) {
+                  <mat-error>{{ fieldError('batchNumber') }}</mat-error>
+                }
+              </mat-form-field>
+              } @else {
+                <mat-form-field appearance="outline" class="wide" subscriptSizing="dynamic">
+                  <mat-label>Batch number</mat-label>
+                  <span matTextPrefix class="batch-number-prefix">{{ batchNumberPrefix() }}</span>
+                  <input matInput formControlName="batchSequence" inputmode="numeric" maxlength="35" placeholder="02" autocomplete="off" (blur)="normalizeBatchSequence()" />
+                  <mat-hint aria-live="polite">
+                    @if (generalForm.controls.batchNumber.value) {
+                      Full batch number: {{ generalForm.controls.batchNumber.value }}
+                    } @else {
+                      Enter only the number. Year comes from the start date; code comes from the course.
+                    }
+                  </mat-hint>
+                  @if (generalForm.controls.batchSequence.touched && generalForm.controls.batchSequence.hasError('required')) {
+                    <mat-error>Batch number is required</mat-error>
+                  } @else if (fieldError('batchNumber')) {
+                    <mat-error>{{ fieldError('batchNumber') }}</mat-error>
+                  } @else if (generalForm.controls.batchSequence.touched && generalForm.controls.batchSequence.invalid) {
+                    <mat-error>Enter a whole number greater than zero, up to 35 digits</mat-error>
+                  }
+                </mat-form-field>
+              }
 
               <mat-form-field appearance="outline" class="wide">
                 <mat-label>Remarks</mat-label>
@@ -223,7 +257,9 @@
                 <mat-hint>DD/MM/YYYY</mat-hint>
                 <mat-datepicker-toggle matIconSuffix [for]="examinationDueDatePicker" />
                 <mat-datepicker #examinationDueDatePicker [touchUi]="stepperOrientation() === 'vertical'" />
-                @if (feeForm.controls.examinationDueDate.touched && feeForm.controls.examinationDueDate.hasError('required')) {
+                @if (feeForm.controls.examinationDueDate.touched && feeForm.controls.examinationDueDate.hasError('matDatepickerParse')) {
+                  <mat-error>Enter a valid date as DD/MM/YYYY</mat-error>
+                } @else if (feeForm.controls.examinationDueDate.touched && feeForm.controls.examinationDueDate.hasError('required')) {
                   <mat-error>Examination due date is required</mat-error>
                 } @else if (fieldError('examinationDueDate')) {
                   <mat-error>{{ fieldError('examinationDueDate') }}</mat-error>

@@ -45,6 +45,11 @@
 - Duplicate student-and-batch enrollment is rejected.
 - Registration number generation is safe during concurrent requests.
 - Charges are generated atomically with enrollment.
+- Phase 6: administrator can issue, preview, print, and download a student QR card
+  after enrollment, with optional email and photo.
+- The same card works across enrollments; a reprint retains its credential and a
+  replacement revokes the old one without changing student history.
+- Card/PDF/email failures do not undo enrollment or generated charges.
 
 ## 6. Sessions
 
@@ -69,6 +74,13 @@
 - Historical changes are audited.
 - Overdue fees display a warning.
 - Attendance remains enabled for overdue students.
+- Phase 8: authorized staff can scan with a phone camera or USB QR scanner for a
+  selected regular or manually scheduled session, with manual marking retained.
+- Valid scans save attendance and show name/available photo after authorization.
+- Repeated/concurrent scans create only one record and preserve any existing status.
+- Revoked/unknown cards, ineligible enrollments, and unauthorized/cancelled sessions
+  are rejected; denied scans do not leak out-of-scope student information.
+- Save failures never show a false success. Unscanned students require staff review.
 
 ## 8. Fee Plan and Charges
 
@@ -103,6 +115,12 @@
 - Authorized user can void with a mandatory reason.
 - Voiding restores charge states.
 - Void action is audited.
+- Phase 10: receipts can be printed, downloaded, or optionally emailed to the
+  student's checked saved address by an authorized administrator.
+- Email failure leaves the payment/allocations/receipt intact and supports safe
+  retry/resend without new payment or receipt numbers.
+- Delivery status distinguishes provider acceptance from confirmed delivery;
+  resends respect current void status and lecturers cannot access delivery actions.
 
 ## 11. Reports
 

@@ -6,6 +6,7 @@ PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ENV_FILE="${PROJECT_ROOT}/.env"
 BACKEND_PID=""
 FRONTEND_PID=""
+APPS_STARTED=false
 
 log() {
 	printf '[dev] %s\n' "$1"
@@ -76,9 +77,16 @@ shutdown() {
 	if [[ -n "${FRONTEND_PID}" ]]; then
 		wait "${FRONTEND_PID}" 2>/dev/null || true
 	fi
+	if [[ "${APPS_STARTED}" == true ]]; then
+		"${PROJECT_ROOT}/stop.sh" --apps-only || log "Could not finish stopping the servers; run ./stop.sh."
+	fi
 
-	log "Backend and frontend stopped."
-	log "PostgreSQL is still running. Stop it with: docker compose down"
+	if [[ "${APPS_STARTED}" == true ]]; then
+		log "Backend and frontend stopped."
+	else
+		log "No application servers were started."
+	fi
+	log "PostgreSQL is still running. Stop everything with: ./stop.sh"
 	exit "${status}"
 }
 
@@ -89,6 +97,7 @@ trap 'shutdown 143' TERM
 require_command docker
 require_command java
 require_command npm
+require_command lsof
 
 if [[ ! -f "${ENV_FILE}" ]]; then
 	log "Missing .env file. Create it first with: cp .env.example .env"
@@ -100,6 +109,13 @@ load_env_file
 export IHM_DB_NAME="${IHM_DB_NAME:-ihm_hotel_school}"
 export IHM_DB_PORT="${IHM_DB_PORT:-5432}"
 export IHM_DB_URL="jdbc:postgresql://localhost:${IHM_DB_PORT}/${IHM_DB_NAME}"
+
+for service_port in "${IHM_BACKEND_PORT:-8080}" "${IHM_FRONTEND_PORT:-4200}"; do
+	if [[ -n "$(lsof -nP -tiTCP:"${service_port}" -sTCP:LISTEN 2>/dev/null || true)" ]]; then
+		log "Port ${service_port} is already in use. Run ./stop.sh if it belongs to this project."
+		exit 1
+	fi
+done
 
 if [[ ! -d "${PROJECT_ROOT}/frontend/node_modules" ]]; then
 	log "Frontend dependencies are missing. Run: cd frontend && npm install"
@@ -118,6 +134,7 @@ log "Starting backend at http://localhost:${IHM_BACKEND_PORT:-8080}..."
 	./mvnw spring-boot:run
 ) &
 BACKEND_PID=$!
+APPS_STARTED=true
 
 log "Starting frontend at http://localhost:${IHM_FRONTEND_PORT:-4200}..."
 (

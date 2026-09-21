@@ -64,6 +64,10 @@ describe('CourseListComponent', () => {
     expect(fixture.nativeElement.textContent).toContain('Pastry & Bakery');
     expect(fixture.nativeElement.textContent).toContain('Certificate course');
     expect(fixture.nativeElement.textContent).toContain('PB');
+    const mobileCard = fixture.nativeElement.querySelector('.ihm-mobile-cards .ihm-mobile-card');
+    expect(mobileCard?.textContent).toContain('Pastry & Bakery');
+    expect(mobileCard?.textContent).toContain('Certificate course');
+    expect(mobileCard?.textContent).toContain('Deactivate');
     expect(list).toHaveBeenCalledWith(expect.objectContaining({ page: 0, size: 20 }));
   });
 

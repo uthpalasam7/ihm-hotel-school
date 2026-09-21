@@ -74,6 +74,12 @@ class ApiExceptionHandler {
 		return error(HttpStatus.PAYLOAD_TOO_LARGE, "FILE_TOO_LARGE", "Student photo must be 5 MiB or smaller", List.of(), request);
 	}
 
+	@ExceptionHandler(ServiceUnavailableException.class)
+	@ResponseStatus(HttpStatus.SERVICE_UNAVAILABLE)
+	ApiError serviceUnavailable(ServiceUnavailableException exception, HttpServletRequest request) {
+		return error(HttpStatus.SERVICE_UNAVAILABLE, "SERVICE_UNAVAILABLE", exception.getMessage(), List.of(), request);
+	}
+
 	@ExceptionHandler(ObjectOptimisticLockingFailureException.class)
 	@ResponseStatus(HttpStatus.CONFLICT)
 	ApiError optimisticLock(ObjectOptimisticLockingFailureException exception, HttpServletRequest request) {

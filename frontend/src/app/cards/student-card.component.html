@@ -1,0 +1,83 @@
+<section class="card-page">
+  <app-page-header eyebrow="Student administration" [title]="student()?.fullName || 'Student card'" subtitle="One card can be used for this student across enrolled courses.">
+    <a mat-stroked-button [routerLink]="['/students', studentId]">Back to student</a>
+  </app-page-header>
+  <app-page-state [loading]="loading()" [error]="loading() ? error() : null" (retry)="load()" />
+  @if (!loading() && student(); as current) {
+    @if (error()) { <p role="alert" class="error-message">{{ error() }}</p> }
+    @if (!enrollmentCount()) {
+      <mat-card appearance="outlined"><mat-card-content>
+        <h2>Enroll the student first</h2>
+        <p>A card can be issued after the student has an enrollment in your active branch.</p>
+        <a mat-flat-button routerLink="/enrollments/new" [queryParams]="{studentId: current.id}">Enroll student</a>
+      </mat-card-content></mat-card>
+    } @else {
+      @if (!card()) {
+        <mat-card appearance="outlined"><mat-card-content>
+          <h2>No card issued yet</h2><p>Issue one student card to use across all of this student's batches.</p>
+          <button mat-flat-button type="button" [disabled]="busy() || current.status !== 'ACTIVE'" (click)="issue()">{{ busy() ? 'Issuing…' : 'Issue student card' }}</button>
+        </mat-card-content></mat-card>
+      } @else if (card(); as existing) {
+        <div class="card-toolbar"><div>
+          <strong>{{ existing.identifier }}</strong>
+          <span>{{ existing.status === 'ACTIVE' ? 'Active card' : 'Cancelled card' }} · Issued {{ existing.issuedAt | date:'d MMM y' }}</span>
+        </div><div class="actions">
+          @if (existing.status === 'ACTIVE') {
+            <button mat-stroked-button type="button" (click)="download()" [disabled]="busy()">Download PDF</button>
+            <button mat-stroked-button type="button" (click)="print()" [disabled]="busy()">Print PDF</button>
+            <button mat-stroked-button type="button" (click)="change('replace')" [disabled]="busy()">Replace card</button>
+            <button mat-button type="button" (click)="change('revoke')" [disabled]="busy()">Cancel card</button>
+          } @else {
+            <button mat-flat-button type="button" (click)="issue()" [disabled]="busy() || current.status !== 'ACTIVE'">Issue replacement card</button>
+          }
+        </div></div>
+        @if (existing.status === 'ACTIVE') {
+          <div class="preview-grid">
+            <article class="card-face" aria-label="Card front preview">
+              <div class="top-strip"></div>
+              <header><img src="/assets/branding/ihm-logo.jpg" alt="IHM Hotel School logo" />
+                <div><strong>IHM HOTEL SCHOOL</strong><span>STUDENT ID CARD</span></div></header>
+              <div class="student-area"><div><span class="overline">STUDENT</span><h2>{{ current.fullName }}</h2>
+                <span class="small-label">IHM STUDENT ID</span><strong>{{ existing.identifier }}</strong></div>
+                <app-student-photo class="card-portrait" [studentId]="current.id" [fullName]="current.fullName" [photoAvailable]="current.photoAvailable" [version]="current.version" variant="full" size="large" />
+              </div>
+            </article>
+            <article class="card-face card-back" aria-label="Card back preview"><div class="top-strip"></div>
+              @if (qrUrl(); as url) { <img class="qr" [src]="url" alt="Student card QR code" /> }
+              @else { <p>Loading QR…</p> }
+              <div><strong>SCAN FOR CLASS ATTENDANCE</strong><span class="identifier">{{ existing.identifier }}</span>
+                <span>Staff-supervised check-in only</span><small>{{ existing.contactLine }}</small></div>
+            </article>
+          </div>
+          <p class="note">Print the two PDF pages at actual wallet-card size and check the QR with your scanner. A digital card may also be shown on a phone.</p>
+        }
+          <mat-card appearance="outlined"><mat-card-content><h2>Optional email delivery</h2>
+            @if (existing.status !== 'ACTIVE') {
+              <p class="note">This card is cancelled. Its earlier delivery history is still available below.</p>
+            } @else if (current.email) {
+              <p>Saved student address: <strong>{{ current.email }}</strong></p>
+              @if (emailAvailable()) {
+                <button mat-stroked-button type="button" (click)="email()" [disabled]="busy()">Email card PDF</button>
+              } @else { <p class="note">Card email is not configured. You can still print or download the PDF.</p> }
+            } @else { <p class="note">Add a student email address to enable email delivery. Printing and download are available now.</p> }
+            @if (deliveries().length) { <div class="delivery-list">
+              <div class="section-heading"><h3>Delivery attempts</h3><button mat-button type="button" (click)="refreshDeliveries()">Refresh status</button></div>
+              @for (delivery of deliveries(); track delivery.id) {
+                <div class="history-row"><strong>{{ delivery.status }}</strong><span>{{ delivery.recipientEmail }}</span>
+                  <span>{{ delivery.createdAt | date:'d MMM y, h:mm a' }}</span>
+                  @if (delivery.lastError) { <span>{{ delivery.lastError }}</span> }
+                </div>
+              }
+              <p class="note">Accepted means the mail service accepted the message; it does not confirm delivery to the student's inbox.</p>
+            </div> }
+          </mat-card-content></mat-card>
+        <mat-card appearance="outlined"><mat-card-content><h2>Card history</h2>
+          @for (event of events(); track event.id) {
+            <div class="history-row"><strong>{{ event.action }}</strong><span>{{ event.occurredAt | date:'d MMM y, h:mm a' }}</span>
+              @if (event.reason) { <span>{{ event.reason }}</span> }</div>
+          } @empty { <p>No card history yet.</p> }
+        </mat-card-content></mat-card>
+      }
+    }
+  }
+</section>

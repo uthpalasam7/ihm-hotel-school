@@ -2,7 +2,7 @@ import { DatePipe, DecimalPipe } from '@angular/common';
 import { BreakpointObserver } from '@angular/cdk/layout';
 import { StepperOrientation } from '@angular/cdk/stepper';
 import { Component, HostListener, OnInit, inject, signal } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import {
   AbstractControl,
   FormBuilder,
@@ -14,6 +14,7 @@ import {
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatCheckboxModule } from '@angular/material/checkbox';
+import { DateAdapter, MAT_DATE_LOCALE } from '@angular/material/core';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
@@ -23,7 +24,7 @@ import { MatRadioModule } from '@angular/material/radio';
 import { MatSelectModule } from '@angular/material/select';
 import { MatStepper, MatStepperModule } from '@angular/material/stepper';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { catchError, finalize, forkJoin, map, of, switchMap } from 'rxjs';
+import { catchError, finalize, forkJoin, map, merge, of, switchMap } from 'rxjs';
 import { Branch } from '../branches/branch.models';
 import { BranchService } from '../branches/branch.service';
 import { Course } from '../courses/course.models';
@@ -31,6 +32,7 @@ import { CourseService } from '../courses/course.service';
 import { ActiveBranchService } from '../core/auth/active-branch.service';
 import { errorMessage, fieldError } from '../shared/api-error';
 import { DateValue, toIsoDate, toLocalDate } from '../shared/date-value';
+import { DayMonthYearDateAdapter } from '../shared/day-month-year-date-adapter';
 import { NotificationService } from '../shared/notification.service';
 import { PageHeaderComponent } from '../shared/page-header.component';
 import { PageStateComponent } from '../shared/page-state.component';
@@ -57,6 +59,10 @@ function orderedDates(startControl: string, endControl: string): ValidatorFn {
 
 @Component({
   selector: 'app-batch-form',
+  providers: [
+    { provide: DateAdapter, useClass: DayMonthYearDateAdapter },
+    { provide: MAT_DATE_LOCALE, useValue: 'en-GB' },
+  ],
   imports: [
     DatePipe,
     DecimalPipe,
@@ -99,6 +105,7 @@ export class BatchFormComponent implements OnInit, HasUnsavedChanges {
   protected readonly error = signal<string | null>(null);
   protected readonly serverError = signal<unknown>(null);
   protected readonly editingId = signal<number | null>(null);
+  protected readonly automaticEndDate = signal(true);
   protected readonly courses = signal<Course[]>([]);
   protected readonly branches = signal<Branch[]>([]);
   protected readonly lecturers = signal<UserAccount[]>([]);
@@ -122,9 +129,10 @@ export class BatchFormComponent implements OnInit, HasUnsavedChanges {
     courseId: [0, [Validators.required, Validators.min(1)]],
     branchId: [0, [Validators.required, Validators.min(1)]],
     batchNumber: ['', [Validators.required, Validators.maxLength(60)]],
+    batchSequence: ['', [Validators.required, Validators.pattern(/^\d+$/), Validators.min(1), Validators.maxLength(35)]],
     startDate: this.fb.control<DateValue>(null, Validators.required),
     endDate: this.fb.control<DateValue>(null, Validators.required),
-    durationMonths: [6, [Validators.required, Validators.min(1)]],
+    durationMonths: [6, [Validators.required, Validators.min(1), Validators.pattern(/^\d+$/)]],
     status: ['UPCOMING', [Validators.required]],
     remarks: [''],
   }, { validators: orderedDates('startDate', 'endDate') });
@@ -141,6 +149,72 @@ export class BatchFormComponent implements OnInit, HasUnsavedChanges {
   protected readonly scheduleForm = this.fb.nonNullable.group({
     scheduleMode: ['REGULAR', [Validators.required]],
   });
+
+  constructor() {
+    const { startDate, durationMonths, endDate } = this.generalForm.controls;
+    merge(startDate.valueChanges, durationMonths.valueChanges)
+      .pipe(takeUntilDestroyed())
+      .subscribe(() => {
+        if (this.automaticEndDate()) {
+          endDate.setValue(this.calculatedEndDate(), { emitEvent: false });
+        }
+      });
+    endDate.valueChanges.pipe(takeUntilDestroyed()).subscribe(() => {
+      this.automaticEndDate.set(false);
+    });
+    merge(startDate.valueChanges, this.generalForm.controls.courseId.valueChanges,
+      this.generalForm.controls.batchSequence.valueChanges)
+      .pipe(takeUntilDestroyed())
+      .subscribe(() => this.updateBatchNumber());
+  }
+
+  protected batchNumberPrefix(): string {
+    const start = toLocalDate(this.generalForm.controls.startDate.value);
+    const year = start && this.generalForm.controls.startDate.valid ? start.getFullYear() : 'YYYY';
+    return `${year}/${this.selectedCourse()?.shortCode ?? 'COURSE'}`;
+  }
+
+  protected normalizeBatchSequence(): void {
+    const sequence = this.generalForm.controls.batchSequence;
+    if (sequence.valid) {
+      sequence.setValue(sequence.value.replace(/^0+/, '').padStart(2, '0'));
+    }
+  }
+
+  private updateBatchNumber(): void {
+    if (this.editingId()) {
+      return;
+    }
+    const { batchNumber, batchSequence, startDate } = this.generalForm.controls;
+    const ready = batchSequence.valid && startDate.valid && toLocalDate(startDate.value) && this.selectedCourse();
+    const sequence = batchSequence.value.replace(/^0+/, '').padStart(2, '0');
+    batchNumber.setValue(ready ? `${this.batchNumberPrefix()}${sequence}` : '', { emitEvent: false });
+  }
+
+  protected calculatedEndDate(): Date | null {
+    const { startDate, durationMonths } = this.generalForm.controls;
+    const start = toLocalDate(startDate.value);
+    const months = durationMonths.value;
+    if (!start || startDate.invalid || durationMonths.invalid || !Number.isSafeInteger(months)) {
+      return null;
+    }
+    // Inclusive end: the day before the corresponding day N months later.
+    // If that day is beyond the target month, use its final calendar day.
+    const end = new Date(start.getFullYear(), start.getMonth() + months, 1);
+    const lastDay = new Date(end.getFullYear(), end.getMonth() + 1, 0).getDate();
+    end.setDate(Math.min(start.getDate() - 1, lastDay));
+    return Number.isNaN(end.getTime()) ? null : end;
+  }
+
+  protected useCalculatedEndDate(): void {
+    const end = this.calculatedEndDate();
+    if (!end) {
+      return;
+    }
+    this.automaticEndDate.set(true);
+    this.generalForm.controls.endDate.setValue(end, { emitEvent: false });
+    this.generalForm.controls.endDate.markAsDirty();
+  }
 
   ngOnInit(): void {
     const activeBranch = this.activeBranchService.activeBranch();
@@ -313,7 +387,7 @@ export class BatchFormComponent implements OnInit, HasUnsavedChanges {
     const durationMonths = this.generalForm.controls.durationMonths.value;
     const monthlyDueDay = this.feeForm.controls.monthlyDueDay.value;
     const courseFee = this.money(this.feeForm.controls.courseFee.value);
-    if (!startDate || durationMonths < 1) {
+    if (!startDate || durationMonths < 1 || !Number.isSafeInteger(durationMonths)) {
       return [];
     }
     const base = Math.floor((courseFee / durationMonths) * 100) / 100;
@@ -422,6 +496,7 @@ export class BatchFormComponent implements OnInit, HasUnsavedChanges {
       return;
     }
     this.editingId.set(id);
+    this.generalForm.controls.batchSequence.disable({ emitEvent: false });
     this.batchService.get(id).pipe(
       switchMap((batch) => forkJoin({
         batch: of(batch),
@@ -431,6 +506,7 @@ export class BatchFormComponent implements OnInit, HasUnsavedChanges {
     ).subscribe({
       next: ({ batch, feePlan, assignments }) => {
         this.ensureCurrentOptions(batch);
+        this.automaticEndDate.set(false);
         this.generalForm.patchValue({
           courseId: batch.course.id,
           branchId: batch.branch.id,
@@ -440,7 +516,7 @@ export class BatchFormComponent implements OnInit, HasUnsavedChanges {
           durationMonths: batch.durationMonths,
           status: batch.status,
           remarks: batch.remarks ?? '',
-        });
+        }, { emitEvent: false });
         this.scheduleForm.patchValue({ scheduleMode: batch.scheduleMode });
         if (feePlan) {
           this.feeForm.patchValue(this.feePlanFormValue(feePlan));
@@ -536,7 +612,7 @@ export class BatchFormComponent implements OnInit, HasUnsavedChanges {
     const response = error as { error?: { fieldErrors?: Array<{ field: string }> } };
     for (const item of response.error?.fieldErrors ?? []) {
       const controls: Array<AbstractControl | null> = [
-        this.generalForm.get(item.field),
+        this.generalForm.get(item.field === 'batchNumber' && !this.editingId() ? 'batchSequence' : item.field),
         this.feeForm.get(item.field),
         this.scheduleForm.get(item.field),
       ];

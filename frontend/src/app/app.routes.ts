@@ -2,7 +2,6 @@ import { Routes } from '@angular/router';
 import { ChangePasswordComponent } from './auth/change-password.component';
 import { AccessDeniedComponent } from './auth/access-denied.component';
 import { LoginComponent } from './auth/login.component';
-import { BatchFormComponent } from './batches/batch-form.component';
 import { BatchListComponent } from './batches/batch-list.component';
 import { BranchFormComponent } from './branches/branch-form.component';
 import { BranchListComponent } from './branches/branch-list.component';
@@ -67,19 +66,24 @@ export const routes: Routes = [
         canActivate: [roleGuard(['SUPER_ADMIN', 'ADMIN'])],
         canDeactivate: [unsavedChangesGuard],
       },
-      { path: 'batches', component: BatchListComponent, canActivate: [roleGuard(['SUPER_ADMIN', 'ADMIN'])] },
+      { path: 'batches', component: BatchListComponent, canActivate: [roleGuard(['SUPER_ADMIN', 'ADMIN', 'LECTURER'])] },
+      { path: 'batches/:id/students', loadComponent: () => import('./enrollments/batch-students.component').then(m => m.BatchStudentsComponent), canActivate: [roleGuard(['SUPER_ADMIN', 'ADMIN', 'LECTURER'])] },
       {
         path: 'batches/new',
-        component: BatchFormComponent,
+        loadComponent: () => import('./batches/batch-form.component').then(m => m.BatchFormComponent),
         canActivate: [roleGuard(['SUPER_ADMIN', 'ADMIN'])],
         canDeactivate: [unsavedChangesGuard],
       },
       {
         path: 'batches/:id/edit',
-        component: BatchFormComponent,
+        loadComponent: () => import('./batches/batch-form.component').then(m => m.BatchFormComponent),
         canActivate: [roleGuard(['SUPER_ADMIN', 'ADMIN'])],
         canDeactivate: [unsavedChangesGuard],
       },
+      { path: 'students/:id/card', loadComponent: () => import('./cards/student-card.component').then(m => m.StudentCardComponent), canActivate: [roleGuard(['SUPER_ADMIN', 'ADMIN'])] },
+      { path: 'enrollments', loadComponent: () => import('./enrollments/enrollment-list.component').then(m => m.EnrollmentListComponent), canActivate: [roleGuard(['SUPER_ADMIN', 'ADMIN'])] },
+      { path: 'enrollments/new', loadComponent: () => import('./enrollments/enrollment-form.component').then(m => m.EnrollmentFormComponent), canActivate: [roleGuard(['SUPER_ADMIN', 'ADMIN'])], canDeactivate: [unsavedChangesGuard] },
+      { path: 'enrollments/:id', loadComponent: () => import('./enrollments/enrollment-detail.component').then(m => m.EnrollmentDetailComponent), canActivate: [roleGuard(['SUPER_ADMIN', 'ADMIN'])] },
       { path: 'students', component: StudentListComponent, canActivate: [roleGuard(['SUPER_ADMIN', 'ADMIN'])] },
       {
         path: 'students/new',

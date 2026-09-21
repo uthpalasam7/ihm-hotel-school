@@ -1,0 +1,97 @@
+<section class="enrollment-page">
+  <app-page-header eyebrow="Student administration" title="Enroll student" subtitle="Choose an existing student and batch, then review the charges before confirming.">
+    <a mat-stroked-button routerLink="/enrollments">Back to enrollments</a>
+  </app-page-header>
+  <div class="selection-grid">
+    <mat-card appearance="outlined"><mat-card-content>
+      <h2>1. Student</h2>
+      @if (selectedStudent(); as student) {
+        <div class="selected-record"><strong>{{ student.fullName }}</strong><p>NIC: {{ student.nic }}</p><p>{{ student.contactNumber }}</p>
+          @if (student.status !== 'ACTIVE') { <p role="alert">This student is inactive. Activate their profile before enrolling.</p> }
+          <button mat-button type="button" (click)="selectStudent(null)" [disabled]="saving()">Change student</button>
+        </div>
+      } @else {
+        <div class="search-row"><mat-form-field appearance="outline"><mat-label>Name, NIC or phone</mat-label>
+          <input matInput [formControl]="studentSearch" (keyup.enter)="searchStudents()" />
+        </mat-form-field><button mat-stroked-button type="button" (click)="searchStudents()">Search</button></div>
+        <app-page-state [loading]="studentLoading()" [error]="studentError()" [empty]="!studentLoading() && !studentError() && !students().length"
+          emptyTitle="No active students found" emptyMessage="Try another search or add the student first." (retry)="searchStudents()" />
+        @if (!studentLoading() && !studentError()) {
+          @for (student of students(); track student.id) {
+            <div class="choice-row"><div><strong>{{ student.fullName }}</strong><span>{{ student.nic }}</span></div>
+              <button mat-button type="button" (click)="selectStudent(student)" [attr.aria-label]="'Select ' + student.fullName">Select</button></div>
+          }
+          <mat-paginator [length]="studentTotal()" [pageIndex]="studentPage()" [pageSize]="5" [hidePageSize]="true" (page)="searchStudents($event.pageIndex)" aria-label="Student search pages" />
+        }
+        <a mat-button routerLink="/students/new">Add a new student</a>
+      }
+    </mat-card-content></mat-card>
+    <mat-card appearance="outlined"><mat-card-content>
+      <h2>2. Course batch</h2>
+      @if (selectedBatch(); as batch) {
+        <div class="selected-record"><strong>{{ batch.batchNumber }} — {{ batch.course.name }}</strong>
+          <p>{{ batch.branch.name }}</p><p>{{ batch.startDate | date:'d MMM y' }} – {{ batch.endDate | date:'d MMM y' }} · {{ batch.durationMonths }} months</p>
+          @if (!eligible(batch)) { <p role="alert">Select an active or upcoming batch with a fee plan.</p> }
+          <button mat-button type="button" (click)="selectBatch(null)" [disabled]="saving()">Change batch</button>
+        </div>
+      } @else {
+        <div class="search-row"><mat-form-field appearance="outline"><mat-label>Batch number or course</mat-label>
+          <input matInput [formControl]="batchSearch" (keyup.enter)="searchBatches()" />
+        </mat-form-field><button mat-stroked-button type="button" (click)="searchBatches()">Search</button></div>
+        <app-page-state [loading]="batchLoading()" [error]="batchError()" [empty]="!batchLoading() && !batchError() && !batches().length"
+          emptyTitle="No batches found" emptyMessage="Try another search in the active branch." (retry)="searchBatches()" />
+        @if (!batchLoading() && !batchError()) {
+          @for (batch of batches(); track batch.id) {
+            <div class="choice-row"><div><strong>{{ batch.batchNumber }}</strong><span>{{ batch.course.name }} · {{ batch.status }}</span>
+              @if (!batch.feePlanConfigured) { <span>Fee plan required</span> }</div>
+              <button mat-button type="button" [disabled]="!eligible(batch)" (click)="selectBatch(batch)" [attr.aria-label]="'Select ' + batch.batchNumber">Select</button></div>
+          }
+          <mat-paginator [length]="batchTotal()" [pageIndex]="batchPage()" [pageSize]="5" [hidePageSize]="true" (page)="searchBatches($event.pageIndex)" aria-label="Batch search pages" />
+        }
+      }
+    </mat-card-content></mat-card>
+  </div>
+  <mat-card appearance="outlined"><mat-card-content>
+    <h2>3. Enrollment details</h2>
+    <form [formGroup]="form" (ngSubmit)="previewCharges()">
+      <div class="details-grid">
+        <mat-form-field appearance="outline"><mat-label>Enrollment date</mat-label>
+          <input matInput formControlName="enrollmentDate" [matDatepicker]="picker" />
+          <mat-datepicker-toggle matIconSuffix [for]="picker" /><mat-datepicker #picker />
+          <mat-hint>DD/MM/YYYY · Registration fee is due on this date.</mat-hint>
+          <mat-error>Enter a valid enrollment date.</mat-error>
+        </mat-form-field>
+        <mat-form-field appearance="outline"><mat-label>Remarks (optional)</mat-label>
+          <textarea matInput formControlName="remarks" rows="2" maxlength="2000"></textarea>
+          <mat-error>Use no more than 2,000 characters.</mat-error>
+        </mat-form-field>
+      </div>
+      <p class="muted">Course installment dates follow the batch schedule, including dates before a late enrollment.</p>
+      @if (error()) { <p class="error-message" role="alert">{{ error() }}</p> }
+      <button mat-stroked-button type="submit" [disabled]="form.invalid || selectedStudent()?.status !== 'ACTIVE' || !selectedBatch() || !eligible(selectedBatch()!) || previewing() || saving()">{{ previewing() ? 'Preparing preview…' : 'Preview charges' }}</button>
+    </form>
+  </mat-card-content></mat-card>
+  @if (preview(); as plan) {
+    <mat-card appearance="outlined" class="ihm-data-grid"><mat-card-content>
+      <div class="section-heading"><div><h2>Review charges</h2><p>Registration number will be generated when you confirm.</p></div>
+        <strong>{{ plan.currencyCode }} {{ plan.totalAmount | number:'1.2-2' }}</strong></div>
+      <div class="ihm-desktop-table table-wrap"><table><caption class="visually-hidden">Charges that will be created</caption>
+        <thead><tr><th>Charge</th><th>Due date</th><th class="amount">Amount</th></tr></thead>
+        <tbody>@for (charge of plan.charges; track $index) { <tr><td>{{ charge.description }}</td><td>{{ charge.dueDate | date:'d MMM y' }}</td><td class="amount">{{ plan.currencyCode }} {{ charge.amount | number:'1.2-2' }}</td></tr> }</tbody>
+      </table></div>
+      <div class="ihm-mobile-cards preview-charge-cards" aria-label="Charges that will be created">
+        @for (charge of plan.charges; track $index) {
+          <article class="ihm-mobile-card">
+            <div class="ihm-mobile-card__heading"><div><h2>{{ charge.description }}</h2></div></div>
+            <dl class="ihm-mobile-card__details">
+              <div><dt>Due date</dt><dd>{{ charge.dueDate | date:'d MMM y' }}</dd></div>
+              <div><dt>Amount</dt><dd>{{ plan.currencyCode }} {{ charge.amount | number:'1.2-2' }}</dd></div>
+            </dl>
+          </article>
+        }
+      </div>
+      <p class="muted">Confirming creates the enrollment and all listed charges together. It does not record a payment.</p>
+      <div class="actions"><button mat-flat-button type="button" (click)="enroll()" [disabled]="saving()">{{ saving() ? 'Enrolling…' : 'Confirm enrollment' }}</button></div>
+    </mat-card-content></mat-card>
+  }
+</section>

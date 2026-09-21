@@ -15,7 +15,7 @@
           <p>{{ current.nic }}</p>
           <app-status-chip [value]="current.status" />
         </div>
-        <div class="profile-actions">
+        <div class="photo-actions">
           <input #photoInput class="file-input" type="file" accept="image/jpeg,image/png" (change)="selectPhoto($event)" />
           <button mat-stroked-button type="button" (click)="photoInput.click()" [disabled]="updating()">{{ current.photoAvailable ? 'Replace photo' : 'Add photo' }}</button>
           @if (current.photoAvailable) { <button mat-button type="button" (click)="deletePhoto()" [disabled]="updating()">Remove photo</button> }
@@ -24,6 +24,11 @@
       </mat-card-content>
     </mat-card>
 
+    <div class="student-actions" aria-label="Student actions">
+      <a mat-stroked-button [routerLink]="['/students', current.id, 'card']">Student card</a>
+      <a mat-stroked-button routerLink="/enrollments" [queryParams]="{studentId: current.id}">View enrollments</a>
+      @if (current.status === 'ACTIVE') { <a mat-flat-button routerLink="/enrollments/new" [queryParams]="{studentId: current.id}">Enroll in a batch</a> }
+    </div>
     <div class="profile-grid">
       <mat-card appearance="outlined"><mat-card-header><mat-card-title>Contact information</mat-card-title></mat-card-header><mat-card-content><dl>
         <div><dt>Primary contact</dt><dd>{{ current.contactNumber }}</dd></div>

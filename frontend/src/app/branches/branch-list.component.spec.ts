@@ -72,6 +72,11 @@ describe('BranchListComponent', () => {
     expect(fixture.nativeElement.textContent).toContain('IHM Hotel School');
     expect(fixture.nativeElement.textContent).toContain('active');
     expect(fixture.nativeElement.querySelector('mat-paginator')).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('.ihm-desktop-table table')).toBeTruthy();
+    const mobileCard = fixture.nativeElement.querySelector('.ihm-mobile-cards .ihm-mobile-card');
+    expect(mobileCard?.textContent).toContain('IHM Hotel School');
+    expect(mobileCard?.textContent).toContain('Edit');
+    expect(mobileCard?.textContent).toContain('Deactivate');
   });
 
   it('requests the selected server-side page and page size', async () => {

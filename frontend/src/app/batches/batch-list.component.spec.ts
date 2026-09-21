@@ -5,6 +5,7 @@ import { of } from 'rxjs';
 import { vi } from 'vitest';
 import { CourseService } from '../courses/course.service';
 import { ActiveBranchService } from '../core/auth/active-branch.service';
+import { AuthService } from '../core/auth/auth.service';
 import { Batch } from './batch.models';
 import { BatchListComponent } from './batch-list.component';
 import { BatchService } from './batch.service';
@@ -16,6 +17,8 @@ describe('BatchListComponent', () => {
     changeStatus: ReturnType<typeof vi.fn>;
   };
   let activeBranchService: ActiveBranchService;
+  let hasAnyRole: ReturnType<typeof vi.fn>;
+  let listAllActive: ReturnType<typeof vi.fn>;
 
   const batch: Batch = {
     id: 30,
@@ -49,6 +52,10 @@ describe('BatchListComponent', () => {
       })),
       changeStatus: vi.fn(),
     };
+    hasAnyRole=vi.fn(() => true);
+    listAllActive=vi.fn(() => of([
+      { id: 5, name: 'Pastry & Bakery', shortCode: 'PB', description: null, status: 'ACTIVE', batchCount: 1, createdAt: '', updatedAt: '', version: 0 },
+    ]));
 
     await TestBed.configureTestingModule({
       imports: [BatchListComponent],
@@ -56,13 +63,10 @@ describe('BatchListComponent', () => {
         provideRouter([]),
         provideNativeDateAdapter(),
         { provide: BatchService, useValue: batchService },
+        { provide: AuthService, useValue: { hasAnyRole } },
         {
           provide: CourseService,
-          useValue: {
-            listAllActive: () => of([
-              { id: 5, name: 'Pastry & Bakery', shortCode: 'PB', description: null, status: 'ACTIVE', batchCount: 1, createdAt: '', updatedAt: '', version: 0 },
-            ]),
-          },
+          useValue: { listAllActive },
         },
       ],
     }).compileComponents();
@@ -88,6 +92,8 @@ describe('BatchListComponent', () => {
     expect(text).toContain('2026/PB02');
     expect(text).toContain('Fee plan configured');
     expect(text).toContain('PB');
+    const mobileActions = fixture.nativeElement.querySelector('.batch-card-actions');
+    expect(mobileActions?.querySelectorAll('a, button').length).toBe(4);
   });
 
   it('reloads branch-specific batches when the active branch changes', async () => {
@@ -120,5 +126,19 @@ describe('BatchListComponent', () => {
       startDateFrom: '2026-07-01',
       startDateTo: '2026-07-31',
     }));
+  });
+
+  it('shows assigned batches read-only to lecturers', async () => {
+    hasAnyRole.mockReturnValue(false);
+    fixture=TestBed.createComponent(BatchListComponent);
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    const text=fixture.nativeElement.textContent as string;
+    expect(text).toContain('View students');
+    expect(text).not.toContain('Add batch');
+    expect(text).not.toContain('Edit batch');
+    expect(listAllActive).not.toHaveBeenCalled();
   });
 });

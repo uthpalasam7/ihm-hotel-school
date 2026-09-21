@@ -874,6 +874,11 @@ Use server-side filtering for branch, role and lecturer assignment. Never accept
 
 ## 25. Frontend Coding Standards
 
+Before adding a list or detail page, follow the shared page-width and data-grid
+patterns in `docs/UI_STANDARDS.md`. Reuse the `.ihm-data-grid` class and the
+application shell's content width instead of inventing feature-specific table
+styles or outer margins.
+
 Use a feature-based structure, for example:
 
 ```text
@@ -1106,6 +1111,13 @@ Financial and attendance history must remain traceable.
 ## 32. Development Commands
 
 Agents must prefer repository-provided wrappers and scripts.
+
+Start or stop all local development services from the repository root:
+
+```bash
+./dev.sh
+./stop.sh
+```
 
 Expected backend commands:
 

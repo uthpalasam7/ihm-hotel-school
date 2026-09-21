@@ -163,6 +163,7 @@ td {
     border-radius: var(--ihm-radius-sm);
     display: grid;
     gap: var(--ihm-space-4);
+    min-width: 0;
     padding: var(--ihm-space-4);
   }
 
@@ -171,6 +172,10 @@ td {
     display: flex;
     gap: var(--ihm-space-3);
     justify-content: space-between;
+  }
+
+  .batch-card-heading > div {
+    min-width: 0;
   }
 
   .batch-card-heading h2,
@@ -182,6 +187,7 @@ td {
     color: var(--ihm-charcoal);
     font-size: 1.15rem;
     margin-top: 0.2rem;
+    overflow-wrap: anywhere;
   }
 
   .batch-card-heading p {
@@ -221,12 +227,26 @@ td {
   dd {
     font-size: 0.86rem;
     margin: 0;
+    overflow-wrap: anywhere;
   }
 
   .batch-card-actions {
     border-top: 1px solid var(--ihm-border);
-    display: flex;
+    display: grid;
     gap: var(--ihm-space-2);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    min-width: 0;
     padding-top: var(--ihm-space-2);
+  }
+
+  .batch-card-actions > * {
+    min-width: 0;
+    white-space: normal;
+  }
+}
+
+@media (max-width: 360px) {
+  .batch-card-actions {
+    grid-template-columns: 1fr;
   }
 }

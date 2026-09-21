@@ -24,6 +24,9 @@ Requirements:
 
 ## 2. Main Layout
 
+Apply the shared spacing and data-grid rules in [UI_STANDARDS.md](UI_STANDARDS.md)
+to every new phase. The application shell controls the outer content width.
+
 Desktop:
 
 - Left navigation sidebar
@@ -189,12 +192,40 @@ Step 1: General details
 
 - Branch
 - Course
-- Batch number
-- Start date
-- End date
 - Duration months
 - Status
+- Start date
+- End date
+- Batch number
 - Remarks
+
+For new batches, enter only a positive whole batch number. Show the start-date
+year and selected course short code as a non-editable prefix, with a preview of
+the complete identifier. For example, entering `2` for PB starting in 2026 produces
+`2026/PB02`. Pad to at least two digits, normalize redundant leading zeroes, and
+retain numbers above 99. Recalculate the preview when the course or start year
+changes; do not use today's year as a substitute for an unselected start date.
+Missing/invalid inputs cannot produce a savable identifier. Continue submitting
+the full batchNumber through the existing API; server authorization, validation,
+and global uniqueness constraints remain in force. Editing keeps the existing
+full-number field and never regenerates historical numbers from course/date edits.
+
+Duration and status appear before the start/end date row. For new batches, a
+valid start date and positive whole-month duration automatically suggest an
+inclusive end date. Use the day before the corresponding day N months later;
+if that end day exceeds the target month's length, use its final day.
+Examples: 1 July + 6 months → 31 December; 15 July + 6 months → 14 January;
+31 January + 1 month → 28 February (29 in a leap year).
+
+The end date remains editable. Changing it manually stops automatic updates;
+"Use calculated end date" explicitly restores them. Loading an existing batch
+preserves its saved end date, including when its start date or duration changes,
+until that action is selected. Invalid/missing inputs clear only automatically
+calculated dates. Existing date-order validation still applies. Adjusting the end
+date does not change duration, fee-installment count, or examination due date.
+All dates in the batch wizard accept typed DD/MM/YYYY values as well as calendar
+selection. Reject invalid dates instead of interpreting them as US month/day dates
+or rolling them into the next month.
 
 Step 2: Fee plan
 
@@ -282,7 +313,41 @@ Tabs:
 - Documents or photo
 - Audit summary, authorized users only
 
+### Student Card — Phase 6 implementation in progress
+
+Provide administrator-only card actions from the student profile and successful
+enrollment confirmation: Issue card, Preview, Print, Download PDF, Email PDF, and
+Cancel/Replace card. Show the active card and issuance/replacement history. Require
+confirmation and a reason for cancellation/replacement; explain that the old QR
+will stop working. Reprinting retains the current credential.
+
+Use the two-sided wallet-card design in the
+[card and delivery plan](STUDENT_CARDS_QR_AND_DELIVERY_PLAN.md#card-design-and-handover):
+logo, school name, Student ID label, student name, optional photo, human-readable
+identifier, large QR, and school contact/return instructions. Keep photos optional
+and exclude NIC, address, financial data, and batch registration numbers.
+
+Use the stored full-size student photo for the card preview and printable PDF;
+the list thumbnail is too small for an enlarged card portrait. Show the portrait
+as a square crop in both the on-screen and printable card fronts.
+Print/PDF handover is the default; offer optional email after staff check the saved
+student address. Show absent-address, unconfigured-service, queued, provider-accepted,
+and failed/retry states accurately. Card rendering/email failures must leave the
+successful enrollment visible and allow retry without enrolling again.
+
+### Lecturer Batch Roster — implemented in Phase 6
+
+Lecturers can open Batches and view students only in currently assigned batches.
+The roster shows student name, registration number, enrollment date, and status.
+It provides no edit controls, NIC, contact details, remarks, or fee information.
+Administrators retain their full student and enrollment management screens.
+
 ## 10. Enrollment Pages
+
+The enrollment list follows the shared filter-card pattern: registration number,
+student, or batch text search; enrollment status; `Apply filters`; and `Reset`.
+The active branch comes from the shell. A student or batch link can scope the list;
+Reset retains that scope and `Show all` removes it.
 
 ### Enrollment Form
 
@@ -300,6 +365,7 @@ After save, show:
 - Registration number
 - Enrollment details
 - Generated charges
+- Student card issuance or access to the existing student-level card (Phase 6)
 
 ### Batch Student List
 
@@ -410,6 +476,25 @@ Submission:
 - Warn about unmarked students
 - Display success confirmation
 
+### QR Scanning — Planned Phase 8
+
+Add Scan student cards to the selected session's attendance sheet. Keep its batch,
+date, time, and lecturer visible. Offer staff-camera and USB QR scanner input, plus
+manual marking for forgotten cards or failed scans. Explain camera permission and
+provide a useful fallback if denied or unsupported.
+
+Show name and available photo to the supervising staff member. Announce successful
+server-confirmed saves, Already marked, unrecognized/revoked card, ineligible/wrong
+batch, cancelled session, and save failures without disclosing unauthorized data.
+Restore scanner input focus after each result and support keyboard operation.
+Do not rely on sound or color alone.
+
+Scans save Present with check-in time; staff review Late/Absent/Excused through
+existing controls. Repeat scans do not overwrite recorded statuses. Unscanned
+students stay unmarked until review, and final submission includes saved scans.
+Overdue warnings remain staff-only and do not disable scanning. Both scheduling
+modes use this same workflow. Never display success before server confirmation.
+
 ## 13. Fee and Charge Pages
 
 ### Enrollment Fee Account
@@ -483,6 +568,14 @@ Include:
 - Received by
 - Print button
 - PDF download
+- Email PDF action for authorized administrators (planned Phase 10)
+- Saved student recipient shown for checking before send; missing-address and
+  unconfigured-service explanations with print/download still available
+- Delivery status and audited retry/resend; provider acceptance is not confirmed delivery
+
+Sending failures leave the successful payment and receipt visible. Retry delivery
+without posting another payment or allocating another receipt number. Show voided
+receipt status clearly and do not resend a stale PDF that hides a void.
 
 ## 15. Reports UI
 

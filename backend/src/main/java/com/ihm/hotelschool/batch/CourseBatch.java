@@ -155,6 +155,17 @@ public class CourseBatch {
 		return registrationSequence;
 	}
 
+	/** Called only while holding this batch's database write lock. */
+	public int nextRegistrationSequence(Instant now, Long actorUserId) {
+		if (registrationSequence >= 9999) {
+			throw new com.ihm.hotelschool.common.web.ConflictException("This batch has reached its registration-number limit");
+		}
+		registrationSequence++;
+		updatedAt = now;
+		updatedBy = actorUserId;
+		return registrationSequence;
+	}
+
 	public Instant getCreatedAt() {
 		return createdAt;
 	}

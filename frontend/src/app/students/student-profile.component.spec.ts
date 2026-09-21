@@ -37,6 +37,7 @@ describe('StudentProfileComponent', () => {
     expect(text).toContain('Nimal Perera');
     expect(text).toContain('Contact information');
     expect(text).not.toContain('Fees and payments');
-    expect(text).not.toContain('Enrollments');
+    expect(text).toContain('View enrollments');
+    expect(text).toContain('Enroll in a batch');
   });
 });

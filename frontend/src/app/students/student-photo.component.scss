@@ -25,6 +25,18 @@
   width: 9rem;
 }
 
+:host(.card-portrait) .student-photo {
+  border-radius: .35rem;
+  flex-basis: 9.5rem;
+  height: 9.5rem;
+  width: 9.5rem;
+}
+
+:host(.card-portrait) img {
+  object-position: center 40%;
+  transform: scale(1.2);
+}
+
 img {
   height: 100%;
   object-fit: cover;

@@ -16,6 +16,17 @@ spring:
       hibernate:
         jdbc:
           time_zone: UTC
+  mail:
+    host: ${IHM_MAIL_HOST:}
+    port: ${IHM_MAIL_PORT:587}
+    username: ${IHM_MAIL_USERNAME:}
+    password: ${IHM_MAIL_PASSWORD:}
+    properties:
+      mail.smtp.auth: ${IHM_MAIL_AUTH:false}
+      mail.smtp.starttls.enable: ${IHM_MAIL_STARTTLS:true}
+      mail.smtp.connectiontimeout: 5000
+      mail.smtp.timeout: 10000
+      mail.smtp.writetimeout: 10000
   servlet:
     multipart:
       max-file-size: ${IHM_STUDENT_PHOTO_MAX_SIZE:5MB}
@@ -48,6 +59,12 @@ app:
     password: ${IHM_INITIAL_ADMIN_PASSWORD:}
     full-name: ${IHM_INITIAL_ADMIN_FULL_NAME:Initial Super Administrator}
     email: ${IHM_INITIAL_ADMIN_EMAIL:}
+  delivery:
+    from: ${IHM_MAIL_FROM:}
+    poll-ms: 30000
+  card:
+    secret: ${IHM_CARD_SECRET:${IHM_JWT_SECRET:local-development-placeholder-change-before-production-64-characters}}
+    contact-line: ${IHM_CARD_CONTACT_LINE:Return lost cards to IHM Hotel School}
   student-photo:
     storage-path: ${IHM_STUDENT_PHOTO_STORAGE_PATH:./data/student-photos}
     max-size: ${IHM_STUDENT_PHOTO_MAX_SIZE:5MB}

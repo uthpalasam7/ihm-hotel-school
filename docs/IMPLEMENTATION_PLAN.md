@@ -1,8 +1,14 @@
-x# Implementation Plan
+# Implementation Plan
 
 ## General Rule
 
 Implement one phase at a time. Each phase must leave the project runnable and tested.
+
+Scope update approved 20 September 2026: student QR cards and optional card email
+belong to Phase 6, supervised QR attendance to Phase 8, and optional receipt email
+to Phase 10. The roadmap remains 15 phases. Phase 5 is complete, Phase 6 is
+in progress, and Phases 7–15 remain. See the
+[student cards, QR attendance, and delivery plan](STUDENT_CARDS_QR_AND_DELIVERY_PLAN.md).
 
 Do not begin the next phase until:
 
@@ -115,7 +121,22 @@ Implement:
 - Student profile
 - No destructive deletion of historical students
 
-## Phase 6 — Enrollment and Charge Generation
+## Phase 6 — Enrollment, Charge Generation, and Student Cards
+
+Status: In progress. Enrollment and atomic charge creation are implemented with
+migration V9. One revocable student-level QR card, two-sided printable PDF,
+card history, and branch-authorized issue/replacement/cancellation are implemented
+with migration V10. Optional staff-confirmed card email, durable delivery status,
+idempotent queuing, bounded retries, and delivery audit are implemented with
+migration V11; sending needs a configured school SMTP account. Audited enrollment
+status changes are implemented. Lecturers can now view a minimal student roster
+for currently assigned batches; detailed student profiles and financial records
+remain administrator-only.
+Bundled Sinhala and Tamil card-name fonts are implemented and sample PDFs were
+visually checked. Printed card/scanner compatibility and real SMTP delivery
+still need school-side validation before rollout. Do not mark Phase 6 complete
+until these are done. Use the [Phase 6 rollout checklist](PHASE6_ROLLOUT_CHECKLIST.md)
+for the physical and SMTP checks.
 
 Implement:
 
@@ -128,8 +149,17 @@ Implement:
 - Examination charge
 - Transaction rollback
 - Student and batch enrollment views
+- Student-level QR card issuance after enrollment; one active card across courses
+- Branded card preview, printable PDF, physical handover, and download
+- Card cancellation/replacement with old-token revocation and audit history
+- Optional staff-triggered card PDF email to the checked saved student address
+- Shared email configuration, durable delivery status, retry/resend, and audit foundation
 
 This phase requires strong integration and concurrency tests.
+Implement enrollment/charges first, then cards, then email. Card rendering and
+delivery failures must not roll back enrollment or generated charges. Photos and
+email remain optional. Final card design and token/artifact protection follow the
+[detailed plan](STUDENT_CARDS_QR_AND_DELIVERY_PLAN.md).
 
 ## Phase 7 — Class Schedules and Sessions
 
@@ -146,7 +176,7 @@ Implement:
 - Session calendar and list
 - Lecturer session access
 
-## Phase 8 — Attendance
+## Phase 8 — Attendance and QR Scanning
 
 Implement:
 
@@ -159,6 +189,15 @@ Implement:
 - Attendance summaries
 - Overdue warning with restricted financial detail
 - Attendance reports
+- Scan student cards in an explicitly selected session using a staff phone camera
+  or USB 2D QR scanner; support both regular and manual sessions
+- Server-side card, enrollment, branch, and lecturer-assignment checks
+- Duplicate-safe scan saving, revoked-card rejection, and visible save results
+- Name/photo display for supervised identity checks; manual attendance backup
+- Online-only first release, clear failure handling, and paper fallback during outages
+
+Use Phase 6 card credentials and Phase 7 sessions. Overdue fees never block a scan.
+Scans must not silently overwrite attendance or infer absence for unscanned students.
 
 ## Phase 9 — Discounts and Waivers
 
@@ -172,7 +211,7 @@ Implement:
 - Audit history
 - Paid-charge restrictions
 
-## Phase 10 — Payments and Receipts
+## Phase 10 — Payments, Receipts, and Delivery
 
 Implement:
 
@@ -184,6 +223,9 @@ Implement:
 - Receipt numbering
 - Printable receipt
 - PDF receipt
+- Optional staff-triggered receipt PDF email, reusing Phase 6 delivery infrastructure
+- Checked saved recipient, delivery status, retry/resend, and delivery audit history
+- Payment/receipt durability independent of delivery failure; void-aware resends
 - Payment history
 - Voiding and reversal
 - Audit history
@@ -223,6 +265,7 @@ Implement:
 - Receipt regeneration tracking
 - Attendance-correction visibility
 - Payment-void visibility
+- Card issuance/replacement/revocation and document-delivery audit visibility
 
 Audit logs remain read-only.
 
@@ -240,6 +283,9 @@ Perform:
 - Accessibility review
 - Mobile usability review
 - Performance tests
+- QR replay/duplicate handling, credential revocation, and scan authorization review
+- Printed/digital QR readability and staff-phone/scanner workflow checks
+- Email recipient, delivery retry, secret handling, and voided-receipt review
 
 ## Phase 15 — Deployment Preparation
 
@@ -254,6 +300,9 @@ Create:
 - Initial admin setup guide
 - Monitoring recommendations
 - Release checklist
+- School sender/provider configuration and optional-email setup guide
+- Card printing/scanner setup and camera-permission troubleshooting
+- Delivery-failure monitoring, protected card artifacts, and recovery procedures
 
 ## Phase Completion Report
 

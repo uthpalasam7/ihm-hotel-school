@@ -1,0 +1,44 @@
+:host { display: block; }
+.enrollment-page { display: grid; gap: var(--ihm-space-4); }
+mat-card { overflow: hidden; }
+mat-card-content { padding: var(--ihm-space-4); }
+h2 { margin: 0 0 1rem; font-size: 1.15rem; }
+p { line-height: 1.5; }
+.selection-grid, .details-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.25rem; }
+.search-row, .section-heading, .choice-row, .actions { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+.enrollment-filters { align-items: center; display: grid; gap: var(--ihm-space-3); grid-template-columns: minmax(16rem, 2fr) minmax(11rem, 1fr) auto; }
+.filter-actions { display: flex; gap: var(--ihm-space-2); justify-content: flex-end; }
+.section-heading h2 { margin: 0; }
+.search-row mat-form-field { flex: 1; min-width: 0; }
+.choice-row { padding: .75rem 0; border-bottom: 1px solid #e5e5e5; }
+.choice-row span { display: block; margin-top: .3rem; font-size: .875rem; color: #626262; }
+.selected-record { background: #f7f5ef; border-left: 3px solid #b0852c; padding: 1rem; }
+.selected-record p { margin: .5rem 0; }
+.muted { color: #626262; font-size: .9rem; }
+.error-message { color: #b3261e; padding: .75rem; background: #fff4f2; border-radius: .4rem; }
+.actions { justify-content: flex-end; margin-top: 1.25rem; flex-wrap: wrap; }
+.table-wrap { overflow-x: auto; }
+.enrollment-list-grid table { min-width: 62rem; }
+.enrollment-summary mat-card-content { padding: var(--ihm-space-5); }
+.enrollment-summary dl { display: grid; gap: 1rem; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.enrollment-summary dt { color: var(--ihm-text-muted); font-size: .7rem; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; }
+.enrollment-summary dd { margin: var(--ihm-space-1) 0 0; overflow-wrap: anywhere; }
+.enrollment-summary a { color: var(--ihm-charcoal); font-weight: 600; }
+.enrollment-summary .actions { border-top: 1px solid var(--ihm-border); padding-top: var(--ihm-space-4); }
+.enrollment-summary .muted { margin-bottom: 0; }
+.charge-intro h2 { margin-bottom: var(--ihm-space-2); }
+.charge-intro .muted { margin: 0; }
+@media (max-width: 1000px) {
+  .enrollment-summary dl { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .enrollment-filters { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .enrollment-filters .search-filter { grid-column: 1 / -1; }
+}
+@media (max-width: 700px) {
+  .selection-grid, .details-grid, .enrollment-summary dl { grid-template-columns: 1fr; }
+  .enrollment-filters { grid-template-columns: 1fr; }
+  .enrollment-filters .search-filter { grid-column: auto; }
+  .filter-actions { justify-content: flex-start; }
+  mat-card-content { padding: 1rem; }
+  .section-heading { align-items: flex-start; flex-direction: column; }
+  .enrollment-summary mat-card-content { padding: var(--ihm-space-4); }
+}

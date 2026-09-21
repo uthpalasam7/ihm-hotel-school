@@ -1,6 +1,6 @@
 # IHM Hotel School Management System
 
-Phase 5 provides the authentication foundation, branch and user administration, course/batch management, and Student Management for the IHM Hotel School Management System.
+The IHM Hotel School Management System has completed Phase 5 and started Phase 6 with enrollment, automatic charges, student QR cards, and optional card email.
 
 ## Stack
 
@@ -23,6 +23,7 @@ The backend targets Java 17 and requires a JDK 17 or newer. A JRE alone is not e
 ├── branding/
 ├── docker-compose.yml
 ├── dev.sh
+├── stop.sh
 └── .env.example
 ```
 
@@ -40,8 +41,18 @@ Start PostgreSQL, the backend, and the frontend together:
 ./dev.sh
 ```
 
-Press `Ctrl+C` to stop the backend and frontend. PostgreSQL remains available for
-later development sessions; stop it when needed with `docker compose down`.
+Stop all three services from another terminal (or after closing the terminal
+that ran `dev.sh`):
+
+```bash
+./stop.sh
+```
+
+This stops this project's frontend and backend listeners and its PostgreSQL
+container, while preserving the database volume. It is safe to run again if
+they are already stopped. `Ctrl+C` in the `dev.sh` terminal also cleans up the
+frontend and backend; PostgreSQL stays running until `./stop.sh` is run.
+If a port belongs to a different program, `stop.sh` leaves that program alone.
 
 The individual startup commands are available below for troubleshooting or when
 only one service is needed.
@@ -97,10 +108,21 @@ Repeated failed login attempts are rate-limited per username and remote address.
 
 IntelliJ setup:
 
-- Open `backend/pom.xml` as a Maven project.
+- Close any existing backend project window, then open `backend/pom.xml` as a
+  Maven project. Do not import `backend/` as a plain Java project.
 - Set the Project SDK to a JDK 17 or newer. A JRE is not enough because Maven needs `javac`.
 - Use the Maven wrapper and the project settings under `backend/.mvn/`.
-- If the Spring Boot run configuration does not detect `HotelSchoolApplication`, reimport the Maven project after setting the JDK.
+- Wait for Maven sync and indexing to finish before using code navigation.
+- If the Spring Boot run configuration does not detect `HotelSchoolApplication`,
+  close IntelliJ, delete the ignored `backend/.idea/` directory and
+  `backend/hotel-school.iml`, then reopen `backend/pom.xml`.
+- To run from IntelliJ, first start only PostgreSQL from the repository root with
+  `docker compose up -d postgres`. Do not run `dev.sh` at the same time because
+  it already starts a backend on port 8080.
+- Create a Spring Boot run configuration for
+  `com.ihm.hotelschool.HotelSchoolApplication`, use `backend/` as the working
+  directory, and add the backend variables from the root `.env` file to the run
+  configuration's environment variables.
 
 Run the frontend:
 
@@ -132,7 +154,10 @@ cd backend
 ./mvnw package
 ```
 
-The Maven wrapper uses `backend/.mvn/settings.xml`, which resolves dependencies from Maven Central and stores the local cache in `backend/.mvn/repository`. This keeps home and office Maven settings from changing the project build.
+The Maven wrapper uses `backend/.mvn/settings.xml`, which resolves dependencies
+from Maven Central and uses Maven's standard local cache at `~/.m2/repository`.
+This keeps home and office repository settings from changing the project build
+while remaining compatible with IntelliJ's Maven importer.
 
 Frontend:
 
@@ -152,7 +177,7 @@ Student photos are stored outside the public frontend through a replaceable
 backend storage abstraction. Local development uses `backend/data/student-photos`
 by default; include this directory in local backup procedures.
 
-## Implemented Scope Through Phase 5
+## Implemented Scope: Phase 5 and First Phase 6 Delivery
 
 Implemented:
 
@@ -191,20 +216,31 @@ Implemented:
 - Student create, profile, edit, activation/deactivation, and duplicate-NIC lookup workflows
 - Authenticated JPEG/PNG photo upload, replacement, thumbnail display, and removal
 - Student audit events for profile, status, and photo changes
+- Admin enrollment creation with a charge preview and server-generated registration number
+- Atomic enrollment, fee snapshot, charge generation, and audit event
+- Enrollment list, student and batch enrollment views, and saved charge details
+- Branch authorization and prevention of duplicate or concurrent registration numbers
+- Audited enrollment status changes with required reason and optimistic locking
+- Read-only student rosters for lecturers with current assigned batches; no financial details
+- One student-level QR card per student, with replacement, cancellation, audit history,
+  and protected two-sided PDF printing/download
+- Optional staff-confirmed card email to the saved student address, with durable
+  delivery status and bounded retries when SMTP is configured
 
 Not implemented yet:
 
-- Enrollment, attendance, payment, report, and audit-view workflows
-- Automatic student charge generation; fee-plan previews are display-only until enrollment is implemented
+- Remaining Phase 6 rollout checks: physical card and scanner validation and real SMTP delivery validation
+- Follow [the Phase 6 rollout checklist](docs/PHASE6_ROLLOUT_CHECKLIST.md) when school hardware and a school SMTP account are available
+- Class sessions, attendance, payment, report, and audit-view workflows
 
 Current authorization:
 
 - `SUPER_ADMIN` can manage all branches and all user roles.
 - `ADMIN` can manage only `LECTURER` accounts in branches assigned to that admin.
 - `ADMIN` can manage courses and only batches in assigned branches.
-- `LECTURER` can list or view only assigned batches in authorized branches.
+- `LECTURER` can list or view only currently assigned batches in authorized branches and view their minimal student rosters.
 - `LECTURER` cannot access branch, user, course-management, batch-management, fee-plan, or lecturer-assignment mutation endpoints.
 - Student identities are global rather than branch-owned. `SUPER_ADMIN` and `ADMIN`
   can manage them; active branch headers are validated and retained as audit
-  context. Lecturer Student access remains disabled until Phase 6 can scope it
-  through assigned-batch enrollments.
+  context. Lecturers see only a minimal roster for currently assigned batches;
+  shared student profiles remain restricted to administrators.

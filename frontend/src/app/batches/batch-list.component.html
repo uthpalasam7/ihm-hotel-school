@@ -2,9 +2,9 @@
   <app-page-header
     eyebrow="Academics"
     title="Batches"
-    subtitle="Manage course intakes, dates, fees, schedule mode, and lecturer assignments."
+    subtitle="Course intakes, schedules, and enrolled students."
   >
-    <a mat-flat-button routerLink="/batches/new">Add batch</a>
+    @if (canManage) { <a mat-flat-button routerLink="/batches/new">Add batch</a> }
   </app-page-header>
 
   <mat-card appearance="outlined" class="filter-card">
@@ -21,7 +21,7 @@
           />
         </mat-form-field>
 
-        <mat-form-field appearance="outline" subscriptSizing="dynamic">
+        @if (canManage) { <mat-form-field appearance="outline" subscriptSizing="dynamic">
           <mat-label>Course</mat-label>
           <mat-select [(ngModel)]="courseId">
             <mat-option value="">All courses</mat-option>
@@ -29,7 +29,7 @@
               <mat-option [value]="course.id">{{ course.shortCode }} — {{ course.name }}</mat-option>
             }
           </mat-select>
-        </mat-form-field>
+        </mat-form-field> }
 
         <mat-form-field appearance="outline" subscriptSizing="dynamic">
           <mat-label>Status</mat-label>
@@ -144,10 +144,14 @@
                   {{ updatingId() === batch.id ? 'Updating…' : 'Actions' }}
                 </button>
                 <mat-menu #rowMenu="matMenu" xPosition="before">
-                  <a mat-menu-item [routerLink]="['/batches', batch.id, 'edit']">Edit</a>
-                  <button mat-menu-item type="button" (click)="changeStatus(batch)">
-                    {{ batch.status === 'CANCELLED' ? 'Reopen' : 'Cancel' }}
-                  </button>
+                  <a mat-menu-item [routerLink]="['/batches', batch.id, 'students']">View students</a>
+                  @if (canManage) {
+                    <a mat-menu-item routerLink="/enrollments" [queryParams]="{batchId: batch.id}">View enrollments</a>
+                    <a mat-menu-item [routerLink]="['/batches', batch.id, 'edit']">Edit</a>
+                    <button mat-menu-item type="button" (click)="changeStatus(batch)">
+                      {{ batch.status === 'CANCELLED' ? 'Reopen' : 'Cancel' }}
+                    </button>
+                  }
                 </mat-menu>
               </td>
             </ng-container>
@@ -198,10 +202,14 @@
             </dl>
 
             <div class="batch-card-actions">
-              <a mat-button [routerLink]="['/batches', batch.id, 'edit']">Edit batch</a>
-              <button mat-button type="button" (click)="changeStatus(batch)" [disabled]="updatingId() === batch.id">
-                {{ updatingId() === batch.id ? 'Updating…' : batch.status === 'CANCELLED' ? 'Reopen' : 'Cancel' }}
-              </button>
+              <a mat-button [routerLink]="['/batches', batch.id, 'students']">View students</a>
+              @if (canManage) {
+                <a mat-button routerLink="/enrollments" [queryParams]="{batchId: batch.id}">Enrollments</a>
+                <a mat-button [routerLink]="['/batches', batch.id, 'edit']">Edit batch</a>
+                <button mat-button type="button" (click)="changeStatus(batch)" [disabled]="updatingId() === batch.id">
+                  {{ updatingId() === batch.id ? 'Updating…' : batch.status === 'CANCELLED' ? 'Reopen' : 'Cancel' }}
+                </button>
+              }
             </div>
           </article>
         }

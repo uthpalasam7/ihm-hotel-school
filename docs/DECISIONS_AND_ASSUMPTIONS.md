@@ -22,6 +22,17 @@
 18. Overdue fees show a prominent warning but do not block attendance.
 19. Sessions can be automatically generated from weekly schedules.
 20. Sessions can also be manually added, cancelled, edited, or rescheduled.
+21. Approved 20 September 2026: Phase 6 includes one student-level QR card across
+    courses, printable/downloadable as a PDF, with optional card email.
+22. Phase 8 includes supervised camera/USB QR attendance for the selected class
+    session; manual attendance remains available. Biometric attendance is deferred.
+23. Phase 10 includes optional receipt PDF email alongside printing and downloading.
+24. Email is staff-triggered to the checked saved student address; missing email
+    or delivery failure never blocks enrollment, attendance, or payment.
+25. Card replacement revokes the old QR token without changing enrollments or
+    attendance history. Card photos remain optional.
+26. The roadmap remains 15 phases. These additions are planned, not implemented;
+    see [the detailed plan](STUDENT_CARDS_QR_AND_DELIVERY_PLAN.md).
 
 ## Technical Decisions
 
@@ -69,3 +80,7 @@ These assumptions may be changed by the project owner:
 8. What student-photo retention rules are required?
 9. What backup retention period is required?
 10. Which cloud or hosting provider will be used?
+11. What school contact details, card artwork, and printing arrangement will be used?
+12. Which email provider and sender account will deliver documents, with what retry
+    limits and retention policy?
+13. Which staff phones/browsers and USB QR scanners will be supported after testing?

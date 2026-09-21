@@ -1,5 +1,26 @@
 # Database Design
 
+## Planned additions approved 20 September 2026
+
+The [student card, QR, and delivery plan](STUDENT_CARDS_QR_AND_DELIVERY_PLAN.md)
+requires future migrations in Phases 6, 8, and 10; none are added by this plan update.
+Finalize tables, columns, and constraints during those implementation phases:
+
+- Student-level card credentials and issuance/revocation/replacement history, with
+  a student foreign key, unique token lookup, and at most one active card per student.
+- Protected card artifacts or another explicitly designed secure reprinting mechanism;
+  define token protection before choosing storage columns.
+- Attendance capture source/check-in traceability while retaining the unique
+  enrollment-plus-session constraint and original/updated staff actor fields.
+- Durable document-delivery requests and attempts linked to the card or receipt,
+  with recipient snapshot, actor, status, timestamps, retries, and request deduplication.
+- Delivery history and card replacement must not rewrite enrollment registration
+  numbers, attendance history, payment allocations, or receipt numbering.
+
+Preserve the enrollment-plus-charges and payment-plus-allocations transaction
+boundaries. Rendering and external email delivery must not roll back those committed
+operations; queue delivery only for committed documents.
+
 ## 1. General Conventions
 
 - Database: PostgreSQL
@@ -243,6 +264,14 @@ from this key; storage paths and keys are not returned by Student APIs.
 | enrollment_date | DATE | Required |
 | status | VARCHAR(20) | Required |
 | remarks | TEXT | Optional |
+| currency_code | VARCHAR(3) | Fee plan snapshot at enrollment |
+| registration_fee | NUMERIC(14,2) | Fee plan snapshot |
+| course_fee | NUMERIC(14,2) | Fee plan snapshot |
+| examination_fee | NUMERIC(14,2) | Fee plan snapshot |
+| duration_months | INTEGER | Fee plan snapshot |
+| monthly_due_day | INTEGER | Fee plan snapshot |
+| examination_due_date | DATE | Fee plan snapshot |
+| batch_start_date | DATE | Due-date calculation snapshot |
 | created_at | TIMESTAMPTZ | Required |
 | created_by | BIGINT | Required |
 | updated_at | TIMESTAMPTZ | Required |
@@ -254,6 +283,21 @@ Constraints:
 - Unique `(student_id, batch_id)`
 - Unique `(batch_id, sequence_number)`
 - Unique `registration_number`
+
+### Phase 6 card and delivery tables (V10 and V11)
+
+`student_cards` has one row per student enforced by `UNIQUE(student_id)`. It
+stores status, timestamps and actors, an indexed unique SHA-256 token hash, and
+an AES-GCM encrypted token with its random IV. It does not store the raw token.
+Replacement rotates the credential in the same row; old QR codes no longer match.
+`student_card_events` retains issuance, replacement, and revocation events with
+reason, actor and timestamp.
+
+`document_deliveries` stores document type and reference, document version,
+student and branch, saved recipient snapshot, globally unique idempotency UUID,
+queued/sending/accepted/failed status, attempt count, retry time, provider
+acceptance time, and audit fields. `document_delivery_attempts` retains each
+attempt outcome. Both tables retain history when a card is replaced or revoked.
 
 ### 3.12 `batch_schedules`
 
@@ -364,7 +408,7 @@ Constraints:
 | id | BIGINT | PK |
 | enrollment_id | BIGINT | FK enrollments |
 | charge_type | VARCHAR(30) | Required |
-| installment_number | INTEGER | Optional |
+| installment_number | INTEGER | Required; 0 for non-installment charges, 1+ for installments |
 | description | VARCHAR(300) | Required |
 | due_date | DATE | Required |
 | original_amount | NUMERIC(14,2) | Required |
@@ -384,7 +428,7 @@ Constraints:
 
 - All amounts >= 0
 - `final_payable_amount = original_amount - discount_amount - waiver_amount`
-- Unique `(enrollment_id, charge_type, installment_number)` with suitable handling for nullable installment number
+- Unique `(enrollment_id, charge_type, installment_number)` using 0 for non-installment charges
 - Index `(status, due_date)`
 - Index `enrollment_id`
 
