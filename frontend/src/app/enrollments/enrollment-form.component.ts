@@ -9,6 +9,7 @@ import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatPaginatorModule } from '@angular/material/paginator';
+import { MatTableModule } from '@angular/material/table';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { Batch } from '../batches/batch.models';
@@ -26,13 +27,14 @@ import { EnrollmentService } from './enrollment.service';
 @Component({
   selector: 'app-enrollment-form',
   imports: [ReactiveFormsModule, DatePipe, DecimalPipe, MatButtonModule, MatCardModule,
-    MatDatepickerModule, MatFormFieldModule, MatInputModule, MatPaginatorModule, RouterLink,
+    MatDatepickerModule, MatFormFieldModule, MatInputModule, MatPaginatorModule, MatTableModule, RouterLink,
     PageHeaderComponent, PageStateComponent],
   providers: [{ provide: DateAdapter, useClass: DayMonthYearDateAdapter }, { provide: MAT_DATE_LOCALE, useValue: 'en-GB' }],
   templateUrl: './enrollment-form.component.html',
   styleUrl: './enrollments.scss',
 })
 export class EnrollmentFormComponent implements OnInit {
+  protected readonly displayedChargeColumns = ['description', 'dueDate', 'amount'];
   private readonly api = inject(EnrollmentService);
   private readonly studentApi = inject(StudentService);
   private readonly batchApi = inject(BatchService);

@@ -5,6 +5,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatDialog } from '@angular/material/dialog';
 import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
+import { MatTableModule } from '@angular/material/table';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { Subscription, filter, switchMap } from 'rxjs';
 import { errorMessage } from '../shared/api-error';
@@ -18,72 +19,13 @@ import { EnrollmentService } from './enrollment.service';
 
 @Component({
   selector: 'app-enrollment-detail',
-  imports: [DatePipe, DecimalPipe, MatButtonModule, MatCardModule, MatPaginatorModule, RouterLink,
+  imports: [DatePipe, DecimalPipe, MatButtonModule, MatCardModule, MatPaginatorModule, MatTableModule, RouterLink,
     PageHeaderComponent, PageStateComponent, StatusChipComponent],
-  template: `
-    <section class="enrollment-page">
-      <app-page-header eyebrow="Enrollment" [title]="enrollment()?.registrationNumber || 'Enrollment details'" subtitle="Registration and charges saved at enrollment.">
-        <a mat-stroked-button routerLink="/enrollments">Back to enrollments</a>
-      </app-page-header>
-      <app-page-state [loading]="loading()" [error]="error()" (retry)="load()" />
-      @if (!loading() && !error() && enrollment(); as row) {
-        <mat-card appearance="outlined" class="enrollment-summary"><mat-card-content>
-          <div class="section-heading"><h2>{{ row.studentName }}</h2><app-status-chip [value]="row.status" /></div>
-          <dl><div><dt>Student</dt><dd><a [routerLink]="['/students', row.studentId]">View student profile</a> · <a [routerLink]="['/students', row.studentId, 'card']">Student card</a></dd></div>
-            <div><dt>Course batch</dt><dd>{{ row.batchNumber }} — {{ row.courseName }}</dd></div>
-            <div><dt>Branch</dt><dd>{{ row.branchName }}</dd></div><div><dt>Enrollment date</dt><dd>{{ row.enrollmentDate | date:'d MMM y' }}</dd></div>
-            <div><dt>Remarks</dt><dd>{{ row.remarks || 'No remarks' }}</dd></div>
-          </dl>
-          @if (row.status === 'ACTIVE' || row.status === 'SUSPENDED') {
-            <div class="actions">
-              @if (row.status === 'ACTIVE') {
-                <button mat-stroked-button type="button" [disabled]="changing()" (click)="changeStatus('SUSPENDED')">Suspend</button>
-                <button mat-stroked-button type="button" [disabled]="changing()" (click)="changeStatus('COMPLETED')">Complete</button>
-              } @else { <button mat-stroked-button type="button" [disabled]="changing()" (click)="changeStatus('ACTIVE')">Resume</button> }
-              <button mat-stroked-button type="button" [disabled]="changing()" (click)="changeStatus('WITHDRAWN')">Withdraw</button>
-              <button mat-button type="button" [disabled]="changing()" (click)="changeStatus('CANCELLED')">Cancel enrollment</button>
-            </div>
-            <p class="muted">Changing enrollment status does not cancel or waive outstanding charges or automatically cancel the student card.</p>
-          }
-          @if (statusError()) { <p role="alert" class="error-message">{{ statusError() }}</p> }
-        </mat-card-content></mat-card>
-        <mat-card appearance="outlined" class="ihm-data-grid charge-grid">
-          <mat-card-content class="charge-intro">
-          <h2>Student charges</h2><p class="muted">These amounts and due dates were saved at enrollment. Later changes to the batch fee plan do not change them.</p>
-          <app-page-state [loading]="chargesLoading()" [error]="chargesError()" [empty]="!chargesLoading() && !chargesError() && !charges().length" emptyTitle="No charges found" (retry)="loadCharges(chargePage())" />
-          </mat-card-content>
-          @if (!chargesLoading() && !chargesError() && charges().length) {
-            <div class="ihm-desktop-table table-wrap"><table><caption class="visually-hidden">Student charges</caption>
-              <thead><tr><th>Charge</th><th>Due date</th><th class="amount">Payable amount</th><th>Status</th></tr></thead>
-              <tbody>@for (charge of charges(); track charge.id) { <tr><td>{{ charge.description }}</td>
-                <td>{{ charge.dueDate | date:'d MMM y' }}</td><td class="amount">{{ charge.currencyCode }} {{ charge.finalPayableAmount | number:'1.2-2' }}</td>
-                <td><app-status-chip [value]="charge.status" /></td></tr> }</tbody>
-            </table></div>
-            <div class="ihm-mobile-cards" aria-label="Student charges">
-              @for (charge of charges(); track charge.id) {
-                <article class="ihm-mobile-card">
-                  <div class="ihm-mobile-card__heading">
-                    <div><h2>{{ charge.description }}</h2></div>
-                    <app-status-chip [value]="charge.status" />
-                  </div>
-                  <dl class="ihm-mobile-card__details">
-                    <div><dt>Due date</dt><dd>{{ charge.dueDate | date:'d MMM y' }}</dd></div>
-                    <div><dt>Payable amount</dt><dd>{{ charge.currencyCode }} {{ charge.finalPayableAmount | number:'1.2-2' }}</dd></div>
-                  </dl>
-                </article>
-              }
-            </div>
-            <mat-paginator [length]="chargeTotal()" [pageIndex]="chargePage()" [pageSize]="chargePageSize()"
-              [pageSizeOptions]="[10, 20, 50, 100]" [showFirstLastButtons]="true"
-              (page)="changeChargePage($event)" aria-label="Charge pages" />
-          }
-        </mat-card>
-      }
-    </section>
-  `,
+  templateUrl: './enrollment-detail.component.html',
   styleUrl: './enrollments.scss',
 })
 export class EnrollmentDetailComponent implements OnInit {
+  protected readonly displayedColumns = ['description', 'dueDate', 'amount', 'status'];
   private readonly api = inject(EnrollmentService);
   private readonly route = inject(ActivatedRoute);
   private readonly destroyRef = inject(DestroyRef);

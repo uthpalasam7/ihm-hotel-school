@@ -23,6 +23,12 @@ describe('EnrollmentListComponent', () => {
     fixture.detectChanges();
     expect(fixture.nativeElement.querySelector('.ihm-data-grid')).toBeTruthy();
     expect(fixture.nativeElement.querySelector('table caption')?.textContent).toContain('Enrollments');
+    const table: HTMLTableElement = fixture.nativeElement.querySelector('table[mat-table]');
+    expect(Array.from(table.querySelectorAll('th')).map(cell => cell.textContent?.trim())).toEqual([
+      'Registration number', 'Student', 'Course batch', 'Enrolled', 'Status', 'Actions',
+    ]);
+    expect(table.querySelector('td.mat-column-registrationNumber a')?.getAttribute('href')).toBe('/enrollments/4');
+    expect(table.querySelector('td.mat-column-student')?.textContent).toContain('Nimal Perera');
     const mobileCard = fixture.nativeElement.querySelector('.ihm-mobile-cards .ihm-mobile-card');
     expect(mobileCard?.textContent).toContain('Nimal Perera');
     expect(mobileCard?.textContent).toContain('View enrollment');

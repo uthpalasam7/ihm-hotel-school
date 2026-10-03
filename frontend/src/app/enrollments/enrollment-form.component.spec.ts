@@ -64,13 +64,19 @@ describe('EnrollmentFormComponent', () => {
     };
   }
 
-  it('previews before saving and sends the reviewed fee versions', () => {
+  it('previews before saving and sends the reviewed fee versions', async () => {
     const c = component();
     c.selectStudent(student); c.selectBatch(batch);
     c.form.controls.enrollmentDate.setValue(new Date(2026, 0, 15));
     c.previewCharges();
     expect(api.preview).toHaveBeenCalledWith(expect.objectContaining({ studentId: 5, batchId: 8, enrollmentDate: '2026-01-15' }));
     expect(c.preview()?.totalAmount).toBe(600);
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+    const table: HTMLTableElement = fixture.nativeElement.querySelector('table[mat-table]');
+    expect(table.querySelector('td.mat-column-description')?.textContent).toContain('Registration fee');
+    expect(table.querySelector('td.mat-column-amount')?.textContent).toContain('LKR 100.00');
     expect(api.create).not.toHaveBeenCalled();
     c.enroll();
     expect(api.create).toHaveBeenCalledWith(expect.objectContaining({ expectedBatchVersion: 1, expectedFeePlanVersion: 2 }));

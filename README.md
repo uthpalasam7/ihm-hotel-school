@@ -232,6 +232,9 @@ Not implemented yet:
 - Remaining Phase 6 rollout checks: physical card and scanner validation and real SMTP delivery validation
 - Follow [the Phase 6 rollout checklist](docs/PHASE6_ROLLOUT_CHECKLIST.md) when school hardware and a school SMTP account are available
 - Class sessions, attendance, payment, report, and audit-view workflows
+- Future work is divided into bounded numbered tasks in the
+  [implementation plan](docs/IMPLEMENTATION_PLAN.md); start with the first
+  incomplete sub-phase rather than a whole phase at once.
 
 Current authorization:
 

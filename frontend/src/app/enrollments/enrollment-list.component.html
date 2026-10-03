@@ -1,0 +1,86 @@
+<section class="enrollment-page">
+  <app-page-header eyebrow="Student administration" title="Enrollments" subtitle="Student registrations and their saved charge schedules.">
+    <a mat-flat-button routerLink="/enrollments/new" [queryParams]="{studentId: studentId || null, batchId: batchId || null}">Enroll student</a>
+  </app-page-header>
+  <mat-card appearance="outlined" class="filter-card"><mat-card-content>
+    <div class="enrollment-filters" aria-label="Enrollment filters">
+      <mat-form-field appearance="outline" subscriptSizing="dynamic" class="search-filter">
+        <mat-label>Search</mat-label>
+        <input matInput type="search" [formControl]="search" (keyup.enter)="applyFilters()"
+          placeholder="Registration number, student or batch" />
+      </mat-form-field>
+      <mat-form-field appearance="outline" subscriptSizing="dynamic">
+        <mat-label>Status</mat-label>
+        <mat-select [formControl]="status">
+          <mat-option value="">All statuses</mat-option>
+          <mat-option value="ACTIVE">Active</mat-option>
+          <mat-option value="SUSPENDED">Suspended</mat-option>
+          <mat-option value="COMPLETED">Completed</mat-option>
+          <mat-option value="WITHDRAWN">Withdrawn</mat-option>
+          <mat-option value="CANCELLED">Cancelled</mat-option>
+        </mat-select>
+      </mat-form-field>
+      <div class="filter-actions">
+        <button mat-flat-button type="button" (click)="applyFilters()">Apply filters</button>
+        <button mat-button type="button" (click)="clearFilters()">Reset</button>
+      </div>
+    </div>
+    @if (studentId || batchId) { <p class="muted">Showing enrollments for the selected {{ studentId ? 'student' : 'batch' }}. <a routerLink="/enrollments">Show all</a></p> }
+  </mat-card-content></mat-card>
+  <app-page-state [loading]="loading()" [error]="error()" [empty]="!loading() && !error() && !rows().length"
+    emptyTitle="No enrollments found" emptyMessage="No enrollments match the current filters." (retry)="load(page())">
+    <button mat-stroked-button type="button" (click)="clearFilters()">Clear filters</button>
+  </app-page-state>
+  @if (!loading() && !error() && rows().length) {
+    <mat-card appearance="outlined" class="ihm-data-grid enrollment-list-grid"><div class="ihm-desktop-table table-wrap"><table mat-table [dataSource]="rows()">
+      <caption class="visually-hidden">Enrollments</caption>
+      <ng-container matColumnDef="registrationNumber">
+        <th mat-header-cell *matHeaderCellDef>Registration number</th>
+        <td mat-cell *matCellDef="let row"><a [routerLink]="['/enrollments', row.id]">{{ row.registrationNumber }}</a></td>
+      </ng-container>
+      <ng-container matColumnDef="student">
+        <th mat-header-cell *matHeaderCellDef>Student</th>
+        <td mat-cell *matCellDef="let row"><a [routerLink]="['/students', row.studentId]">{{ row.studentName }}</a></td>
+      </ng-container>
+      <ng-container matColumnDef="batch">
+        <th mat-header-cell *matHeaderCellDef>Course batch</th>
+        <td mat-cell *matCellDef="let row">{{ row.batchNumber }}<span class="secondary">{{ row.courseName }}</span></td>
+      </ng-container>
+      <ng-container matColumnDef="enrollmentDate">
+        <th mat-header-cell *matHeaderCellDef>Enrolled</th>
+        <td mat-cell *matCellDef="let row">{{ row.enrollmentDate | date:'d MMM y' }}</td>
+      </ng-container>
+      <ng-container matColumnDef="status">
+        <th mat-header-cell *matHeaderCellDef>Status</th>
+        <td mat-cell *matCellDef="let row"><app-status-chip [value]="row.status" /></td>
+      </ng-container>
+      <ng-container matColumnDef="actions">
+        <th mat-header-cell *matHeaderCellDef><span class="visually-hidden">Actions</span></th>
+        <td mat-cell *matCellDef="let row" class="action-cell"><a mat-button [routerLink]="['/enrollments', row.id]" [attr.aria-label]="'View enrollment ' + row.registrationNumber">View</a></td>
+      </ng-container>
+      <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+      <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+    </table></div>
+    <div class="ihm-mobile-cards" aria-label="Enrollments">
+      @for (row of rows(); track row.id) {
+        <article class="ihm-mobile-card">
+          <div class="ihm-mobile-card__heading">
+            <div><h2>{{ row.studentName }}</h2><p>{{ row.registrationNumber }}</p></div>
+            <app-status-chip [value]="row.status" />
+          </div>
+          <dl class="ihm-mobile-card__details">
+            <div><dt>Course batch</dt><dd>{{ row.batchNumber }} — {{ row.courseName }}</dd></div>
+            <div><dt>Enrolled</dt><dd>{{ row.enrollmentDate | date:'d MMM y' }}</dd></div>
+          </dl>
+          <div class="ihm-mobile-card__actions">
+            <a mat-button [routerLink]="['/enrollments', row.id]">View enrollment</a>
+            <a mat-button [routerLink]="['/students', row.studentId]">View student</a>
+          </div>
+        </article>
+      }
+    </div>
+    <mat-paginator [length]="total()" [pageIndex]="page()" [pageSize]="pageSize()"
+      [pageSizeOptions]="[10, 20, 50, 100]" [showFirstLastButtons]="true"
+      (page)="changePage($event)" aria-label="Enrollment pages" /></mat-card>
+  }
+</section>

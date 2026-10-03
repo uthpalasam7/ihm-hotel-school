@@ -31,6 +31,10 @@ describe('EnrollmentDetailComponent', () => {
     fixture.detectChanges();
     expect(fixture.nativeElement.querySelector('.charge-grid.ihm-data-grid')).toBeTruthy();
     expect(fixture.nativeElement.querySelector('.charge-grid table caption')?.textContent).toContain('Student charges');
+    const table: HTMLTableElement = fixture.nativeElement.querySelector('.charge-grid table[mat-table]');
+    expect(table.querySelector('td.mat-column-description')?.textContent).toContain('Registration fee');
+    expect(table.querySelector('td.mat-column-amount')?.textContent).toContain('LKR 10,000.00');
+    expect(table.querySelector('td.mat-column-status')?.textContent?.trim()).toBe('overdue');
     expect(fixture.nativeElement.querySelector('.charge-grid .ihm-mobile-card')?.textContent).toContain('Registration fee');
 
     const component = fixture.componentInstance as unknown as {

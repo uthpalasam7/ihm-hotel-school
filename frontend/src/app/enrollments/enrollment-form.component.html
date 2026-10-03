@@ -75,9 +75,21 @@
     <mat-card appearance="outlined" class="ihm-data-grid"><mat-card-content>
       <div class="section-heading"><div><h2>Review charges</h2><p>Registration number will be generated when you confirm.</p></div>
         <strong>{{ plan.currencyCode }} {{ plan.totalAmount | number:'1.2-2' }}</strong></div>
-      <div class="ihm-desktop-table table-wrap"><table><caption class="visually-hidden">Charges that will be created</caption>
-        <thead><tr><th>Charge</th><th>Due date</th><th class="amount">Amount</th></tr></thead>
-        <tbody>@for (charge of plan.charges; track $index) { <tr><td>{{ charge.description }}</td><td>{{ charge.dueDate | date:'d MMM y' }}</td><td class="amount">{{ plan.currencyCode }} {{ charge.amount | number:'1.2-2' }}</td></tr> }</tbody>
+      <div class="ihm-desktop-table table-wrap"><table mat-table [dataSource]="plan.charges"><caption class="visually-hidden">Charges that will be created</caption>
+        <ng-container matColumnDef="description">
+          <th mat-header-cell *matHeaderCellDef>Charge</th>
+          <td mat-cell *matCellDef="let charge">{{ charge.description }}</td>
+        </ng-container>
+        <ng-container matColumnDef="dueDate">
+          <th mat-header-cell *matHeaderCellDef>Due date</th>
+          <td mat-cell *matCellDef="let charge">{{ charge.dueDate | date:'d MMM y' }}</td>
+        </ng-container>
+        <ng-container matColumnDef="amount">
+          <th mat-header-cell *matHeaderCellDef class="amount">Amount</th>
+          <td mat-cell *matCellDef="let charge" class="amount">{{ plan.currencyCode }} {{ charge.amount | number:'1.2-2' }}</td>
+        </ng-container>
+        <tr mat-header-row *matHeaderRowDef="displayedChargeColumns"></tr>
+        <tr mat-row *matRowDef="let charge; columns: displayedChargeColumns"></tr>
       </table></div>
       <div class="ihm-mobile-cards preview-charge-cards" aria-label="Charges that will be created">
         @for (charge of plan.charges; track $index) {

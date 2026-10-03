@@ -9,6 +9,9 @@ Constrain only a specific form or reading panel when its content needs it.
 
 ## Page structure
 
+- Keep application templates in separate `.component.html` files referenced by
+  `templateUrl`. Component TypeScript holds metadata and behavior; do not inline
+  page markup in its `template` property.
 - Use `app-page-header` for the eyebrow, title, subtitle, and page actions.
 - Use `mat-card appearance="outlined"` for filters, summaries, and results.
 - Use the theme tokens in `frontend/src/styles.scss` for spacing, colors, and
@@ -21,11 +24,19 @@ Constrain only a specific form or reading panel when its content needs it.
 ## Data grids
 
 Use the shared `.ihm-data-grid` class from `frontend/src/styles.scss` on the
-result card. Wrap a semantic table in `.table-wrap` and give it a
+result card. Use Angular Material's native `<table mat-table [dataSource]="...">`
+with `matColumnDef`, `mat-header-cell`, `mat-cell`, `mat-header-row`, and `mat-row`,
+following the Students list. Wrap the table in `.table-wrap` and give it a
 `.visually-hidden` caption. Headers use the same small uppercase style as
 Students; rows use the same border, padding, dark record links, secondary text,
 status chips, and right-aligned money/actions. Do not repeat these table rules in
 each feature stylesheet.
+
+Let Material own header height, line height, padding, and borders. Shared grid
+styles provide IHM typography and record presentation; do not simulate Material
+headers with plain table markup and fixed-height CSS. Bind the current server
+page directly to `dataSource`; keep server-side pagination and filtering in the
+existing services instead of adding client-side pagination over a partial dataset.
 
 For new or updated record lists, pair the desktop table (`.ihm-desktop-table`)
 with `.ihm-mobile-cards` and `.ihm-mobile-card` at 760px and below. The existing

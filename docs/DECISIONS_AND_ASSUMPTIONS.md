@@ -33,6 +33,14 @@
     attendance history. Card photos remain optional.
 26. The roadmap remains 15 phases. These additions are planned, not implemented;
     see [the detailed plan](STUDENT_CARDS_QR_AND_DELIVERY_PLAN.md).
+27. User guidance direction confirmed 3 October 2026: reduce repeated developer-led
+    training through role-specific in-app Help, clear workflow steps and actionable
+    empty/error states, a first-use administrator setup checklist, and short
+    illustrated task guides. Use videos only where demonstration adds value.
+    Train one school administrator to support staff and onboard new users.
+    Prioritize Help, the enrollment guide, and the lecturer attendance guide for
+    the proposed pilot after Phase 8; observe staff using test records and improve
+    confusing screens or instructions. These are planned additions, not implemented.
 
 ## Technical Decisions
 

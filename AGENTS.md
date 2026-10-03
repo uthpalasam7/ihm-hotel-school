@@ -909,6 +909,7 @@ Rules:
 - Do not rely on route guards as the only security layer.
 - Use HTTP interceptors for authentication and common error handling.
 - Keep components focused.
+- Keep application component templates in separate `.html` files referenced by `templateUrl`; do not embed HTML templates in TypeScript files.
 - Move reusable logic into services or shared utilities.
 - Show loading, success, empty and error states.
 - Confirm destructive or irreversible actions.
@@ -1148,6 +1149,10 @@ If the actual repository uses different commands, update this section and the RE
 ---
 
 ## 33. Implementation Order
+
+For Phases 7–15, follow the numbered sub-phases and exit checks in
+`docs/IMPLEMENTATION_PLAN.md`; a request to start a phase begins its first
+incomplete sub-phase, not the entire phase.
 
 Implement in this order unless a task explicitly requires otherwise:
 
