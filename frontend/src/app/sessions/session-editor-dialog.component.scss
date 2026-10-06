@@ -1,0 +1,5 @@
+.fields { display: grid; gap: var(--ihm-space-3); grid-template-columns: repeat(2, minmax(0, 1fr)); margin-top: var(--ihm-space-4); }
+.full { grid-column: 1 / -1; }
+.error { color: #a22424; }
+.notice { color: var(--ihm-text-muted); }
+@media (max-width: 600px) { .fields { grid-template-columns: 1fr; } .full { grid-column: auto; } }

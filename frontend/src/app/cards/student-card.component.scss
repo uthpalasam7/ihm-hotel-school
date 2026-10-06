@@ -7,6 +7,7 @@ p { line-height:1.5; }
 .card-toolbar span { display:block; margin-top:.25rem; color:#656565; }
 .actions { display:flex; flex-wrap:wrap; gap:.5rem; }
 .preview-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:1rem; }
+.preview-grid + .ihm-guidance { margin-top: var(--ihm-space-4); }
 .card-face { position:relative; aspect-ratio:85.6/53.98; min-height:230px; overflow:hidden; border-radius:.75rem; border:1px solid #d7d5cf;
   background:white; box-shadow:0 5px 24px #2929291b; padding:7%; color:#292929; }
 .top-strip { position:absolute; top:0; left:0; right:0; height:4%; background:#b0852c; }
@@ -26,5 +27,6 @@ p { line-height:1.5; }
 .note { color:#626262; }
 .history-row { display:flex; flex-wrap:wrap; gap:1rem; padding:.85rem 0; border-bottom:1px solid #e5e5e5; }
 .history-row span { color:#5c5c5c; }
+.delivery-list .ihm-guidance { margin-top: var(--ihm-space-3); }
 .error-message { color:#b3261e; background:#fff3f1; padding:1rem; border-radius:.5rem; }
 @media(max-width:700px) { .preview-grid { grid-template-columns:1fr; } .card-face { min-height:210px; } mat-card-content { padding:1rem; } }

@@ -9,6 +9,9 @@ public interface CourseBatchRepository extends JpaRepository<CourseBatch, Long>,
 	@org.springframework.data.jpa.repository.Lock(jakarta.persistence.LockModeType.PESSIMISTIC_WRITE)
 	@org.springframework.data.jpa.repository.Query("select b from CourseBatch b where b.id = :id")
 	Optional<CourseBatch> findForEnrollmentById(Long id);
+    @org.springframework.data.jpa.repository.Lock(jakarta.persistence.LockModeType.PESSIMISTIC_WRITE)
+    @org.springframework.data.jpa.repository.Query("select b from CourseBatch b where b.id = :id")
+    Optional<CourseBatch> findForUpdateById(Long id);
 	boolean existsByBatchNumber(String batchNumber);
 
 	boolean existsByBatchNumberAndIdNot(String batchNumber, Long id);

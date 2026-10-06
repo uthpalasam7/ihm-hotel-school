@@ -4,9 +4,11 @@
   @if (data.reasonLabel) {
     <mat-form-field appearance="outline">
       <mat-label>{{ data.reasonLabel }}</mat-label>
-      <textarea matInput [formControl]="reason" rows="3"></textarea>
+      <textarea matInput [formControl]="reason" rows="3" maxlength="2000"></textarea>
       @if (reason.touched && reason.hasError('required')) {
         <mat-error>A reason is required</mat-error>
+      } @else if (reason.touched && reason.hasError('maxlength')) {
+        <mat-error>Use at most 2000 characters</mat-error>
       }
     </mat-form-field>
   }

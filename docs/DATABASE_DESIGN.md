@@ -301,6 +301,11 @@ attempt outcome. Both tables retain history when a card is replaced or revoked.
 
 ### 3.12 `batch_schedules`
 
+Implemented by V12 (Phase 7.1), including audit-user foreign keys and a `version`
+column for optimistic locking. Status is ACTIVE or INACTIVE. Domain construction
+validates ISO weekday 1–7, forward same-day times and classroom length (150).
+Database checks also enforce the weekday, time range and status. Phase 7.2 adds mutation APIs and V14 unique active-slot enforcement.
+
 | Column | Type | Rules |
 |---|---|---|
 | id | BIGINT | PK |
@@ -315,13 +320,55 @@ attempt outcome. Both tables retain history when a card is replaced or revoked.
 | created_by | BIGINT | Required |
 | updated_at | TIMESTAMPTZ | Required |
 | updated_by | BIGINT | Required |
+| version | BIGINT | Required |
 
 Constraints:
 
 - `start_time < end_time`
-- Unique active schedule pattern as appropriate for batch/day/time
+- V14 unique active `(batch_id, day_of_week, start_time)`; the service also rejects overlapping active intervals
 
 ### 3.13 `class_sessions`
+
+Phase 7.3 adds no schema migration. Manual and generated session writes share a
+batch-row lock before checking same-batch active overlaps. Edits use the existing
+optimistic `version`, preserve generation/creation identity, and write audit
+old/new values in the same transaction. Ordinary edits cannot move the batch or
+change lifecycle status, and reject submitted attendance. Phase 8 must also guard
+against any saved attendance rows when its attendance table is introduced.
+
+
+Implemented by V12 (Phase 7.1). Domain construction requires dates within the
+batch's inclusive date range, start time before end time, topic <= 300,
+classroom <= 150 and remarks <= 2000 characters. New entities start SCHEDULED.
+Database checks enforce valid status, forward times, a nonblank cancellation
+reason for CANCELLED, and no self-reference. A composite original-session foreign
+key enforces that the original session belongs to the same batch. Cancellation
+reason and remarks use VARCHAR(2000); attendance submission remains unused until
+Phase 8. Audit user IDs reference users. Indexes cover batch/date, date/status,
+lecturer/date and original-session lookup.
+
+Phase 7.2 adds V13 `source_schedule_id` and `generation_date`. They must both be
+null (manual session) or both be set (generated session). A same-batch composite
+foreign key links the source pattern, and a unique source/date pair prevents
+regeneration even after cancellation/rescheduling. Existing V12 rows retain null
+origin values. V14 enforces the active session key (SCHEDULED/COMPLETED), treating
+an unassigned lecturer as one slot. PostgreSQL uses partial unique indexes;
+H2 uses generated keys to enforce equivalent uniqueness in integration tests.
+Overlapping intervals are also checked in the service under a batch lock.
+Cross-row batch-date and per-date lecturer eligibility are validated during
+generation and manual writes; replacement sessions use the same validations.
+
+Phase 7.4 adds V15 `rescheduling_reason`, required and nonblank for RESCHEDULED
+rows, and a unique `original_session_id` (nullable) enforcing one immediate
+replacement per original. Replacement rows cannot carry a generation-origin
+pair: that identity stays on the original. The existing composite foreign key
+keeps each replacement in the original's batch. Further moves form chains.
+Cancellation and rescheduling preserve history and write audit evidence in the
+same transaction as status/replacement changes.
+
+Start/end LocalTime fields use direct JDBC local-time mapping, keeping wall-clock
+times unchanged even with the global UTC timestamp setting. V12 exposed no writes;
+no production session data is rewritten by this mapping correction.
 
 | Column | Type | Rules |
 |---|---|---|
@@ -334,9 +381,12 @@ Constraints:
 | topic | VARCHAR(300) | Optional |
 | classroom | VARCHAR(150) | Optional |
 | status | VARCHAR(20) | Required |
-| cancellation_reason | TEXT | Optional |
-| original_session_id | BIGINT | Optional self FK |
-| remarks | TEXT | Optional |
+| cancellation_reason | VARCHAR(2000) | Required when cancelled |
+| rescheduling_reason | VARCHAR(2000) | Required when rescheduled (V15) |
+| original_session_id | BIGINT | Optional same-batch self FK, unique (V15) |
+| source_schedule_id | BIGINT | Optional same-batch pattern FK (V13) |
+| generation_date | DATE | Original generation slot, paired with source_schedule_id (V13) |
+| remarks | VARCHAR(2000) | Optional |
 | attendance_submitted_at | TIMESTAMPTZ | Optional |
 | created_at | TIMESTAMPTZ | Required |
 | created_by | BIGINT | Required |
@@ -347,9 +397,9 @@ Constraints:
 Constraints:
 
 - `start_time < end_time`
-- Cancellation reason required when status is CANCELLED, enforced by service and test
+- Cancellation reason required when CANCELLED; rescheduling reason required when RESCHEDULED, enforced by database checks
 - Index `(batch_id, session_date)`
-- Prevent duplicate active `(batch_id, session_date, start_time, lecturer_user_id)` as applicable
+- V14 unique active `(batch_id, session_date, start_time, COALESCE(lecturer_user_id, 0))`
 
 ### 3.14 `attendance`
 

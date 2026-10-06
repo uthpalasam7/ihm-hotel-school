@@ -49,7 +49,10 @@
                 <span>Staff-supervised check-in only</span><small>{{ existing.contactLine }}</small></div>
             </article>
           </div>
-          <p class="note">Print the two PDF pages at actual wallet-card size and check the QR with your scanner. A digital card may also be shown on a phone.</p>
+          <div class="ihm-guidance"><span class="ihm-guidance__icon" aria-hidden="true">i</span><div>
+            <strong>Before issuing a printed card</strong>
+            <p>Print the two PDF pages at actual wallet-card size and check the QR with your scanner. A digital card may also be shown on a phone.</p>
+          </div></div>
         }
           <mat-card appearance="outlined"><mat-card-content><h2>Optional email delivery</h2>
             @if (existing.status !== 'ACTIVE') {
@@ -68,7 +71,10 @@
                   @if (delivery.lastError) { <span>{{ delivery.lastError }}</span> }
                 </div>
               }
-              <p class="note">Accepted means the mail service accepted the message; it does not confirm delivery to the student's inbox.</p>
+              <div class="ihm-guidance"><span class="ihm-guidance__icon" aria-hidden="true">i</span><div>
+                <strong>About email status</strong>
+                <p>Accepted means the mail service accepted the message; it does not confirm delivery to the student's inbox.</p>
+              </div></div>
             </div> }
           </mat-card-content></mat-card>
         <mat-card appearance="outlined"><mat-card-content><h2>Card history</h2>

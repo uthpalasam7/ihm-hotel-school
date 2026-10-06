@@ -23,6 +23,9 @@ import com.ihm.hotelschool.course.Course;
 import com.ihm.hotelschool.course.CourseRepository;
 import com.ihm.hotelschool.enrollment.EnrollmentRepository;
 import com.ihm.hotelschool.user.Role;
+import com.ihm.hotelschool.session.ClassSessionRepository;
+import com.ihm.hotelschool.session.BatchScheduleRepository;
+import com.ihm.hotelschool.session.ScheduleStatus;
 import com.ihm.hotelschool.user.UserAccount;
 import com.ihm.hotelschool.user.UserRepository;
 import com.ihm.hotelschool.user.UserStatus;
@@ -60,6 +63,8 @@ class BatchService {
 
 	private final CourseBatchRepository batchRepository;
 	private final EnrollmentRepository enrollmentRepository;
+	private final ClassSessionRepository sessionRepository;
+	private final BatchScheduleRepository scheduleRepository;
 	private final CourseRepository courseRepository;
 	private final BranchRepository branchRepository;
 	private final FeePlanRepository feePlanRepository;
@@ -74,6 +79,8 @@ class BatchService {
 	BatchService(
 			CourseBatchRepository batchRepository,
 			EnrollmentRepository enrollmentRepository,
+			ClassSessionRepository sessionRepository,
+			BatchScheduleRepository scheduleRepository,
 			CourseRepository courseRepository,
 			BranchRepository branchRepository,
 			FeePlanRepository feePlanRepository,
@@ -86,6 +93,8 @@ class BatchService {
 			@org.springframework.beans.factory.annotation.Value("${app.timezone:Asia/Colombo}") String timezone) {
 		this.batchRepository = batchRepository;
 		this.enrollmentRepository = enrollmentRepository;
+		this.sessionRepository = sessionRepository;
+		this.scheduleRepository = scheduleRepository;
 		this.courseRepository = courseRepository;
 		this.branchRepository = branchRepository;
 		this.feePlanRepository = feePlanRepository;
@@ -204,12 +213,26 @@ class BatchService {
 	@Transactional
 	BatchResponse update(Long id, BatchRequest request, Authentication authentication, HttpServletRequest httpRequest) {
 		CurrentActor actor = adminActor(authentication);
-		CourseBatch batch = findBatch(id);
+		CourseBatch batch = findBatchForUpdate(id);
 		actor.requireBranchAccess(Set.of(batch.getBranch().getId()));
 		Course course = findCourse(request.courseId());
 		Branch branch = resolveAuthorizedBranch(request.branchId(), actor);
 		validateBatchRequest(request);
 		String batchNumber = normalizeRequired(request.batchNumber());
+        if (sessionRepository.existsByBatchId(id)) {
+            if (!batch.getCourse().getId().equals(course.getId()) || !batch.getBranch().getId().equals(branch.getId())
+                    || !batch.getBatchNumber().equals(batchNumber)) {
+                throw new ConflictException("Course, branch, and batch number cannot change after sessions exist");
+            }
+            if (sessionRepository.existsByBatchIdAndSessionDateBeforeOrBatchIdAndSessionDateAfter(
+                    id, request.startDate(), id, request.endDate())) {
+                throw new ConflictException("Batch dates must include all saved sessions");
+            }
+        }
+        if (request.scheduleMode() == ScheduleMode.MANUAL && scheduleRepository.existsByBatchIdAndStatus(id, ScheduleStatus.ACTIVE)) {
+            throw new ConflictException("Deactivate weekly patterns before switching to manual mode");
+        }
+
         if (enrollmentRepository.existsByBatchId(id) && (
                 !batch.getCourse().getId().equals(course.getId())
                 || !batch.getBranch().getId().equals(branch.getId())
@@ -230,7 +253,7 @@ class BatchService {
 	@Transactional
 	BatchResponse changeStatus(Long id, BatchStatusRequest request, Authentication authentication, HttpServletRequest httpRequest) {
 		CurrentActor actor = adminActor(authentication);
-		CourseBatch batch = findBatch(id);
+		CourseBatch batch = findBatchForUpdate(id);
 		actor.requireBranchAccess(Set.of(batch.getBranch().getId()));
 		BatchResponse oldValue = toResponse(batch);
 		batch.changeStatus(request.status(), clock.instant(), actor.id());
@@ -280,8 +303,17 @@ class BatchService {
 
 	@Transactional(readOnly = true)
 	List<BatchLecturerResponse> listLecturers(Long batchId, Authentication authentication) {
-		CourseBatch batch = requireBatchManageAccess(batchId, authentication);
+		CurrentActor actor = currentActorService.actor(authentication);
+		actor.requireAnyRole("SUPER_ADMIN", "ADMIN", "LECTURER");
+		CourseBatch batch = findBatch(batchId);
+		actor.requireBranchAccess(Set.of(batch.getBranch().getId()));
+		boolean lecturerOnly = !actor.admin() && !actor.superAdmin();
+		if (lecturerOnly && !batchLecturerRepository.hasActiveAssignmentOn(batchId, actor.id(),
+				LocalDate.now(clock.withZone(zone)))) {
+			throw new AccessDeniedException("Access denied");
+		}
 		return batchLecturerRepository.findByBatchIdOrderByAssignmentStartDateAsc(batch.getId()).stream()
+				.filter(assignment -> !lecturerOnly || assignment.getStatus() == BatchLecturerStatus.ACTIVE)
 				.map(batchMapper::toResponse)
 				.toList();
 	}
@@ -289,7 +321,7 @@ class BatchService {
 	@Transactional
 	BatchLecturerResponse addLecturer(Long batchId, BatchLecturerRequest request, Authentication authentication, HttpServletRequest httpRequest) {
 		CurrentActor actor = adminActor(authentication);
-		CourseBatch batch = findBatch(batchId);
+		CourseBatch batch = findBatchForUpdate(batchId);
 		actor.requireBranchAccess(Set.of(batch.getBranch().getId()));
 		UserAccount lecturer = resolveLecturer(request.lecturerUserId(), batch.getBranch().getId());
 		validateLecturerRequest(request);
@@ -308,7 +340,7 @@ class BatchService {
 	@Transactional
 	BatchLecturerResponse updateLecturer(Long batchId, Long assignmentId, BatchLecturerRequest request, Authentication authentication, HttpServletRequest httpRequest) {
 		CurrentActor actor = adminActor(authentication);
-		CourseBatch batch = findBatch(batchId);
+		CourseBatch batch = findBatchForUpdate(batchId);
 		actor.requireBranchAccess(Set.of(batch.getBranch().getId()));
 		BatchLecturer assignment = findAssignment(batchId, assignmentId);
 		UserAccount lecturer = resolveLecturer(request.lecturerUserId(), batch.getBranch().getId());
@@ -330,7 +362,7 @@ class BatchService {
 	@Transactional
 	List<BatchLecturerResponse> syncLecturers(Long batchId, BatchLecturerSyncRequest request, Authentication authentication, HttpServletRequest httpRequest) {
 		CurrentActor actor = adminActor(authentication);
-		CourseBatch batch = findBatch(batchId);
+		CourseBatch batch = findBatchForUpdate(batchId);
 		actor.requireBranchAccess(Set.of(batch.getBranch().getId()));
 		LinkedHashSet<Long> selectedLecturerIds = request.lecturerUserIds().stream()
 				.collect(Collectors.toCollection(LinkedHashSet::new));
@@ -382,7 +414,7 @@ class BatchService {
 	@Transactional
 	BatchLecturerResponse changeLecturerStatus(Long batchId, Long assignmentId, BatchLecturerStatusRequest request, Authentication authentication, HttpServletRequest httpRequest) {
 		CurrentActor actor = adminActor(authentication);
-		CourseBatch batch = findBatch(batchId);
+		CourseBatch batch = findBatchForUpdate(batchId);
 		actor.requireBranchAccess(Set.of(batch.getBranch().getId()));
 		BatchLecturer assignment = findAssignment(batchId, assignmentId);
 		BatchLecturerResponse oldValue = batchMapper.toResponse(assignment);
@@ -391,6 +423,10 @@ class BatchService {
 		auditService.record(actor.user(), batch.getBranch(), "BATCH_LECTURER_STATUS_CHANGED", "BatchLecturer", assignment.getId(), oldValue, response, request.reason(), httpRequest);
 		return response;
 	}
+
+    private CourseBatch findBatchForUpdate(Long id) {
+        return batchRepository.findForUpdateById(id).orElseThrow(() -> new NotFoundException("Batch was not found"));
+    }
 
 	private InstallmentPreviewResponse preview(CourseBatch batch, FeePlanRequest request) {
 		String currencyCode = normalizeCurrency(request.currencyCode());

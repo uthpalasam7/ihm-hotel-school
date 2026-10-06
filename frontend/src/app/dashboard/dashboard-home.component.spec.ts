@@ -53,4 +53,20 @@ describe('DashboardHomeComponent', () => {
     expect(branchLink).toBeTruthy();
     expect(branchLink.getAttribute('href')).toBe('/branches');
   });
+
+  it('links lecturers to assigned batches and class sessions without administrator tools', async () => {
+    const user: CurrentUser = { id: 2, username: 'teacher', fullName: 'Lecturer User', status: 'ACTIVE',
+      passwordChangeRequired: false, roles: ['LECTURER'],
+      branches: [{ id: 1, code: 'IHM-MAIN', name: 'IHM Hotel School' }] };
+    await TestBed.configureTestingModule({ imports: [DashboardHomeComponent], providers: [provideRouter([]),
+      { provide: AuthService, useValue: { currentUser: signal(user).asReadonly(),
+        hasAnyRole: (roles: string[]) => user.roles.some(role => roles.includes(role)) } },
+    ] }).compileComponents();
+    TestBed.inject(ActiveBranchService).configure(user.branches);
+    const fixture = TestBed.createComponent(DashboardHomeComponent); fixture.detectChanges();
+    const text = fixture.nativeElement.textContent as string;
+    expect(text).toContain('Batches'); expect(text).toContain('Class sessions');
+    expect(text).not.toContain('Teaching tools will appear here'); expect(text).not.toContain('View users');
+    expect(fixture.nativeElement.querySelector('a[href="/sessions"]')).toBeTruthy();
+  });
 });

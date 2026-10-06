@@ -187,6 +187,35 @@ automated tests alone.
 
 ## Phase 7 — Class Schedules and Sessions
 
+Status: Phase 7.1 implemented on 4 October 2026; validation results are recorded in
+[the session foundation report](PHASE7_1_SESSION_FOUNDATION.md). V12 introduces
+weekly-pattern and session persistence; session list/detail APIs enforce current
+branch/batch-assignment access.
+Phase 7.2 implemented on 4 October 2026: weekly-pattern APIs, bounded signed
+preview, atomic generation, V13/V14 origin and duplicate constraints, and
+local-time persistence correction. See [the 7.2 report](PHASE7_2_REGULAR_GENERATION.md).
+Phase 7.3 implemented on 4 October 2026: manual/extra session create/edit APIs,
+current lecturer/branch authorization, overlap and stale-version protection,
+shared batch locking, and transactional audit. See [the 7.3 report](PHASE7_3_MANUAL_SESSIONS.md).
+Phase 7.4 implements reason/version-checked cancellation and atomic rescheduling,
+preserved original/replacement chains, V15 integrity constraints, audit and an
+attendance-state domain guard. See [the 7.4 report](PHASE7_4_SESSION_LIFECYCLE.md).
+Phase 7.5 implemented on 4 October 2026: admin weekly-pattern editing, bounded
+preview with holiday exclusions, conflict review and confirmed generation in a
+responsive Angular screen. See [the 7.5 report](PHASE7_5_REGULAR_SCHEDULE_UI.md).
+Phase 7.6 implemented on 5 October 2026: admin month calendar, paginated list,
+manual/extra creation, editing, cancellation and rescheduling UI. See
+[the 7.6 report](PHASE7_6_SESSION_MANAGEMENT_UI.md).
+Phase 7.7 implemented on 5 October 2026: lecturers can use Class sessions for
+currently assigned batches, active colleague assignments can be read without
+opening assignment writes, and schedule/lifecycle regressions passed. See
+[the 7.7 report](PHASE7_7_LECTURER_SESSIONS.md).
+Next: Phase 8 — Attendance and QR Scanning. Phase 6 school-side
+rollout checks remain open; the user's request to start Phase 7 advances development
+without claiming those physical/email checks are complete. The user reported SMTP
+ACCEPTED; inbox/PDF receipt, controlled retry and physical equipment checks still
+need recorded evidence.
+
 Implement:
 
 - Regular weekly schedule patterns
@@ -215,6 +244,11 @@ Implement:
 Implement:
 
 - Attendance sheet
+- Every attendance write must take the shared batch lock, reload the session and
+  call `requireAttendanceEligible()` before saving; cancelled/rescheduled sessions
+  are ineligible. Add attendance-versus-cancellation race tests. Extend lifecycle
+  guards to detect saved attendance rows, including drafts, before implementing
+  the confirmed/audited correction flow.
 - Mark All Present
 - Present, Absent, Late, Excused
 - Save and submit

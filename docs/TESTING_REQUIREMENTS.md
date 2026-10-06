@@ -49,6 +49,37 @@ Test business services for:
 
 ### Session Generation
 
+Phase 7.5 frontend coverage checks schedule HTTP requests, pattern form and
+server-error handling, role visibility, batch/mode restrictions, date and holiday
+validation, stale preview invalidation, confirmation, expiry, conflicts,
+duplicate submission prevention, pagination and mobile-card rendering. The
+synthetic browser check uses an isolated PostgreSQL database to create a regular
+batch, exclude one Monday, preview three sessions, and generate them.
+
+Phase 7.6 frontend coverage checks filtered/paginated HTTP calls, a complete
+42-day calendar range and overflow fallback, responsive list cards, local date
+and time validation, lecturer assignment dates, reason/version request bodies,
+stale-version reload, cancellation and original/replacement display. Its
+disposable PostgreSQL browser check creates, edits, reschedules and cancels a
+manual session, then verifies generated and one-off sessions in a regular batch.
+
+Phase 7.7 coverage checks lecturer route/navigation and dashboard links,
+assigned-batch choices, co-lecturer/unassigned sessions, branch and assignment
+revocation handling, and administrator-only weekly schedule controls. Backend
+checks allow active lecturer assignment reads only within a currently assigned
+batch while all assignment writes remain administrator-only. PostgreSQL
+regression repeats regular generation without duplicates and exercises manual
+creation, editing, rescheduling, cancellation, cross-batch denial and live
+assignment revocation with a synthetic lecturer account.
+
+Phase 7.2 regression coverage lives in `ScheduleGenerationTests` and
+`GenerationPreviewSignerTests`. It covers multiple patterns, inclusive boundaries,
+exclusions, request bounds, stale/expired/tampered confirmation, per-date lecturer
+eligibility, repeated/concurrent generation, failure rollback, audit, preserved
+cancelled/rescheduled slots, same-batch overlaps, optional-lecturer uniqueness,
+batch edit protection, and raw SQL local-time storage. Run the integration suite
+on PostgreSQL as well as H2 when changing generation or vendor constraints.
+
 - Weekly date generation
 - Multiple weekly patterns
 - Date-range boundaries
@@ -59,6 +90,33 @@ Test business services for:
 - Manual session creation
 - Cancellation rules
 - Rescheduling traceability
+
+### Manual Sessions
+
+Phase 7.3 coverage lives in `ManualSessionTests`: one-off creation in both modes,
+inclusive batch dates, time/DTO validation, optional lecturer eligibility,
+current assignment and branch/header authorization, protected historical sessions,
+stale versions, overlap/adjacency, generated-origin preservation, transactional
+audit rollback, concurrent creates/edits and manual-versus-generation races.
+Run on both H2 and a disposable PostgreSQL database. These committed-fixture tests
+clear application tables: never point them at development or production data.
+When Phase 8 introduces attendance records, add coverage for saved draft attendance
+as well as submitted attendance before enabling any confirmed correction flow.
+
+### Session Lifecycle
+
+Phase 7.4 coverage lives in `SessionLifecycleTests`: mandatory reasons/versions,
+branch/current-lecturer authorization, terminal/submitted-attendance protection,
+cancellation history, rescheduling chains, same-day moves, batch date/time and
+lecturer eligibility, overlap/adjacency, generation-origin preservation, database
+constraints, atomic rollback on audit/insert failure, and concurrent move/cancel/
+manual-create requests. Run against both H2 and disposable PostgreSQL. Fixtures
+clear tables and must never target development or production data.
+
+The domain guard rejects attendance for cancelled/rescheduled sessions. When
+Phase 8 introduces attendance writes, call it under the shared batch lock and add
+API-level blocking plus attendance-versus-cancellation race tests. Validate draft
+attendance protection and exclusion of cancelled sessions from report denominators.
 
 ### Attendance
 

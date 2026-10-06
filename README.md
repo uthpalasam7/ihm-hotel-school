@@ -1,6 +1,6 @@
 # IHM Hotel School Management System
 
-The IHM Hotel School Management System has completed Phase 5 and started Phase 6 with enrollment, automatic charges, student QR cards, and optional card email.
+The IHM Hotel School Management System includes enrollment, automatic charges, student QR cards, optional card email, regular schedule generation, and administrator and lecturer class-session management. Phase 6 school-side rollout checks remain pending.
 
 ## Stack
 
@@ -177,7 +177,7 @@ Student photos are stored outside the public frontend through a replaceable
 backend storage abstraction. Local development uses `backend/data/student-photos`
 by default; include this directory in local backup procedures.
 
-## Implemented Scope: Phase 5 and First Phase 6 Delivery
+## Implemented Scope: Through Phase 7.5 Regular Schedule UI
 
 Implemented:
 
@@ -226,12 +226,33 @@ Implemented:
   and protected two-sided PDF printing/download
 - Optional staff-confirmed card email to the saved student address, with durable
   delivery status and bounded retries when SMTP is configured
+- Weekly-pattern and class-session schema (V12), domain validation, and paginated
+  session list/detail APIs with branch and current lecturer-assignment authorization
+
+- Weekly-pattern create/update/deactivation APIs, signed session previews,
+  transactional generation and duplicate prevention (V13/V14)
+- Saved-session protection when batch identity, dates or schedule mode change
+- Manual/extra session create/edit APIs in either schedule mode, with current
+  lecturer/branch access, per-date lecturer validation, overlap and version checks,
+  protected history and transactional audit ([7.3 report](docs/PHASE7_3_MANUAL_SESSIONS.md))
+- Cancellation and rescheduling APIs with mandatory reasons, version checks,
+  original/replacement chains, atomic audit, V15 constraints and an attendance
+  eligibility guard ([7.4 report](docs/PHASE7_4_SESSION_LIFECYCLE.md))
+- Admin weekly-pattern editor and responsive list for regular batches, with
+  bounded date/holiday preview, conflict review, and confirmed session generation
+  ([7.5 report](docs/PHASE7_5_REGULAR_SCHEDULE_UI.md))
+- Admin Class sessions month calendar and paginated list, with manual/extra
+  creation, editing, cancellation and rescheduling
+  ([7.6 report](docs/PHASE7_6_SESSION_MANAGEMENT_UI.md))
+- Lecturer access to assigned-batch sessions and lifecycle actions, with
+  assignment-scoped lecturer choices and schedule regression verification
+  ([7.7 report](docs/PHASE7_7_LECTURER_SESSIONS.md))
 
 Not implemented yet:
 
 - Remaining Phase 6 rollout checks: physical card and scanner validation and real SMTP delivery validation
 - Follow [the Phase 6 rollout checklist](docs/PHASE6_ROLLOUT_CHECKLIST.md) when school hardware and a school SMTP account are available
-- Class sessions, attendance, payment, report, and audit-view workflows
+- Attendance, payment, report, and audit-view workflows
 - Future work is divided into bounded numbered tasks in the
   [implementation plan](docs/IMPLEMENTATION_PLAN.md); start with the first
   incomplete sub-phase rather than a whole phase at once.

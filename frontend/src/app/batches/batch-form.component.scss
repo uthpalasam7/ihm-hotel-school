@@ -54,9 +54,7 @@ mat-stepper {
 }
 
 .step-heading p,
-.empty-copy,
-.preview-note,
-.information-note {
+.empty-copy {
   color: var(--ihm-text-muted);
   line-height: 1.5;
 }
@@ -256,25 +254,8 @@ mat-stepper {
   width: 1.65rem;
 }
 
-.preview-note,
-.information-note,
 .empty-copy {
   margin: 0;
-}
-
-.information-note {
-  background: #fff8e8;
-  border: 1px solid #e3c782;
-  border-radius: var(--ihm-radius-sm);
-  color: #5f4209;
-  padding: var(--ihm-space-3);
-}
-
-.preview-note {
-  background: var(--ihm-page);
-  border-radius: var(--ihm-radius-sm);
-  font-size: 0.82rem;
-  padding: var(--ihm-space-3);
 }
 
 .schedule-options {

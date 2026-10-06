@@ -1,0 +1,103 @@
+<section class="schedule-page">
+  <app-page-header eyebrow="Academics" title="Weekly schedule" subtitle="Set weekly class times, review proposed dates, then generate sessions.">
+    <a mat-button routerLink="/sessions" [queryParams]="{batchId: batch()?.id}">View class sessions</a>
+    <a mat-button routerLink="/batches">Back to batches</a>
+  </app-page-header>
+  <app-page-state [loading]="loading()" [error]="loadError()" loadingLabel="Loading weekly schedule…" (retry)="load()" />
+  @if (batch(); as batch) {
+    @if (!loading() && !loadError()) {
+      <mat-card appearance="outlined"><mat-card-content class="intro">
+        <h2>{{ batch.batchNumber }} · {{ batch.course.name }}</h2>
+        <p>{{ batch.branch.name }} · {{ batch.startDate | date:'d MMM y' }} – {{ batch.endDate | date:'d MMM y' }} · <app-status-chip [value]="batch.status" /></p>
+        <div class="ihm-guidance"><span class="ihm-guidance__icon" aria-hidden="true">i</span><div>
+          <strong>How weekly scheduling works</strong>
+          <p>Add a pattern for each weekly class, such as Monday 09:00–13:00. Exclude holidays before previewing. Saved sessions keep their own details when patterns change.</p>
+        </div></div>
+        @if (batch.scheduleMode !== 'REGULAR') { <p>This batch uses manual sessions. Change its schedule mode in Edit batch before configuring regular weekly classes.</p> }
+        @else if (!writable()) { <p>This batch is {{ batch.status.toLowerCase() }}. Patterns remain visible; active patterns can be deactivated.</p> }
+      </mat-card-content></mat-card>
+      @if (actionError()) { <p class="error" role="alert">{{ actionError() }} <button mat-button type="button" [disabled]="busy()" (click)="load()">Reload patterns</button></p> }
+      @if (result(); as result) { <p class="success" role="status">{{ result.createdCount }} sessions generated. {{ result.skippedCount }} existing sessions kept.</p> }
+      <mat-card appearance="outlined" class="ihm-data-grid">
+        <div class="section-header"><h2>Weekly patterns</h2>@if (writable()) { <button mat-flat-button type="button" [disabled]="busy()" (click)="edit()">Add pattern</button> }</div>
+        <app-page-state [empty]="patterns().length === 0" emptyTitle="No weekly patterns" emptyMessage="Add your first weekly class time to start generating sessions." />
+        @if (patterns().length) {
+          <div class="ihm-desktop-table table-wrap"><table mat-table [dataSource]="patterns()">
+            <caption class="visually-hidden">Weekly patterns for {{ batch.batchNumber }}</caption>
+            <ng-container matColumnDef="day"><th mat-header-cell *matHeaderCellDef>Weekday</th><td mat-cell *matCellDef="let p">{{ days[p.dayOfWeek - 1] }}</td></ng-container>
+            <ng-container matColumnDef="time"><th mat-header-cell *matHeaderCellDef>Time</th><td mat-cell *matCellDef="let p">{{ p.startTime | slice:0:5 }}–{{ p.endTime | slice:0:5 }}</td></ng-container>
+            <ng-container matColumnDef="lecturer"><th mat-header-cell *matHeaderCellDef>Lecturer</th><td mat-cell *matCellDef="let p">{{ p.defaultLecturerName || 'Unassigned' }}</td></ng-container>
+            <ng-container matColumnDef="classroom"><th mat-header-cell *matHeaderCellDef>Classroom</th><td mat-cell *matCellDef="let p">{{ p.classroom || 'Not set' }}</td></ng-container>
+            <ng-container matColumnDef="status"><th mat-header-cell *matHeaderCellDef>Status</th><td mat-cell *matCellDef="let p"><app-status-chip [value]="p.status" /></td></ng-container>
+            <ng-container matColumnDef="actions"><th mat-header-cell *matHeaderCellDef><span class="visually-hidden">Actions</span></th><td mat-cell *matCellDef="let p" class="action-cell">
+              @if (writable()) { <button mat-button type="button" [disabled]="busy()" (click)="edit(p)" [attr.aria-label]="'Edit ' + days[p.dayOfWeek - 1] + ' pattern'">Edit</button> }
+              @if (canManage && p.status === 'ACTIVE') { <button mat-button type="button" [disabled]="busy()" (click)="deactivate(p)">Deactivate</button> }
+            </td></ng-container>
+            <tr mat-header-row *matHeaderRowDef="patternColumns"></tr><tr mat-row *matRowDef="let row; columns: patternColumns"></tr>
+          </table></div>
+          <div class="ihm-mobile-cards">@for (p of patterns(); track p.id) {
+            <article class="ihm-mobile-card"><div class="ihm-mobile-card__heading"><strong>{{ days[p.dayOfWeek - 1] }} {{ p.startTime | slice:0:5 }}–{{ p.endTime | slice:0:5 }}</strong><app-status-chip [value]="p.status" /></div>
+              <dl class="ihm-mobile-card__details"><div><dt>Lecturer</dt><dd>{{ p.defaultLecturerName || 'Unassigned' }}</dd></div><div><dt>Classroom</dt><dd>{{ p.classroom || 'Not set' }}</dd></div></dl>
+              <div class="ihm-mobile-card__actions">@if (writable()) { <button mat-button [disabled]="busy()" (click)="edit(p)">Edit</button> }@if (canManage && p.status === 'ACTIVE') { <button mat-button [disabled]="busy()" (click)="deactivate(p)">Deactivate</button> }</div>
+            </article>
+          }</div>
+        }
+        <mat-paginator [length]="total()" [pageIndex]="page()" [pageSize]="size()" [pageSizeOptions]="[10,20,50,100]" showFirstLastButtons [disabled]="busy()" (page)="changePage($event)" aria-label="Weekly pattern pages" />
+      </mat-card>
+      @if (writable()) {
+        <mat-card appearance="outlined"><mat-card-content>
+          <h2>Preview class sessions</h2>
+          <div class="ihm-guidance"><span class="ihm-guidance__icon" aria-hidden="true">i</span><div>
+            <strong>Preview only</strong>
+            <p>Choose up to 366 days within the batch. Previewing does not save sessions.</p>
+          </div></div>
+          <form [formGroup]="range" (ngSubmit)="createPreview()">
+            <div class="range-fields">
+              <mat-form-field appearance="outline"><mat-label>From date</mat-label><input matInput formControlName="fromDate" [matDatepicker]="fromPicker" [min]="minDate()" [max]="maxDate()" /><mat-datepicker-toggle matIconSuffix [for]="fromPicker" /><mat-datepicker #fromPicker /><mat-hint>DD/MM/YYYY</mat-hint><mat-error>Choose a date within this batch.</mat-error></mat-form-field>
+              <mat-form-field appearance="outline"><mat-label>To date</mat-label><input matInput formControlName="toDate" [matDatepicker]="toPicker" [min]="minDate()" [max]="maxDate()" /><mat-datepicker-toggle matIconSuffix [for]="toPicker" /><mat-datepicker #toPicker /><mat-hint>DD/MM/YYYY</mat-hint><mat-error>Choose a date within this batch.</mat-error></mat-form-field>
+            </div>
+            @if (range.hasError('dateOrder')) { <p class="error" role="alert">The end date must be on or after the start date.</p> }
+            @if (range.hasError('rangeTooLong')) { <p class="error" role="alert">Preview at most 366 days at a time.</p> }
+            <div class="exclusions">
+              <mat-form-field appearance="outline"><mat-label>Exclude a date (optional)</mat-label><input matInput [formControl]="exclusion" [matDatepicker]="excludePicker" [min]="minDate()" [max]="maxDate()" /><mat-datepicker-toggle matIconSuffix [for]="excludePicker" /><mat-datepicker #excludePicker /><mat-hint>For example, a public holiday.</mat-hint></mat-form-field>
+              <button mat-stroked-button type="button" [disabled]="working()" (click)="addExclusion()">Exclude date</button>
+            </div>
+            <div class="exclusions">@for (date of excludedDates(); track date) { <button mat-stroked-button type="button" [disabled]="working()" (click)="removeExclusion(date)" [attr.aria-label]="'Remove excluded date ' + date">{{ date | date:'d MMM y' }} ×</button> }</div>
+            <button mat-flat-button type="submit" [disabled]="busy()">{{ previewLoading() ? 'Preparing preview…' : 'Preview sessions' }}</button>
+          </form>
+          @if (previewError()) { <p class="error notice" role="alert">{{ previewError() }}</p> }
+        </mat-card-content></mat-card>
+        <app-page-state [loading]="previewLoading()" loadingLabel="Checking proposed sessions…" />
+      }
+      @if (preview(); as preview) {
+        <mat-card appearance="outlined" class="ihm-data-grid">
+          <div class="preview-summary"><h2>Review proposed sessions</h2>
+            <p class="counts"><strong>{{ preview.createCount }} new</strong><span>{{ preview.skipCount }} kept</span><strong [class.conflict]="preview.conflictCount > 0">{{ preview.conflictCount }} conflicts</strong></p>
+            @if (preview.conflictCount) { <p class="error" role="alert">Resolve the conflicts below, then preview again. No sessions can be generated from this preview.</p> }
+            @if (expired()) { <p class="error" role="alert">This preview has expired. Preview again before generating.</p> }
+            @else { <p>Preview valid until {{ preview.expiresAt | date:'d MMM y, h:mm a' }}.</p> }
+            @if (!preview.createCount && !preview.conflictCount) { <p role="status">No new sessions to save. Matching sessions already exist, or no weekly patterns fall on the selected dates.</p> }
+            <div class="actions"><button mat-flat-button type="button" [disabled]="busy() || expired() || preview.conflictCount > 0 || preview.createCount === 0" (click)="generate()">{{ working() ? 'Please wait…' : 'Generate sessions' }}</button></div>
+          </div>
+          @if (preview.sessions.length) {
+            <div class="ihm-desktop-table table-wrap"><table mat-table [dataSource]="previewRows()"><caption class="visually-hidden">Proposed sessions for {{ batch.batchNumber }}</caption>
+              <ng-container matColumnDef="date"><th mat-header-cell *matHeaderCellDef>Date</th><td mat-cell *matCellDef="let s">{{ s.sessionDate | date:'EEE, d MMM y' }}</td></ng-container>
+              <ng-container matColumnDef="time"><th mat-header-cell *matHeaderCellDef>Time</th><td mat-cell *matCellDef="let s">{{ s.startTime | slice:0:5 }}–{{ s.endTime | slice:0:5 }}</td></ng-container>
+              <ng-container matColumnDef="lecturer"><th mat-header-cell *matHeaderCellDef>Lecturer</th><td mat-cell *matCellDef="let s">{{ s.lecturerName || 'Unassigned' }}</td></ng-container>
+              <ng-container matColumnDef="classroom"><th mat-header-cell *matHeaderCellDef>Classroom</th><td mat-cell *matCellDef="let s">{{ s.classroom || 'Not set' }}</td></ng-container>
+              <ng-container matColumnDef="outcome"><th mat-header-cell *matHeaderCellDef>Result</th><td mat-cell *matCellDef="let s"><strong [class.conflict]="s.outcome === 'CONFLICT'">{{ outcomeLabel(s.outcome) }}</strong><span class="secondary">{{ s.message }}</span></td></ng-container>
+              <tr mat-header-row *matHeaderRowDef="previewColumns"></tr><tr mat-row *matRowDef="let row; columns: previewColumns"></tr>
+            </table></div>
+            <div class="ihm-mobile-cards">@for (s of previewRows(); track s.scheduleId + ':' + s.sessionDate) {
+              <article class="ihm-mobile-card"><div class="ihm-mobile-card__heading"><strong>{{ s.sessionDate | date:'EEE, d MMM y' }}</strong><span [class.conflict]="s.outcome === 'CONFLICT'">{{ outcomeLabel(s.outcome) }}</span></div>
+                <dl class="ihm-mobile-card__details"><div><dt>Time</dt><dd>{{ s.startTime | slice:0:5 }}–{{ s.endTime | slice:0:5 }}</dd></div><div><dt>Lecturer</dt><dd>{{ s.lecturerName || 'Unassigned' }}</dd></div><div><dt>Classroom</dt><dd>{{ s.classroom || 'Not set' }}</dd></div></dl>
+                @if (s.message) { <p>{{ s.message }}</p> }
+              </article>
+            }</div>
+            <mat-paginator [length]="preview.sessions.length" [pageIndex]="previewPage()" [pageSize]="previewSize()" [pageSizeOptions]="[10,20,50,100]" showFirstLastButtons (page)="changePreviewPage($event)" aria-label="Preview pages" />
+          }
+        </mat-card>
+      }
+    }
+  }
+</section>

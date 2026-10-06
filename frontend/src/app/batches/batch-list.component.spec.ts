@@ -92,8 +92,10 @@ describe('BatchListComponent', () => {
     expect(text).toContain('2026/PB02');
     expect(text).toContain('Fee plan configured');
     expect(text).toContain('PB');
+    expect(fixture.nativeElement.querySelector('.batch-cell .batch-link')?.getAttribute('href')).toBe('/batches/30/edit');
+    expect(fixture.nativeElement.querySelector('.batch-card-heading .batch-link')?.getAttribute('href')).toBe('/batches/30/edit');
     const mobileActions = fixture.nativeElement.querySelector('.batch-card-actions');
-    expect(mobileActions?.querySelectorAll('a, button').length).toBe(4);
+    expect(mobileActions?.querySelectorAll('a, button').length).toBe(6);
   });
 
   it('reloads branch-specific batches when the active branch changes', async () => {
@@ -137,8 +139,12 @@ describe('BatchListComponent', () => {
 
     const text=fixture.nativeElement.textContent as string;
     expect(text).toContain('View students');
+    expect(text).toContain('Class sessions');
     expect(text).not.toContain('Add batch');
     expect(text).not.toContain('Edit batch');
+    expect(text).not.toContain('Weekly schedule');
+    expect(fixture.nativeElement.querySelector('.batch-cell .batch-link')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.batch-card-heading .batch-link')).toBeNull();
     expect(listAllActive).not.toHaveBeenCalled();
   });
 });

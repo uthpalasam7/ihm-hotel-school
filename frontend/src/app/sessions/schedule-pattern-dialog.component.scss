@@ -1,0 +1,4 @@
+.fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--ihm-space-4); }
+p { margin: 0 0 var(--ihm-space-4); }
+.error { color: var(--mat-sys-error); }
+@media (max-width: 600px) { .fields { grid-template-columns: 1fr; } }

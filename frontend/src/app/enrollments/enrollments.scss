@@ -25,9 +25,9 @@ p { line-height: 1.5; }
 .enrollment-summary dd { margin: var(--ihm-space-1) 0 0; overflow-wrap: anywhere; }
 .enrollment-summary a { color: var(--ihm-charcoal); font-weight: 600; }
 .enrollment-summary .actions { border-top: 1px solid var(--ihm-border); padding-top: var(--ihm-space-4); }
-.enrollment-summary .muted { margin-bottom: 0; }
+.enrollment-summary .actions + .ihm-guidance { margin-top: var(--ihm-space-3); }
 .charge-intro h2 { margin-bottom: var(--ihm-space-2); }
-.charge-intro .muted { margin: 0; }
+.details-grid + .ihm-guidance { margin: var(--ihm-space-4) 0; }
 @media (max-width: 1000px) {
   .enrollment-summary dl { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .enrollment-filters { grid-template-columns: repeat(2, minmax(0, 1fr)); }

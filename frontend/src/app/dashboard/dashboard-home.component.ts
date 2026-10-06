@@ -56,11 +56,19 @@ export class DashboardHomeComponent {
     },
     {
       label: 'Batches',
-      description: 'Set up and manage course intakes for the active branch.',
+      description: 'View course intakes available to you in the active branch.',
       category: 'Intakes',
       actionLabel: 'View batches',
       path: '/batches',
-      roles: ['SUPER_ADMIN', 'ADMIN'],
+      roles: ['SUPER_ADMIN', 'ADMIN', 'LECTURER'],
+    },
+    {
+      label: 'Class sessions',
+      description: 'View the timetable and manage classes you can access.',
+      category: 'Teaching',
+      actionLabel: 'View class sessions',
+      path: '/sessions',
+      roles: ['SUPER_ADMIN', 'ADMIN', 'LECTURER'],
     },
     {
       label: 'Students',

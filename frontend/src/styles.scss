@@ -109,6 +109,48 @@ button {
   outline-offset: 0.125rem;
 }
 
+/* Longer, persistent workflow guidance. Field hints and feedback keep their own styles. */
+.ihm-guidance {
+  align-items: start;
+  background: #f3f6f5;
+  border-left: 3px solid #6b8582;
+  border-radius: var(--ihm-radius-sm);
+  color: var(--ihm-text);
+  display: grid;
+  gap: var(--ihm-space-3);
+  grid-template-columns: 1.25rem minmax(0, 1fr);
+  margin: 0;
+  padding: var(--ihm-space-3) var(--ihm-space-4);
+}
+
+.ihm-guidance__icon {
+  align-items: center;
+  background: #dce8e5;
+  border-radius: 50%;
+  color: #355551;
+  display: inline-flex;
+  font-size: 0.75rem;
+  font-weight: 700;
+  height: 1.25rem;
+  justify-content: center;
+  width: 1.25rem;
+}
+
+.ihm-guidance strong {
+  color: var(--ihm-charcoal);
+  display: block;
+  font-size: 0.85rem;
+  line-height: 1.35;
+}
+
+.ihm-guidance p {
+  color: #4c5855;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  margin: var(--ihm-space-1) 0 0;
+  overflow-wrap: anywhere;
+}
+
 /* Shared list and charge-table treatment. Keep future grids aligned with Students. */
 .ihm-data-grid {
   background: var(--ihm-surface);
@@ -140,13 +182,13 @@ button {
   text-transform: uppercase;
 }
 
-.ihm-data-grid a {
+.ihm-data-grid td:not(.action-cell) a {
   color: var(--ihm-charcoal);
   font-weight: 700;
   text-decoration: none;
 }
 
-.ihm-data-grid a:hover {
+.ihm-data-grid td:not(.action-cell) a:hover {
   text-decoration: underline;
 }
 
@@ -162,6 +204,12 @@ button {
 .ihm-data-grid .action-cell {
   text-align: right;
   white-space: nowrap;
+}
+
+/* Keep row actions readable while wide desktop tables scroll horizontally. */
+.ihm-sticky-actions .mat-column-actions {
+  background: var(--ihm-surface);
+  box-shadow: -0.25rem 0 0.5rem rgb(41 41 41 / 8%);
 }
 
 .visually-hidden {

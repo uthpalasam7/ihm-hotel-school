@@ -82,11 +82,17 @@
     <mat-card appearance="outlined" class="results-card">
       <div class="desktop-table">
         <div class="table-wrap">
-          <table mat-table [dataSource]="batches()" aria-label="Batches">
+          <table mat-table [dataSource]="batches()" class="ihm-sticky-actions" aria-label="Batches">
             <ng-container matColumnDef="batch">
               <th mat-header-cell *matHeaderCellDef>Batch</th>
               <td mat-cell *matCellDef="let batch" class="batch-cell">
-                <strong>{{ batch.batchNumber }}</strong>
+                <strong>
+                  @if (canManage) {
+                    <a class="batch-link" [routerLink]="['/batches', batch.id, 'edit']">{{ batch.batchNumber }}</a>
+                  } @else {
+                    {{ batch.batchNumber }}
+                  }
+                </strong>
                 <span>{{ batch.scheduleMode === 'REGULAR' ? 'Regular schedule' : 'Manual sessions' }}</span>
                 <span>{{ batch.feePlanConfigured ? 'Fee plan configured' : 'Fee plan not configured' }}</span>
               </td>
@@ -131,7 +137,7 @@
               </td>
             </ng-container>
 
-            <ng-container matColumnDef="actions">
+            <ng-container matColumnDef="actions" stickyEnd>
               <th mat-header-cell *matHeaderCellDef><span class="visually-hidden">Actions</span></th>
               <td mat-cell *matCellDef="let batch" class="action-cell">
                 <button
@@ -145,9 +151,11 @@
                 </button>
                 <mat-menu #rowMenu="matMenu" xPosition="before">
                   <a mat-menu-item [routerLink]="['/batches', batch.id, 'students']">View students</a>
+                  <a mat-menu-item routerLink="/sessions" [queryParams]="{batchId: batch.id}">Class sessions</a>
                   @if (canManage) {
                     <a mat-menu-item routerLink="/enrollments" [queryParams]="{batchId: batch.id}">View enrollments</a>
                     <a mat-menu-item [routerLink]="['/batches', batch.id, 'edit']">Edit</a>
+                    @if (batch.scheduleMode === 'REGULAR') { <a mat-menu-item [routerLink]="['/batches', batch.id, 'schedule']">Weekly schedule</a> }
                     <button mat-menu-item type="button" (click)="changeStatus(batch)">
                       {{ batch.status === 'CANCELLED' ? 'Reopen' : 'Cancel' }}
                     </button>
@@ -168,7 +176,13 @@
             <div class="batch-card-heading">
               <div>
                 <span class="course-code">{{ batch.course.shortCode }}</span>
-                <h2>{{ batch.batchNumber }}</h2>
+                <h2>
+                  @if (canManage) {
+                    <a class="batch-link" [routerLink]="['/batches', batch.id, 'edit']">{{ batch.batchNumber }}</a>
+                  } @else {
+                    {{ batch.batchNumber }}
+                  }
+                </h2>
                 <p>{{ batch.course.name }}</p>
               </div>
               <app-status-chip [value]="batch.status" />
@@ -203,9 +217,11 @@
 
             <div class="batch-card-actions">
               <a mat-button [routerLink]="['/batches', batch.id, 'students']">View students</a>
+              <a mat-button routerLink="/sessions" [queryParams]="{batchId: batch.id}">Class sessions</a>
               @if (canManage) {
                 <a mat-button routerLink="/enrollments" [queryParams]="{batchId: batch.id}">Enrollments</a>
                 <a mat-button [routerLink]="['/batches', batch.id, 'edit']">Edit batch</a>
+                @if (batch.scheduleMode === 'REGULAR') { <a mat-button [routerLink]="['/batches', batch.id, 'schedule']">Weekly schedule</a> }
                 <button mat-button type="button" (click)="changeStatus(batch)" [disabled]="updatingId() === batch.id">
                   {{ updatingId() === batch.id ? 'Updating…' : batch.status === 'CANCELLED' ? 'Reopen' : 'Cancel' }}
                 </button>

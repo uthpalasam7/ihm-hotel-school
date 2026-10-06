@@ -226,6 +226,12 @@ Batch reads and writes are branch-aware. `SUPER_ADMIN` may access all branches; 
 ### `PUT /batches/{batchId}/lecturers/{assignmentId}`
 ### `PATCH /batches/{batchId}/lecturers/{assignmentId}/status`
 
+`GET` returns the full assignment history to branch-authorized administrators.
+A lecturer may read only ACTIVE assignment rows for a batch where that lecturer
+has a current ACTIVE assignment in an authorized branch. An expired, inactive,
+future, or unassigned lecturer receives 403. This read supports session lecturer
+choices; all assignment write endpoints remain administrator-only.
+
 Request:
 
 ```json
@@ -430,63 +436,278 @@ student's inbox.
 
 ## 12. Batch Schedules
 
-### `GET /batches/{batchId}/schedules`
-### `POST /batches/{batchId}/schedules`
-### `PUT /batches/{batchId}/schedules/{scheduleId}`
-### `DELETE /batches/{batchId}/schedules/{scheduleId}`
+Implemented in Phase 7.2. All paths below are relative to `/api/v1`.
+SUPER_ADMIN and branch-authorized ADMIN manage patterns and generate sessions.
+LECTURER can read patterns only for currently assigned batches in authorized
+branches; regular-pattern mutation and bulk generation are administrator workflows.
+The optional active-branch header is validated, and authorization always checks
+the actual batch branch. Active/upcoming REGULAR batches in active branches are
+required for creation, update, preview and generation.
 
-Deletion is allowed only when no dependent generated history requires preservation.
+### `GET /batches/{batchId}/schedules`
+
+Paginated `PageResponse<ScheduleResponse>`, including inactive history, ordered
+by ISO weekday, start time and ID. `page=0`, `size=20` by default, size capped at
+100. Response fields: `id`, `batchId`, `dayOfWeek`, `startTime`, `endTime`,
+`defaultLecturerUserId`, `defaultLecturerName`, `classroom`, `status`, `version`.
+
+### `POST /batches/{batchId}/schedules`
+
+Returns 201 with the saved pattern. Example:
+
+```json
+{
+  "dayOfWeek": 1,
+  "startTime": "09:00",
+  "endTime": "13:00",
+  "defaultLecturerUserId": 20,
+  "classroom": "Kitchen 1",
+  "status": "ACTIVE"
+}
+```
+
+ISO weekday is 1 (Monday) through 7 (Sunday). End must be after start on the same
+day. Lecturer and classroom are optional; classroom is limited to 150 characters.
+An active pattern's named lecturer must be an active lecturer user assigned to
+the branch and have an active batch assignment overlapping the batch dates.
+Generation additionally checks assignment coverage for each proposed date.
+Active patterns cannot overlap in a batch, regardless of lecturer; adjacent
+intervals are allowed. At most 100 active patterns are supported per batch.
+
+### `PUT /batches/{batchId}/schedules/{scheduleId}`
+
+Same body as creation, with required `version` from the saved response.
+Missing/stale version returns 409. Edits affect subsequent generation only;
+already saved sessions retain their dates, times, lecturer and classroom.
+
+### `DELETE /batches/{batchId}/schedules/{scheduleId}?version=0`
+
+Returns 204 and **deactivates** the pattern. It does not hard-delete the pattern
+or any generated sessions. Version is required; stale versions return 409.
+Deactivation is also available for retired batches. Create/update/deactivate
+record audit events. Switching a batch to MANUAL requires deactivating its active
+weekly patterns first.
 
 ## 13. Session Generation
 
-### `POST /batches/{batchId}/sessions/preview`
+Implemented in Phase 7.2. Generation and pattern/batch/assignment changes acquire
+the same batch row lock. Request bodies use date-only `YYYY-MM-DD` values; class
+times remain local wall-clock values, independent of UTC audit timestamps.
 
-Request:
+### `POST /batches/{batchId}/sessions/preview`
 
 ```json
 {
   "fromDate": "2026-07-01",
-  "toDate": "2026-12-31",
-  "excludeDates": ["2026-08-01"]
+  "toDate": "2026-07-31",
+  "excludeDates": ["2026-07-08"]
 }
 ```
 
-Response includes proposed dates, duplicate warnings, and validation errors.
+The inclusive range must be inside the batch dates and span at most 366 days.
+Exclusions are optional, must fall inside the range, and are deduplicated.
+At most 1000 proposed sessions, 5000 existing session-context records and 1000
+active lecturer assignments are examined per request; exceeding a bound returns
+400 with a message. Narrow the range where applicable. At least one active
+pattern is required. No matching dates (or excluding all dates) returns an empty
+preview and can be confirmed as a no-op.
+
+Returns `previewToken`, `expiresAt`, `createCount`, `skipCount`, `conflictCount`,
+and `sessions`. Each entry includes `scheduleId`, `sessionDate`, `startTime`,
+`endTime`, `lecturerUserId`, `lecturerName`, `classroom`, `outcome`,
+`existingSessionId`, and an optional explanation in `message`.
+
+Entry outcomes:
+
+- `CREATE`: a valid new session.
+- `ALREADY_GENERATED`: the pattern/date already generated a session; preserve it
+  even if it was edited, cancelled or rescheduled later.
+- `EXISTING`: a matching session already exists. A cancelled/rescheduled session
+  with the same date/start/lecturer is retained too, rather than resurrected.
+- `CONFLICT`: a different active session overlaps this batch's proposed interval,
+  or the named lecturer lacks active branch/batch eligibility for that date.
+
+Preview changes no session records. The 30-minute HMAC confirmation token uses
+an application-specific signing context with the configured JWT secret and is
+bound to actor, batch/version, range, normalized exclusions and active pattern
+contents/versions. It is not a login token. Do not place it in URLs.
 
 ### `POST /batches/{batchId}/sessions/generate`
 
-Uses a confirmed preview token or matching request details to generate sessions transactionally.
+Send the same range/exclusions plus `previewToken` from the preview:
+
+```json
+{
+  "fromDate": "2026-07-01",
+  "toDate": "2026-07-31",
+  "excludeDates": ["2026-07-08"],
+  "previewToken": "<token returned by preview>"
+}
+```
+
+Returns 200, for example:
+
+```json
+{
+  "createdCount": 4,
+  "skippedCount": 0,
+  "createdSessionIds": [101, 102, 103, 104]
+}
+```
+
+Missing, expired, tampered, different-actor or stale-plan tokens return 409.
+The server recalculates duplicates/conflicts under the batch lock. A concurrent
+successful generation can change CREATE entries into skips without invalidating
+the confirmation; any new conflict aborts the entire operation. All newly created
+sessions and the generation audit event commit in one transaction. Failure rolls
+back all new sessions. Reusing a still-valid confirmation creates no duplicates;
+a pure no-op does not add another generation audit event. After expiry, obtain a
+fresh preview before retrying.
+
+Generated sessions persist their source pattern and original generation date.
+This identity survives later edits or cancellation/rescheduling. Duplicate active
+session keys also have a database unique index, including the unassigned-lecturer
+case. Saved sessions prevent later batch identity changes or date ranges that
+exclude those sessions. Bulk generation never records attendance.
 
 ## 14. Class Sessions
 
 ### `GET /sessions`
 
-Filters:
+List/detail were implemented in Phase 7.1. Creation and editing are implemented
+in Phase 7.3; cancellation and rescheduling are implemented in Phase 7.4.
 
-- branchId
-- batchId
-- lecturerId
-- dateFrom
-- dateTo
-- status
-- attendanceState
+Filters: `branchId`, `batchId`, `lecturerId`, `dateFrom`, `dateTo`, `status`.
+Dates use `YYYY-MM-DD`, both bounds are inclusive, and an inverted range returns
+400. Status accepts SCHEDULED, COMPLETED, CANCELLED, RESCHEDULED (case-insensitive).
+IDs must be positive. `page` defaults to 0 and must be non-negative; `size`
+defaults to 20, must be positive, and is capped at 100. Ordering is fixed by
+session date, start time, then ID. Returns the shared paginated `PageResponse`.
+`attendanceState` filtering is deferred to Phase 8.
 
-### `POST /sessions`
-### `GET /sessions/{id}`
-### `PUT /sessions/{id}`
-### `POST /sessions/{id}/cancel`
+Without `branchId`, the validated `X-Active-Branch-Id` header is the default
+filter. Explicit filters never widen the caller's authorized scope. SUPER_ADMIN
+can read all branches; ADMIN reads assigned branches; LECTURER additionally needs
+an ACTIVE batch assignment covering today in the configured application timezone.
+Lecturers can read all sessions in such a batch, including sessions led by a
+co-lecturer or with no named lecturer. Being named on a session alone grants no
+access. The same rules apply to direct detail URLs. Expired/future/inactive
+assignments grant no access. Historical sessions remain readable while the caller
+has current batch access; session date does not replace the current-access check.
 
-Request:
+List counts are scoped in the database. Unauthorized explicit branch/batch filters
+and detail access return 403; missing batch/detail records return 404.
+
+Example detail response (illustrative IDs):
 
 ```json
 {
-  "reason": "Public holiday"
+  "id": 12,
+  "batchId": 7,
+  "batchNumber": "2026/CK01",
+  "courseName": "Professional Cookery",
+  "branchId": 1,
+  "branchName": "IHM Hotel School",
+  "sessionDate": "2026-10-05",
+  "startTime": "09:00:00",
+  "endTime": "13:00:00",
+  "lecturerUserId": 20,
+  "lecturerName": "Example Lecturer",
+  "topic": "Kitchen safety",
+  "classroom": "Kitchen 1",
+  "status": "SCHEDULED",
+  "cancellationReason": null,
+  "originalSessionId": null,
+  "remarks": null,
+  "attendanceSubmittedAt": null,
+  "createdAt": "2026-10-04T02:00:00Z",
+  "updatedAt": "2026-10-04T02:00:00Z",
+  "version": 0,
+  "sourceScheduleId": null,
+  "generationDate": null,
+  "reschedulingReason": null
+}
+```
+
+Responses contain no student personal data or financial details. Local class
+date/time values are interpreted in the application timezone; audit timestamps
+are UTC. The Phase 7.6 admin screen uses these existing endpoints without
+changing their contracts.
+
+### `POST /sessions`
+### `PUT /sessions/{id}`
+
+Implemented in Phase 7.3. POST returns 201 with `SessionResponse`; PUT returns
+200 with the updated response. Both accept:
+
+```json
+{
+  "batchId": 7,
+  "sessionDate": "2026-10-05",
+  "startTime": "09:00",
+  "endTime": "13:00",
+  "lecturerUserId": 20,
+  "topic": "Kitchen safety",
+  "classroom": "Kitchen 1",
+  "remarks": "Bring safety shoes",
+  "version": 0
+}
+```
+
+`batchId`, date and both times are required. `version` is required for PUT and
+must match the latest response; omit it for POST. PUT replaces the editable
+fields, so omitted optional fields become null. IDs must be positive. Topic,
+classroom and remarks have limits of 300, 150 and 2000 characters, are trimmed,
+and blank values become null. Lecturer is optional; when supplied, the user must
+be an active LECTURER in the batch branch with an ACTIVE assignment covering the
+proposed session date (inclusive).
+
+SUPER_ADMIN and branch-authorized ADMIN can write. LECTURER additionally needs a
+current ACTIVE batch assignment covering today, using the same batch access rules
+as the read endpoints. This permits managing co-lecturer/unassigned sessions in
+that batch; being named on a session alone grants no access. A named lecturer's
+session-date eligibility is separate from the caller's current access check.
+The active-branch header is validated and never grants additional permissions.
+
+Both MANUAL and REGULAR batches allow one-off sessions. The branch must be ACTIVE
+and the batch ACTIVE or UPCOMING. Dates must be within inclusive batch bounds,
+and start must precede end on the same day. Overlaps with SCHEDULED or COMPLETED
+sessions in the same batch return 409, regardless of lecturer. Adjacent intervals
+are allowed. CANCELLED and RESCHEDULED records do not occupy an active slot.
+Cross-batch classroom/lecturer resource conflicts are not enforced in this phase.
+
+New sessions are SCHEDULED. Batch cannot change on edit. PUT only edits SCHEDULED
+sessions without submitted attendance; terminal states or submitted attendance
+return 409. Missing/stale versions also return 409. Date/time correction preserves
+the same session ID; the separate lifecycle rescheduling operation in 7.4
+preserves an original/replacement link. Generated sessions retain their original
+`sourceScheduleId` and `generationDate`, so generation cannot recreate their old
+slot after an edit. Status and provenance are controlled by the server.
+
+Writes lock the batch, recheck validation, and save session plus SESSION_CREATED
+or SESSION_UPDATED audit evidence in one transaction. Edits record old/new values.
+Bulk generation uses the same lock. Invalid input returns 400, unauthorized access
+403, and missing batch/session/lecturer 404. No hard-delete endpoint is provided.
+
+Attendance records do not exist yet: Phase 8 must extend the edit guard to detect
+any saved attendance, including drafts, and implement the confirmed/audited
+correction flow before allowing changes to such sessions.
+
+### `POST /sessions/{id}/cancel`
+
+Implemented in Phase 7.4. Returns 200 with the updated `SessionResponse`.
+
+```json
+{
+  "reason": "Public holiday",
+  "version": 0
 }
 ```
 
 ### `POST /sessions/{id}/reschedule`
 
-Request:
+Implemented in Phase 7.4. Returns 201 with
+`{ "original": SessionResponse, "replacement": SessionResponse }`.
 
 ```json
 {
@@ -494,9 +715,57 @@ Request:
   "newStartTime": "09:00",
   "newEndTime": "13:00",
   "lecturerUserId": 20,
-  "reason": "Lecturer unavailable"
+  "reason": "Lecturer unavailable",
+  "version": 0
 }
 ```
+
+Both endpoints require a nonblank reason (maximum 2000 characters, trimmed) and
+nonnegative current `version`. Missing/invalid fields return 400; stale versions
+return 409. Authorization, active branch/batch requirements, and active-branch
+header validation match manual editing. Lecturers must have current access to the
+batch; a replacement's named lecturer additionally needs eligibility on its date.
+Unauthorized callers receive 403; missing sessions or named lecturers return 404.
+
+Only SCHEDULED sessions without submitted attendance can transition. Completed,
+already cancelled/rescheduled, or attendance-submitted sessions return 409. A
+repeat request never creates another replacement or overwrites a reason: reload
+the session to inspect the first request's outcome.
+
+Cancellation preserves the session's dates, lecturer, content and generation
+identity, sets CANCELLED and `cancellationReason`, and releases the active slot.
+Rescheduling preserves these original details, sets RESCHEDULED and
+`reschedulingReason`, then creates a new SCHEDULED session in the same batch with
+`originalSessionId` pointing to the immediate original. Topic, classroom and
+remarks are copied. The new lecturer is explicitly selected by `lecturerUserId`;
+null/omission leaves the replacement unassigned. Supply the original lecturer ID
+to retain it. Date/start/end are required and at least one must change. Changing
+only lecturer/content uses the ordinary edit endpoint.
+
+Replacement dates must fall within inclusive batch bounds; start must precede
+end. Overlaps with other SCHEDULED/COMPLETED sessions in the same batch return
+409. The original is excluded from this check because it is being retired;
+adjacent intervals and same-day time changes are allowed. Replacement sessions
+have no attendance or generation-origin pair. The original retains its source
+pattern/date, preventing automatic regeneration of the retired slot.
+
+Further rescheduling creates a chain: A → B → C. Each original has at most one
+immediate replacement, enforced by V15's unique constraint. The existing
+same-batch foreign key prevents moving history between batches. No deletion or
+reactivation endpoint is provided.
+
+Both operations share the batch lock with generation/manual editing. Original
+transition, replacement insertion (when applicable) and audit are atomic.
+SESSION_CANCELLED records before/after plus reason; SESSION_RESCHEDULED records
+the original before value and both resulting responses plus reason. Any insertion
+or audit failure rolls back the whole operation.
+
+`ClassSession.requireAttendanceEligible()` rejects CANCELLED and RESCHEDULED
+sessions. Phase 8 must call this guard after taking the same batch lock and
+reloading the session for every attendance mutation. Attendance APIs and report
+calculations are not implemented in this sub-phase. Phase 8 must also check saved
+attendance rows (including drafts) before allowing lifecycle corrections; the
+existing submitted-attendance field currently blocks such operations.
 
 ## 15. Attendance
 

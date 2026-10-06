@@ -66,7 +66,10 @@
           <mat-error>Use no more than 2,000 characters.</mat-error>
         </mat-form-field>
       </div>
-      <p class="muted">Course installment dates follow the batch schedule, including dates before a late enrollment.</p>
+      <div class="ihm-guidance"><span class="ihm-guidance__icon" aria-hidden="true">i</span><div>
+        <strong>Installment dates</strong>
+        <p>Course installment dates follow the batch schedule, including dates before a late enrollment.</p>
+      </div></div>
       @if (error()) { <p class="error-message" role="alert">{{ error() }}</p> }
       <button mat-stroked-button type="submit" [disabled]="form.invalid || selectedStudent()?.status !== 'ACTIVE' || !selectedBatch() || !eligible(selectedBatch()!) || previewing() || saving()">{{ previewing() ? 'Preparing preview…' : 'Preview charges' }}</button>
     </form>
@@ -102,7 +105,10 @@
           </article>
         }
       </div>
-      <p class="muted">Confirming creates the enrollment and all listed charges together. It does not record a payment.</p>
+      <div class="ihm-guidance"><span class="ihm-guidance__icon" aria-hidden="true">i</span><div>
+        <strong>What confirmation saves</strong>
+        <p>Confirming creates the enrollment and all listed charges together. It does not record a payment.</p>
+      </div></div>
       <div class="actions"><button mat-flat-button type="button" (click)="enroll()" [disabled]="saving()">{{ saving() ? 'Enrolling…' : 'Confirm enrollment' }}</button></div>
     </mat-card-content></mat-card>
   }

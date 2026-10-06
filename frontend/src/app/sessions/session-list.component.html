@@ -1,0 +1,110 @@
+<section class="sessions-page">
+  <app-page-header eyebrow="Academics" title="Class sessions" subtitle="Find classes, add one-off sessions, and manage changes to the timetable.">
+    <button mat-flat-button type="button" [disabled]="!canAdd() || working() || batchLoading()" (click)="add()">Add session</button>
+  </app-page-header>
+
+  <mat-card appearance="outlined" class="filters-card"><mat-card-content>
+    <div class="filters">
+      <mat-form-field appearance="outline" subscriptSizing="dynamic">
+        <mat-label>Batch</mat-label>
+        <input matInput [formControl]="batchSearch" [matAutocomplete]="batchAuto" placeholder="Search batch number or course" />
+        <mat-autocomplete #batchAuto="matAutocomplete" [displayWith]="displayBatch" (optionSelected)="chooseBatch($event)">
+          @for (option of batchOptions(); track option.id) { <mat-option [value]="option">{{ option.batchNumber }} · {{ option.course.name }}</mat-option> }
+        </mat-autocomplete>
+      </mat-form-field>
+      <mat-form-field appearance="outline" subscriptSizing="dynamic">
+        <mat-label>Lecturer</mat-label><mat-select [formControl]="lecturerId" [canSelectNullableOptions]="true">
+          <mat-option [value]="null">All lecturers</mat-option>
+          @for (lecturer of filterLecturers(); track lecturer.lecturerUserId) { <mat-option [value]="lecturer.lecturerUserId">{{ lecturer.lecturerFullName }}</mat-option> }
+        </mat-select>
+      </mat-form-field>
+      <mat-form-field appearance="outline" subscriptSizing="dynamic">
+        <mat-label>Status</mat-label><mat-select [formControl]="status">
+          <mat-option value="">All statuses</mat-option><mat-option value="SCHEDULED">Scheduled</mat-option>
+          <mat-option value="COMPLETED">Completed</mat-option><mat-option value="CANCELLED">Cancelled</mat-option>
+          <mat-option value="RESCHEDULED">Rescheduled</mat-option>
+        </mat-select>
+      </mat-form-field>
+      @if (view() === 'list') {
+        <mat-form-field appearance="outline"><mat-label>From date</mat-label><input matInput [formControl]="dateFrom" [matDatepicker]="fromPicker" /><mat-datepicker-toggle matIconSuffix [for]="fromPicker" /><mat-datepicker #fromPicker /><mat-hint>DD/MM/YYYY</mat-hint></mat-form-field>
+        <mat-form-field appearance="outline"><mat-label>To date</mat-label><input matInput [formControl]="dateTo" [matDatepicker]="toPicker" /><mat-datepicker-toggle matIconSuffix [for]="toPicker" /><mat-datepicker #toPicker /><mat-hint>DD/MM/YYYY</mat-hint></mat-form-field>
+      }
+      <div class="filter-actions"><button mat-flat-button type="button" [disabled]="loading()" (click)="applyFilters()">Apply filters</button><button mat-button type="button" [disabled]="loading()" (click)="resetFilters()">Reset</button></div>
+    </div>
+    @if (scopeBatchId) { <p class="helper">Showing the batch opened from Batches. <a routerLink="/sessions">Show all batches</a></p> }
+  </mat-card-content></mat-card>
+
+  @if (actionError()) { <p class="error" role="alert">{{ actionError() }}</p> }
+  @if (success()) { <p class="success" role="status">{{ success() }}</p> }
+  @if (detailLoading()) { <p role="status">Loading the latest session details…</p> }
+  @if (selected(); as session) {
+    <mat-card appearance="outlined" class="detail-card"><mat-card-content>
+      <div class="detail-heading"><div><h2>{{ session.batchNumber }} · {{ session.sessionDate | date:'EEE, d MMM y' }}</h2>
+        <p>{{ session.courseName }} · {{ session.startTime | slice:0:5 }}–{{ session.endTime | slice:0:5 }}</p></div>
+        <app-status-chip [value]="session.status" /><button mat-button type="button" (click)="closeDetail()">Close details</button>
+      </div>
+      <dl class="detail-grid">
+        <div><dt>Lecturer</dt><dd>{{ session.lecturerName || 'Unassigned' }}</dd></div>
+        <div><dt>Classroom</dt><dd>{{ session.classroom || 'Not set' }}</dd></div>
+        <div><dt>Topic</dt><dd>{{ session.topic || 'Not set' }}</dd></div>
+        <div><dt>Remarks</dt><dd>{{ session.remarks || 'None' }}</dd></div>
+        @if (session.cancellationReason) { <div><dt>Cancellation reason</dt><dd>{{ session.cancellationReason }}</dd></div> }
+        @if (session.reschedulingReason) { <div><dt>Rescheduling reason</dt><dd>{{ session.reschedulingReason }}</dd></div> }
+        @if (session.originalSessionId) { <div><dt>Rescheduled from</dt><dd><button mat-button type="button" (click)="open({ id: session.originalSessionId })">Session #{{ session.originalSessionId }}</button></dd></div> }
+        @if (replacementFor(session); as replacement) { <div><dt>Replacement session</dt><dd><button mat-button type="button" (click)="open(replacement)">Session #{{ replacement.id }}</button></dd></div> }
+      </dl>
+      @if (canChange(session)) {
+        <div class="detail-actions"><button mat-stroked-button type="button" [disabled]="working()" (click)="edit('edit', session)">Edit</button>
+          <button mat-stroked-button type="button" [disabled]="working()" (click)="edit('reschedule', session)">Reschedule</button>
+          <button mat-button type="button" [disabled]="working()" (click)="cancel(session)">Cancel session</button></div>
+      } @else { <p class="helper">This session cannot be changed because it is no longer scheduled or attendance has been submitted.</p> }
+    </mat-card-content></mat-card>
+  }
+
+  <mat-card appearance="outlined" class="results-card ihm-data-grid">
+    <div class="view-bar"><div class="view-switch" aria-label="Session view">
+      <button mat-button type="button" [class.active]="view() === 'calendar'" [attr.aria-pressed]="view() === 'calendar'" (click)="setView('calendar')">Calendar</button>
+      <button mat-button type="button" [class.active]="view() === 'list'" [attr.aria-pressed]="view() === 'list'" (click)="setView('list')">List</button>
+    </div>
+    @if (view() === 'calendar') { <div class="month-controls"><button mat-button type="button" aria-label="Previous month" (click)="changeMonth(-1)">‹</button><h2>{{ monthLabel() }}</h2><button mat-button type="button" aria-label="Next month" (click)="changeMonth(1)">›</button></div> }
+    </div>
+    <app-page-state [loading]="loading()" [error]="error()" [empty]="view() === 'list' && !loading() && !error() && rows().length === 0" loadingLabel="Loading class sessions…" emptyTitle="No class sessions" emptyMessage="No sessions match the selected filters and dates." (retry)="load()" />
+    @if (tooMany()) { <p class="limit-notice" role="status">More than 500 sessions fall in this calendar period. Select a batch or switch to the paginated list to see every session.</p> }
+    @if (!loading() && !error() && !tooMany() && view() === 'calendar') {
+      @if (!rows().length) { <p class="empty-month" role="status">No sessions in this calendar period.</p> }
+      <div class="calendar" role="grid" [attr.aria-label]="'Class sessions in ' + monthLabel()">
+        @for (weekday of weekdays; track weekday) { <div class="weekday" role="columnheader">{{ weekday }}</div> }
+        @for (day of days(); track day.getTime()) {
+          <div class="calendar-day" role="gridcell" [class.other-month]="!isCurrentMonth(day)" [class.today]="isToday(day)">
+            <span class="day-number">{{ day | date:'d' }}</span>
+            @for (session of sessionsOn(day); track session.id) {
+              <button type="button" class="calendar-session" [class.inactive]="session.status === 'CANCELLED' || session.status === 'RESCHEDULED'" (click)="open(session)"
+                [attr.aria-label]="session.batchNumber + ' on ' + session.sessionDate + ', ' + session.status.toLowerCase() + ', view details'">
+                <strong>{{ session.startTime | slice:0:5 }}</strong> {{ session.batchNumber }}<span class="calendar-topic">{{ session.topic || session.courseName }}</span>
+                @if (session.status !== 'SCHEDULED') { <span class="calendar-status">{{ session.status.toLowerCase() }}</span> }
+              </button>
+            }
+          </div>
+        }
+      </div>
+    }
+    @if (!loading() && !error() && view() === 'list' && rows().length) {
+      <div class="ihm-desktop-table table-wrap"><table mat-table [dataSource]="rows()"><caption class="visually-hidden">Class sessions</caption>
+        <ng-container matColumnDef="date"><th mat-header-cell *matHeaderCellDef>Date</th><td mat-cell *matCellDef="let s">{{ s.sessionDate | date:'EEE, d MMM y' }}</td></ng-container>
+        <ng-container matColumnDef="batch"><th mat-header-cell *matHeaderCellDef>Batch</th><td mat-cell *matCellDef="let s"><strong>{{ s.batchNumber }}</strong><span class="secondary">{{ s.courseName }}</span></td></ng-container>
+        <ng-container matColumnDef="time"><th mat-header-cell *matHeaderCellDef>Time</th><td mat-cell *matCellDef="let s">{{ s.startTime | slice:0:5 }}–{{ s.endTime | slice:0:5 }}</td></ng-container>
+        <ng-container matColumnDef="lecturer"><th mat-header-cell *matHeaderCellDef>Lecturer</th><td mat-cell *matCellDef="let s">{{ s.lecturerName || 'Unassigned' }}</td></ng-container>
+        <ng-container matColumnDef="status"><th mat-header-cell *matHeaderCellDef>Status</th><td mat-cell *matCellDef="let s"><app-status-chip [value]="s.status" /></td></ng-container>
+        <ng-container matColumnDef="actions"><th mat-header-cell *matHeaderCellDef><span class="visually-hidden">Actions</span></th><td mat-cell *matCellDef="let s" class="action-cell"><button mat-button type="button" (click)="open(s)" [attr.aria-label]="'View session for ' + s.batchNumber + ' on ' + s.sessionDate">View</button></td></ng-container>
+        <tr mat-header-row *matHeaderRowDef="columns"></tr><tr mat-row *matRowDef="let row; columns: columns"></tr>
+      </table></div>
+      <div class="ihm-mobile-cards">@for (s of rows(); track s.id) {
+        <article class="ihm-mobile-card"><div class="ihm-mobile-card__heading"><strong>{{ s.sessionDate | date:'EEE, d MMM y' }} · {{ s.batchNumber }}</strong><app-status-chip [value]="s.status" /></div>
+          <dl class="ihm-mobile-card__details"><div><dt>Time</dt><dd>{{ s.startTime | slice:0:5 }}–{{ s.endTime | slice:0:5 }}</dd></div><div><dt>Lecturer</dt><dd>{{ s.lecturerName || 'Unassigned' }}</dd></div><div><dt>Topic</dt><dd>{{ s.topic || 'Not set' }}</dd></div></dl>
+          <div class="ihm-mobile-card__actions"><button mat-button type="button" (click)="open(s)">View details</button></div>
+        </article>
+      }</div>
+    }
+    @if (view() === 'list') { <mat-paginator [length]="total()" [pageIndex]="page()" [pageSize]="size()" [pageSizeOptions]="[10,20,50,100]" showFirstLastButtons (page)="changePage($event)" aria-label="Class session pages" /> }
+  </mat-card>
+</section>

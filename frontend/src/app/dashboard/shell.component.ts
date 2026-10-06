@@ -61,6 +61,7 @@ export class ShellComponent implements OnInit {
     { label: 'Users', path: '/users', roles: ['SUPER_ADMIN', 'ADMIN'] },
     { label: 'Courses', path: '/courses', roles: ['SUPER_ADMIN', 'ADMIN'] },
     { label: 'Batches', path: '/batches', roles: ['SUPER_ADMIN', 'ADMIN', 'LECTURER'] },
+    { label: 'Class sessions', path: '/sessions', roles: ['SUPER_ADMIN', 'ADMIN', 'LECTURER'] },
     { label: 'Students', path: '/students', roles: ['SUPER_ADMIN', 'ADMIN'] },
     { label: 'Enrollments', path: '/enrollments', roles: ['SUPER_ADMIN', 'ADMIN'] },
   ];

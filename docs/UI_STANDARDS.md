@@ -20,6 +20,10 @@ Constrain only a specific form or reading panel when its content needs it.
 - Keep summary fields in a compact responsive grid. Put status and actions next
   to their related record. Avoid large empty regions created by fixed heights or
   overly narrow content wrappers.
+- Use `.ihm-guidance` for longer, persistent workflow explanations beside the
+  section or action they explain. Give each note a short label and keep the copy
+  concise. Leave short field hints in `mat-hint`; use existing error, success,
+  empty-state and confirmation patterns for those distinct messages.
 
 ## Data grids
 
@@ -46,6 +50,9 @@ wrap within the card. Keep pagination outside the cards. Use the shared heading,
 details, and actions classes instead of one-off mobile table widths. Only keep
 horizontal table scrolling for genuinely tabular material such as a schedule
 matrix, and document why a card view would lose meaning.
+For wide desktop tables that keep row actions in the last column, use Material's
+`stickyEnd` on that column and the shared `.ihm-sticky-actions` table style so
+the actions remain visible while other columns scroll.
 
 Filter cards use labeled search and relevant server-backed controls, followed by
 `Apply filters` and `Reset` actions. Enter applies the search. Applying or resetting

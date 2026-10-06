@@ -26,5 +26,7 @@ public interface BatchLecturerRepository extends JpaRepository<BatchLecturer, Lo
 	@EntityGraph(attributePaths = {"lecturer", "batch", "batch.branch", "batch.course"})
 	Optional<BatchLecturer> findByBatchIdAndLecturerIdAndStatus(Long batchId, Long lecturerId, BatchLecturerStatus status);
 
+    java.util.List<BatchLecturer> findByBatchIdAndStatus(Long batchId, BatchLecturerStatus status,
+            org.springframework.data.domain.Pageable limit);
 	long countByBatchIdAndStatus(Long batchId, BatchLecturerStatus status);
 }

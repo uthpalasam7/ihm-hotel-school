@@ -31,7 +31,7 @@ export class ConfirmationDialogComponent {
 
   protected readonly reason = new FormControl('', {
     nonNullable: true,
-    validators: this.data.reasonRequired ? [Validators.required] : [],
+    validators: this.data.reasonRequired ? [control => control.value.trim() ? null : { required: true }, Validators.maxLength(2000)] : [],
   });
 
   protected confirm(): void {

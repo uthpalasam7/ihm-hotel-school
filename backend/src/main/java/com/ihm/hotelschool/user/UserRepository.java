@@ -6,6 +6,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
 public interface UserRepository extends JpaRepository<UserAccount, Long>, JpaSpecificationExecutor<UserAccount> {
+    @EntityGraph(attributePaths = {"roles", "branches"})
+    java.util.List<UserAccount> findByIdIn(java.util.Collection<Long> ids);
 	boolean existsByUsername(String username);
 
 	boolean existsByUsernameAndIdNot(String username, Long id);

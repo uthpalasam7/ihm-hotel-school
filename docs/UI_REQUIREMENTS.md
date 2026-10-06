@@ -411,6 +411,30 @@ For regular schedules:
 5. Show duplicates and conflicts.
 6. Confirm generation.
 
+Phase 7.5 implements this as an admin-only batch schedule page, linked from
+regular batches. Weekly patterns use the shared Material grid on desktop and
+cards on mobile. Pattern create/edit uses a reactive dialog with weekday,
+start/end times, optional lecturer and classroom, and active/inactive status.
+An active pattern can be deactivated after confirmation; saved sessions remain.
+The preview accepts at most 366 inclusive days within the batch and optional
+excluded dates. It shows new, kept and conflicting rows before the admin confirms
+generation. Conflict, empty and expired previews cannot be submitted; editing a
+pattern, changing the range or changing exclusions requires a fresh preview.
+Dates entered in the form use DD/MM/YYYY. Manual and retired batches explain why
+generation is unavailable. Phase 7.6 adds the admin Class sessions page: a
+bounded month grid and server-paginated list for the active branch, with batch,
+lecturer, date and status filters. Staff can create one-off sessions in either
+schedule mode and edit, cancel or reschedule eligible sessions. Cancellation and
+rescheduling require reasons; a replacement links to its original. A month too
+large for the calendar shows a prompt to narrow the batch or use the list rather
+than an incomplete calendar. Phase 7.7 opens the same Class sessions page to
+lecturers, limited by backend authorization to currently assigned batches.
+Lecturers can manage eligible scheduled sessions in those batches, including
+co-taught and unassigned classes. The Batches menu and dashboard link to the
+page; weekly-pattern editing and generation stay administrator-only. If an
+assignment is revoked while the page is open, clear inaccessible details and
+show the access error.
+
 ### Session Form
 
 Fields:

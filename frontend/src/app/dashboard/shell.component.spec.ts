@@ -51,6 +51,7 @@ describe('ShellComponent', () => {
 
     const text = fixture.nativeElement.textContent as string;
     expect(text).toContain('Dashboard');
+    expect(text).toContain('Class sessions');
     expect(text).not.toContain('Attendance');
     expect(text).not.toContain('Users');
     expect(text).not.toContain('Audit');

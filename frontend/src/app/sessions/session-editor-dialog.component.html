@@ -1,0 +1,39 @@
+<h2 mat-dialog-title>{{ data.mode === 'create' ? 'Add class session' : data.mode === 'edit' ? 'Edit class session' : 'Reschedule class session' }}</h2>
+<form [formGroup]="form" (ngSubmit)="save()">
+  <mat-dialog-content>
+    <p>{{ data.batch.batchNumber }} · {{ data.batch.course.name }}</p>
+    @if (data.mode === 'reschedule') { <p>The original stays in the history. A new scheduled session will be created.</p> }
+    @if (initialLecturerUnavailable) { <p class="notice">The previous lecturer is not assigned on this date. Choose an eligible lecturer or leave the session unassigned.</p> }
+    @if (error()) { <p class="error" role="alert">{{ message(error()) }}</p> }
+    <div class="fields">
+      <mat-form-field appearance="outline"><mat-label>Class date</mat-label>
+        <input matInput formControlName="sessionDate" [matDatepicker]="datePicker" [min]="minDate" [max]="maxDate" />
+        <mat-datepicker-toggle matIconSuffix [for]="datePicker" /><mat-datepicker #datePicker />
+        <mat-hint>DD/MM/YYYY · Within the batch dates</mat-hint><mat-error>Choose a date within the batch.</mat-error>
+      </mat-form-field>
+      <mat-form-field appearance="outline"><mat-label>Start time</mat-label><input matInput type="time" formControlName="startTime" /><mat-error>Enter a valid start time.</mat-error></mat-form-field>
+      <mat-form-field appearance="outline"><mat-label>End time</mat-label><input matInput type="time" formControlName="endTime" /><mat-error>Enter a valid end time.</mat-error></mat-form-field>
+      <mat-form-field appearance="outline"><mat-label>Lecturer (optional)</mat-label><mat-select formControlName="lecturerUserId" [canSelectNullableOptions]="true">
+        <mat-option [value]="null">Unassigned</mat-option>
+        @for (lecturer of eligibleLecturers(); track lecturer.lecturerUserId) { <mat-option [value]="lecturer.lecturerUserId">{{ lecturer.lecturerFullName }}</mat-option> }
+      </mat-select>
+<!--        <mat-hint>Only lecturers assigned on the class date appear.</mat-hint>-->
+      </mat-form-field>
+      @if (data.mode !== 'reschedule') {
+        <mat-form-field appearance="outline"><mat-label>Topic (optional)</mat-label><input matInput formControlName="topic" maxlength="300" /><mat-error>Use at most 300 characters.</mat-error></mat-form-field>
+        <mat-form-field appearance="outline"><mat-label>Classroom (optional)</mat-label><input matInput formControlName="classroom" maxlength="150" /><mat-error>Use at most 150 characters.</mat-error></mat-form-field>
+        <mat-form-field appearance="outline" class="full"><mat-label>Remarks (optional)</mat-label><textarea matInput formControlName="remarks" rows="3" maxlength="2000"></textarea><mat-error>Use at most 2000 characters.</mat-error></mat-form-field>
+      } @else {
+        <mat-form-field appearance="outline" class="full"><mat-label>Reason for rescheduling</mat-label><textarea matInput formControlName="reason" rows="3" maxlength="2000"></textarea><mat-error>A reason is required, up to 2000 characters.</mat-error></mat-form-field>
+      }
+    </div>
+    @if (form.hasError('timeOrder')) { <p class="error" role="alert">End time must be after start time on the same day.</p> }
+    @for (field of data.mode === 'reschedule' ? ['newDate', 'newStartTime', 'newEndTime', 'lecturerUserId', 'reason'] : ['sessionDate', 'startTime', 'endTime', 'lecturerUserId', 'topic', 'classroom', 'remarks']; track field) {
+      @if (fieldError(error(), field); as fieldMessage) { <p class="error" role="alert">{{ fieldMessage }}</p> }
+    }
+  </mat-dialog-content>
+  <mat-dialog-actions align="end">
+    <button mat-button type="button" [mat-dialog-close]="false" [disabled]="saving()">Close</button>
+    <button mat-flat-button type="submit" [disabled]="saving()">{{ saving() ? 'Saving…' : data.mode === 'reschedule' ? 'Reschedule session' : 'Save session' }}</button>
+  </mat-dialog-actions>
+</form>

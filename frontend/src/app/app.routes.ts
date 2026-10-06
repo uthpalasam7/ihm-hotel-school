@@ -67,6 +67,8 @@ export const routes: Routes = [
         canDeactivate: [unsavedChangesGuard],
       },
       { path: 'batches', component: BatchListComponent, canActivate: [roleGuard(['SUPER_ADMIN', 'ADMIN', 'LECTURER'])] },
+      { path: 'sessions', loadComponent: () => import('./sessions/session-list.component').then(m => m.SessionListComponent), canActivate: [roleGuard(['SUPER_ADMIN', 'ADMIN', 'LECTURER'])] },
+      { path: 'batches/:id/schedule', loadComponent: () => import('./sessions/batch-schedule.component').then(m => m.BatchScheduleComponent), canActivate: [roleGuard(['SUPER_ADMIN', 'ADMIN'])], canDeactivate: [unsavedChangesGuard] },
       { path: 'batches/:id/students', loadComponent: () => import('./enrollments/batch-students.component').then(m => m.BatchStudentsComponent), canActivate: [roleGuard(['SUPER_ADMIN', 'ADMIN', 'LECTURER'])] },
       {
         path: 'batches/new',

@@ -2,6 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { provideRouter, Router, RouterStateSnapshot } from '@angular/router';
 import { AuthService } from './auth.service';
 import { authGuard, guestGuard, roleGuard } from './auth.guard';
+import { routes } from '../../app.routes';
 
 describe('auth route guards', () => {
   let router: Router;
@@ -96,5 +97,20 @@ describe('auth route guards', () => {
     const result = TestBed.runInInjectionContext(() => roleGuard(['SUPER_ADMIN', 'ADMIN'])({} as never, state('/users')));
 
     expect(result).toBe(true);
+  });
+
+  it('opens class sessions to lecturers while keeping weekly schedule admin-only', () => {
+    authenticated = true;
+    currentRoles = ['LECTURER'];
+    const children = routes.find(route => route.path === '')?.children ?? [];
+    const sessions = children.find(route => route.path === 'sessions');
+    const schedule = children.find(route => route.path === 'batches/:id/schedule');
+    expect(sessions?.canActivate).toBeDefined();
+    expect(schedule?.canActivate).toBeDefined();
+    const sessionsGuard = sessions!.canActivate![0] as ReturnType<typeof roleGuard>;
+    const scheduleGuard = schedule!.canActivate![0] as ReturnType<typeof roleGuard>;
+    expect(TestBed.runInInjectionContext(() => sessionsGuard({} as never, state('/sessions')))).toBe(true);
+    const denied = TestBed.runInInjectionContext(() => scheduleGuard({} as never, state('/batches/7/schedule')));
+    expect(router.serializeUrl(denied as never)).toBe('/forbidden');
   });
 });

@@ -20,13 +20,20 @@
           <button mat-stroked-button type="button" [disabled]="changing()" (click)="changeStatus('WITHDRAWN')">Withdraw</button>
           <button mat-button type="button" [disabled]="changing()" (click)="changeStatus('CANCELLED')">Cancel enrollment</button>
         </div>
-        <p class="muted">Changing enrollment status does not cancel or waive outstanding charges or automatically cancel the student card.</p>
+        <div class="ihm-guidance"><span class="ihm-guidance__icon" aria-hidden="true">i</span><div>
+          <strong>Before changing status</strong>
+          <p>Changing enrollment status does not cancel or waive outstanding charges or automatically cancel the student card.</p>
+        </div></div>
       }
       @if (statusError()) { <p role="alert" class="error-message">{{ statusError() }}</p> }
     </mat-card-content></mat-card>
     <mat-card appearance="outlined" class="ihm-data-grid charge-grid">
       <mat-card-content class="charge-intro">
-      <h2>Student charges</h2><p class="muted">These amounts and due dates were saved at enrollment. Later changes to the batch fee plan do not change them.</p>
+      <h2>Student charges</h2>
+      <div class="ihm-guidance"><span class="ihm-guidance__icon" aria-hidden="true">i</span><div>
+        <strong>About these charges</strong>
+        <p>These amounts and due dates were saved at enrollment. Later changes to the batch fee plan do not change them.</p>
+      </div></div>
       <app-page-state [loading]="chargesLoading()" [error]="chargesError()" [empty]="!chargesLoading() && !chargesError() && !charges().length" emptyTitle="No charges found" (retry)="loadCharges(chargePage())" />
       </mat-card-content>
       @if (!chargesLoading() && !chargesError() && charges().length) {
